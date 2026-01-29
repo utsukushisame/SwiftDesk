@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knižnica promptov</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtbGlicmFyeS1zcXVhcmUiPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iMyIgcng9IjIiIGZpbGw9IiNlYTU4MGMiIHN0cm9rZT0ibm9uZSIvPjxwYXRoIGQ9Ik03IDd2MTQiLz48cGF0aCBkPSJNMTEgN3YxNCIvPjxwYXRoIGQ9Ik0xNSA3djE0Ii8+PC9zdmc+">
+
+    <!-- Tailwind CSS (pre rýchle stylovanie) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts & Material Icons -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
+
+    <!-- Konfigurácia Tailwind pre Material You farby -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Manuálne prepínanie pomocou triedy 'dark'
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Google Sans', 'Roboto', 'sans-serif'],
+                        mono: ['Roboto Mono', 'monospace'],
+                    },
+                    colors: {
+                        // Material You tóny (Primary Key: Orange-600 #ea580c)
+                        m3: {
+                            sys: {
+                                light: {
+                                    primary: '#ea580c',
+                                    onPrimary: '#FFFFFF',
+                                    container: '#ffdbca',
+                                    onContainer: '#331200',
+                                    background: '#FDFBFF',
+                                    surface: '#FDFBFF',
+                                    surfaceVariant: '#F5DED4',
+                                },
+                                dark: {
+                                    primary: '#ffb596',
+                                    onPrimary: '#552000',
+                                    container: '#782f00',
+                                    onContainer: '#ffdbca',
+                                    background: '#1A1B1E',
+                                    surface: '#1A1B1E',
+                                    surfaceVariant: '#52433d',
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Jemné animácie prechodov */
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Skrytie scrollbaru pre čistý vzhľad textarea */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+        }
+
+        .dark textarea::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Material Ripple efekt (zjednodušený) */
+        .ripple {
+            position: relative;
+            overflow: hidden;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .ripple:after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform .5s, opacity 1s;
+        }
+
+        .ripple:active:after {
+            transform: scale(0, 0);
+            opacity: .3;
+            transition: 0s;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-m3-sys-light-background text-slate-900 dark:bg-m3-sys-dark-background dark:text-slate-100 min-h-screen selection:bg-orange-200 dark:selection:bg-orange-900">
+
+    <!-- Hlavný kontajner -->
+    <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
+
+        <!-- Hlavička / Navigácia -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <div class="flex items-baseline gap-4">
+                    <button onclick="switchView('library')" id="tab-library"
+                        class="text-3xl font-normal text-slate-800 dark:text-slate-100 transition-colors">
+                        Knižnica promptov
+                    </button>
+                    <span class="text-3xl font-light text-slate-300 dark:text-slate-600">|</span>
+                    <button onclick="switchView('implementation')" id="tab-implementation"
+                        class="text-3xl font-normal text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                        Implementačné plány
+                    </button>
+                </div>
+                <p id="header-subtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-1">Vytváraj, optimalizuj a
+                    ukladaj svoje príkazy pre AI</p>
+            </div>
+
+            <!-- Akčné tlačidlá hlavičky -->
+            <div class="flex gap-2">
+                <button onclick="openSettings()"
+                    class="flex items-center gap-2 px-4 py-2.5 rounded-full border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <span class="material-symbols-rounded text-xl">settings</span>
+                    <span class="text-sm font-medium">Nastavenia</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Knižnica Promptov View -->
+        <div id="view-library" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Ľavý panel: Editor Promptov (Sticky) -->
+            <div class="lg:col-span-5 xl:col-span-4">
+                <div
+                    class="sticky top-6 bg-m3-sys-light-surfaceVariant dark:bg-m3-sys-dark-surfaceVariant/50 rounded-[28px] p-6 shadow-sm border border-white/20 backdrop-blur-sm">
+
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-medium flex items-center gap-2">
+                            <span
+                                class="material-symbols-rounded text-m3-sys-light-primary dark:text-m3-sys-dark-primary">edit_note</span>
+                            Editor
+                        </h2>
+                        <span class="text-xs font-mono bg-white/50 dark:bg-black/20 px-2 py-1 rounded-md">Draft</span>
+                    </div>
+
+                    <!-- Formulár -->
+                    <form id="promptForm" class="space-y-4" onsubmit="event.preventDefault(); savePrompt();">
+
+                        <!-- Názov -->
+                        <div
+                            class="group bg-white dark:bg-zinc-900 rounded-t-xl rounded-b-sm border-b-2 border-slate-300 dark:border-slate-600 focus-within:border-m3-sys-light-primary dark:focus-within:border-m3-sys-dark-primary transition-colors px-4 pt-2 pb-1">
+                            <label
+                                class="block text-xs text-slate-500 dark:text-slate-400 group-focus-within:text-m3-sys-light-primary dark:group-focus-within:text-m3-sys-dark-primary font-medium">Názov
+                                Promptu</label>
+                            <input type="text" id="promptTitle" placeholder="Napr. Generátor Blog Postov"
+                                class="w-full bg-transparent border-none outline-none text-base py-1 dark:text-white placeholder-slate-400">
+                        </div>
+
+                        <!-- Text Promptu -->
+                        <div
+                            class="group bg-white dark:bg-zinc-900 rounded-xl border border-transparent focus-within:ring-2 focus-within:ring-m3-sys-light-primary dark:focus-within:ring-m3-sys-dark-primary p-4 h-64 flex flex-col">
+                            <div class="flex justify-between mb-2">
+                                <label class="text-xs text-slate-500 font-medium uppercase tracking-wider">Obsah
+                                    príkazu</label>
+                                <button type="button" onclick="optimizePrompt()"
+                                    class="text-xs flex items-center gap-1 text-amber-600 dark:text-amber-400 hover:text-amber-700 font-medium transition-colors">
+                                    <span class="material-symbols-rounded text-[16px]">auto_fix</span>
+                                    Vylepšiť AI
+                                </button>
+                            </div>
+                            <textarea id="promptContent"
+                                class="flex-1 w-full bg-transparent border-none outline-none resize-none font-mono text-sm leading-relaxed dark:text-slate-200"
+                                placeholder="Sem napíš svoj prompt..."></textarea>
+                        </div>
+
+                        <!-- Nastavenia (Hierarchia: Kategória -> Subkategória) -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <!-- Kategória (Dropdown) -->
+                            <div class="bg-white dark:bg-zinc-900 rounded-xl px-4 py-2 flex flex-col justify-center">
+                                <label class="text-[10px] text-slate-500 uppercase font-bold">Kategória</label>
+                                <select id="promptCategory"
+                                    class="bg-transparent border-none outline-none text-sm font-medium dark:text-slate-200 -ml-1">
+                                    <!-- Options generated by JS -->
+                                </select>
+                            </div>
+                            <!-- Subkategória / Projekt (Input presunutý sem) -->
+                            <div class="bg-white dark:bg-zinc-900 rounded-xl px-4 py-2 flex flex-col justify-center">
+                                <label class="text-[10px] text-slate-500 uppercase font-bold">Projekt /
+                                    Subkategória</label>
+                                <input type="text" id="promptSubcategory" placeholder="Napr. SwiftDesk"
+                                    class="bg-transparent border-none outline-none text-sm font-medium dark:text-slate-200 w-full placeholder-slate-400">
+                            </div>
+                        </div>
+
+                        <!-- Akčné tlačidlá -->
+                        <div class="pt-2 flex gap-3">
+                            <button type="button"
+                                class="flex-1 py-3 rounded-full text-sm font-medium text-m3-sys-light-primary dark:text-m3-sys-dark-primary hover:bg-white/50 dark:hover:bg-white/10 transition-colors">
+                                Vymazať
+                            </button>
+                            <button type="submit"
+                                class="ripple flex-[2] py-3 rounded-full bg-m3-sys-light-primary dark:bg-m3-sys-dark-primary text-white dark:text-m3-sys-dark-onPrimary text-sm font-medium shadow-lg shadow-orange-500/20 hover:shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-rounded">save</span>
+                                Uložiť Prompt
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <!-- Pravý panel: Zoznam uložených (Masonry Grid) -->
+            <div class="lg:col-span-7 xl:col-span-8">
+
+                <!-- Filter Bar -->
+                <div id="filterContainer" class="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide">
+                    <!-- Filtre budú generované cez JS -->
+                </div>
+
+                <!-- Kontajner pre karty -->
+                <div id="promptsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Karty budú generované cez JS -->
+                </div>
+
+                <!-- Prázdny stav (ak by neboli prompty) -->
+                <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center opacity-60">
+                    <span class="material-symbols-rounded text-6xl mb-4 text-slate-300 dark:text-slate-600">inbox</span>
+                    <p class="text-lg font-medium">Zatiaľ žiadne uložené prompty</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Implementačné Plány View (Hidden by default) -->
+        <div id="view-implementation" class="hidden grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-140px)]">
+            <!-- Vstup: Prompt pre Plán -->
+            <div
+                class="flex flex-col h-full bg-m3-sys-light-surfaceVariant dark:bg-m3-sys-dark-surfaceVariant/30 rounded-[28px] p-6 border border-white/20">
+                <h2 class="text-xl font-medium mb-4 flex items-center gap-2">
+                    <span
+                        class="material-symbols-rounded text-m3-sys-light-primary dark:text-m3-sys-dark-primary">lightbulb</span>
+                    Zadanie plánu
+                </h2>
+                <textarea id="implInput"
+                    class="flex-1 w-full bg-white dark:bg-zinc-900 rounded-xl p-4 border-none outline-none resize-none font-mono text-sm leading-relaxed dark:text-slate-200 focus:ring-2 focus:ring-m3-sys-light-primary dark:focus:ring-m3-sys-dark-primary transition-all mb-4"
+                    placeholder="Popíš, čo chceš vytvoriť (napr. 'Vytvor plán pre novú funkciu Login')..."></textarea>
+
+                <button onclick="generateImplementationPlan()" id="btnGenerateImpl"
+                    class="ripple w-full py-4 rounded-full bg-m3-sys-light-primary dark:bg-m3-sys-dark-primary text-white dark:text-m3-sys-dark-onPrimary text-lg font-medium shadow-lg shadow-orange-500/20 hover:shadow-xl hover:scale-[1.01] transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-rounded">smart_toy</span>
+                    Generovať Plán
+                </button>
+            </div>
+
+            <!-- Výstup: Markdown Preview (Editable) -->
+            <div
+                class="flex flex-col h-full bg-white dark:bg-zinc-900 rounded-[28px] p-6 border border-slate-200 dark:border-slate-800 relative">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-medium flex items-center gap-2">
+                        <span class="material-symbols-rounded text-slate-500">description</span>
+                        Výstup
+                    </h2>
+                    <span id="implStatus" class="text-xs font-mono text-slate-400">Pripravené</span>
+                </div>
+
+                <!-- Editable Textarea for Output -->
+                <textarea id="implOutput"
+                    class="flex-1 w-full bg-transparent border-none outline-none resize-none font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-300 mb-4"
+                    placeholder="Výstup sa zobrazí tu a môžete ho upravovať..."></textarea>
+
+                <button onclick="saveImplementationPlan()" id="btnSaveImpl"
+                    class="w-full py-3 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    <span class="material-symbols-rounded">save_as</span>
+                    Skopírovať a Uložiť do Knižnice
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal"
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-[#1E1E1E] rounded-[28px] w-full max-w-lg shadow-2xl overflow-hidden scale-95 opacity-0 transition-all duration-200"
+                id="settingsContent">
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                    <h2 class="text-xl font-normal">Nastavenia</h2>
+                    <button onclick="closeSettings()"
+                        class="text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full p-2">
+                        <span class="material-symbols-rounded">close</span>
+                    </button>
+                </div>
+                <div class="p-6 space-y-6 h-96 overflow-y-auto">
+                    <!-- API Key -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">OpenAI API
+                            Key</label>
+                        <input type="password" id="apiKeyInput" placeholder="sk-..."
+                            class="w-full bg-slate-50 dark:bg-black/30 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-m3-sys-light-primary dark:focus:border-m3-sys-dark-primary transition-colors text-sm">
+                        <p class="text-xs text-slate-500 mt-1">Kľúč sa ukladá iba lokálne v prehliadači.</p>
+                    </div>
+
+                    <!-- Category Management -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Správa
+                                Kategórií</label>
+                            <button onclick="addCategory()" class="text-xs text-m3-sys-light-primary hover:underline">
+                                + Pridať novú
+                            </button>
+                        </div>
+                        <div id="settingsCategoriesList" class="space-y-2">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Theme -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Vzhľad</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setTheme('light')"
+                                class="py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">Light</button>
+                            <button onclick="setTheme('dark')"
+                                class="py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">Dark</button>
+                            <button onclick="setTheme('auto')"
+                                class="py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm">Auto</button>
+                        </div>
+                    </div>
+
+                    <!-- Backup -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Záloha
+                            dát</label>
+                        <div class="flex gap-2">
+                            <button onclick="downloadBackup()"
+                                class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <span class="material-symbols-rounded text-lg">download</span>
+                                Stiahnuť
+                            </button>
+                            <button onclick="document.getElementById('fileUpload').click()"
+                                class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm flex items-center justify-center gap-2 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                <span class="material-symbols-rounded text-lg">upload</span>
+                                Načítať
+                            </button>
+                            <input type="file" id="fileUpload" class="hidden" accept=".json"
+                                onchange="loadBackup(this)">
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-slate-50 dark:bg-black/20 text-right">
+                    <button onclick="saveSettings()"
+                        class="bg-m3-sys-light-primary dark:bg-m3-sys-dark-primary text-white dark:text-m3-sys-dark-onPrimary px-6 py-2.5 rounded-full text-sm font-medium shadow-lg shadow-orange-500/20 hover:shadow-xl hover:scale-[1.02] transition-all">
+                        Uložiť zmeny
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Action Button (FAB) len pre mobil -->
+        <button
+            class="md:hidden fixed bottom-6 right-6 h-14 w-14 rounded-2xl bg-m3-sys-light-container dark:bg-m3-sys-dark-primary text-m3-sys-light-onContainer dark:text-m3-sys-dark-onPrimary shadow-xl flex items-center justify-center z-50 ripple">
+            <span class="material-symbols-rounded text-2xl">add</span>
+        </button>
+
+    </div>
+
+    <!-- JavaScript pre funkcionalitu -->
+    <script>
+        // --- Data & State ---
+        const defaultCategories = [
+            { id: 'blue', name: 'Kódovanie', color: 'blue' },
+            { id: 'green', name: 'Marketing', color: 'green' },
+            { id: 'purple', name: 'Kreatíva', color: 'purple' },
+            { id: 'orange', name: 'Produktivita', color: 'orange' }
+        ];
+
+        const colorThemes = {
+            blue: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300' },
+            green: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300' },
+            purple: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-300' },
+            orange: { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300' },
+            red: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300' },
+            cyan: { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-700 dark:text-cyan-300' },
+            slate: { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-700 dark:text-slate-300' }
+        };
+
+        let categories = JSON.parse(localStorage.getItem('categories')) || defaultCategories;
+
+        let prompts = JSON.parse(localStorage.getItem('prompts')) || [
+            {
+                id: 1,
+                title: 'Expert na Python Refactoring',
+                content: 'Konaj ako Senior Python Developer...',
+                subcategory: 'Legacy App',
+                category: 'blue',
+                date: 'Dnes, 14:30'
+            },
+            {
+                id: 2,
+                title: 'SEO Blog Post Generator',
+                content: 'Vytvor štruktúru pre blogový článok...',
+                subcategory: 'Health Blog',
+                category: 'green',
+                date: 'Včera'
+            }
+        ];
+
+        let currentFilter = 'all';
+
+        // --- Core Functions ---
+
+        function init() {
+            renderFilters();
+            renderCategorySelect();
+            renderPrompts();
+            renderSettingsCategories();
+        }
+
+        function saveCategories() {
+            localStorage.setItem('categories', JSON.stringify(categories));
+            renderFilters();
+            renderCategorySelect();
+            renderPrompts(); // Pre-render to update labels/colors
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = '';
+
+            // All Button
+            const allBtn = document.createElement('button');
+            allBtn.onclick = () => filterPrompts('all');
+            allBtn.innerText = 'Všetky';
+            allBtn.className = currentFilter === 'all'
+                ? "px-4 py-1.5 rounded-lg bg-m3-sys-light-container dark:bg-m3-sys-dark-container text-m3-sys-light-onContainer dark:text-m3-sys-dark-onContainer text-sm font-medium whitespace-nowrap transition-colors"
+                : "px-4 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap";
+            container.appendChild(allBtn);
+
+            // Category Buttons
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.onclick = () => filterPrompts(cat.id);
+                btn.innerText = cat.name;
+                btn.className = currentFilter === cat.id
+                    ? "px-4 py-1.5 rounded-lg bg-m3-sys-light-container dark:bg-m3-sys-dark-container text-m3-sys-light-onContainer dark:text-m3-sys-dark-onContainer text-sm font-medium whitespace-nowrap transition-colors"
+                    : "px-4 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors whitespace-nowrap";
+                container.appendChild(btn);
+            });
+        }
+
+        function renderCategorySelect() {
+            const select = document.getElementById('promptCategory');
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.innerText = cat.name;
+                select.appendChild(option);
+            });
+        }
+
+        // --- Category Management Logic ---
+
+        function renderSettingsCategories() {
+            const container = document.getElementById('settingsCategoriesList');
+            container.innerHTML = '';
+
+            categories.forEach((cat, index) => {
+                const el = document.createElement('div');
+                el.className = 'flex items-center gap-2 bg-slate-50 dark:bg-black/20 p-2 rounded-lg';
+
+                // Color Select
+                const colorSelect = document.createElement('select');
+                colorSelect.className = 'bg-transparent border border-slate-200 dark:border-slate-700 rounded-md text-xs p-1 outline-none dark:text-slate-300';
+                for (const color in colorThemes) {
+                    const option = document.createElement('option');
+                    option.value = color;
+                    option.innerText = color;
+                    if (cat.color === color) option.selected = true;
+                    colorSelect.appendChild(option);
+                }
+                colorSelect.onchange = (e) => updateCategoryColor(index, e.target.value);
+
+                // Name Input
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.value = cat.name;
+                nameInput.className = 'flex-1 bg-transparent border-none outline-none text-sm font-medium dark:text-slate-200';
+                nameInput.onchange = (e) => updateCategoryName(index, e.target.value);
+
+                // Delete Button
+                const delBtn = document.createElement('button');
+                delBtn.className = 'text-slate-400 hover:text-red-500 transition-colors p-1';
+                delBtn.innerHTML = '<span class="material-symbols-rounded text-base">delete</span>';
+                delBtn.onclick = () => deleteCategory(index);
+
+                el.appendChild(colorSelect);
+                el.appendChild(nameInput);
+                el.appendChild(delBtn);
+
+                container.appendChild(el);
+            });
+        }
+
+        function addCategory() {
+            categories.push({
+                id: 'cat_' + Date.now(),
+                name: 'Nová kategória',
+                color: 'slate'
+            });
+            saveCategories();
+            renderSettingsCategories();
+        }
+
+        function deleteCategory(index) {
+            if (categories.length <= 1) {
+                alert('Musí ostať aspoň jedna kategória.');
+                return;
+            }
+            if (confirm('Naozaj zmazať túto kategóriu? Prompty v nej ostanú, ale budú mať neznámu farbu.')) {
+                categories.splice(index, 1);
+                saveCategories();
+                renderSettingsCategories();
+            }
+        }
+
+        function updateCategoryName(index, newName) {
+            categories[index].name = newName;
+            saveCategories();
+        }
+
+        function updateCategoryColor(index, newColor) {
+            categories[index].color = newColor;
+            saveCategories();
+        }
+
+
+        function renderPrompts() {
+            const list = document.getElementById('promptsList');
+            list.innerHTML = '';
+
+            const filteredPrompts = currentFilter === 'all'
+                ? prompts
+                : prompts.filter(p => p.category === currentFilter);
+
+            if (filteredPrompts.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+                document.getElementById('emptyState').classList.add('flex');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('flex');
+            }
+
+            filteredPrompts.forEach(prompt => {
+                // Find Category Info
+                const cat = categories.find(c => c.id === prompt.category) || { name: 'Neznáme', color: 'slate' };
+                const theme = colorThemes[cat.color] || colorThemes['slate'];
+
+                const tagColor = `${theme.bg} ${theme.text}`;
+
+                const cardHTML = `
+                    <div class="group relative bg-m3-sys-light-surface dark:bg-zinc-900 p-5 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-orange-300 dark:hover:border-orange-700 transition-all hover:shadow-lg hover:-translate-y-1">
+                        
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[10px] font-bold tracking-wide uppercase ${tagColor} px-2.5 py-1 rounded-md">
+                                ${cat.name}
+                            </span>
+                            <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="copyToClipboard('${prompt.content.replace(/'/g, "\\'")}')" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500" title="Kopírovať">
+                                    <span class="material-symbols-rounded text-lg">content_copy</span>
+                                </button>
+                                <button onclick="deletePrompt(${prompt.id})" class="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full text-slate-500 hover:text-red-500" title="Zmazať">
+                                    <span class="material-symbols-rounded text-lg">delete</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-medium text-slate-800 dark:text-slate-100 mb-2 leading-tight">${prompt.title}</h3>
+                        
+                        <div class="bg-slate-50 dark:bg-black/20 rounded-xl p-3 mb-4">
+                            <p class="text-sm text-slate-600 dark:text-slate-400 font-mono line-clamp-3 overflow-hidden text-ellipsis">
+                                ${prompt.content}
+                            </p>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-auto border-t border-slate-100 dark:border-slate-800 pt-3">
+                            <div class="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                                <span class="material-symbols-rounded text-base">folder</span>
+                                ${prompt.subcategory || 'General'}
+                            </div>
+                            <span class="text-xs text-slate-400">${prompt.date}</span>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        function filterPrompts(categoryId) {
+            currentFilter = categoryId;
+            renderFilters(); // Re-render to update active state
+            renderPrompts();
+        }
+
+        // --- Init on Load ---
+        document.addEventListener('DOMContentLoaded', init);
+        function openSettings() {
+            document.getElementById('apiKeyInput').value = localStorage.getItem('openai_api_key') || '';
+            const modal = document.getElementById('settingsModal');
+            const content = document.getElementById('settingsContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeSettings() {
+            const modal = document.getElementById('settingsModal');
+            const content = document.getElementById('settingsContent');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function saveSettings() {
+            const key = document.getElementById('apiKeyInput').value;
+            localStorage.setItem('openai_api_key', key);
+            closeSettings();
+            alert('Nastavenia uložené');
+        }
+
+        // --- Theme Logic ---
+        function setTheme(theme) {
+            if (theme === 'auto') {
+                localStorage.removeItem('theme');
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } else if (theme === 'dark') {
+                localStorage.setItem('theme', 'dark');
+                document.documentElement.classList.add('dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Init Theme
+        (function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+
+        // --- Backup Logic ---
+        function downloadBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prompts));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "prompts_backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function loadBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const loaded = JSON.parse(e.target.result);
+                    if (Array.isArray(loaded)) {
+                        prompts = loaded;
+                        localStorage.setItem('prompts', JSON.stringify(prompts));
+                        renderPrompts();
+                        alert('Záloha úspešne načítaná');
+                        closeSettings();
+                    } else {
+                        alert('Neplatný formát súboru');
+                    }
+                } catch (err) {
+                    alert('Chyba pri čítaní súboru');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- AI Implementation Plan Logic ---
+        async function generateImplementationPlan() {
+            const apiKey = localStorage.getItem('openai_api_key');
+            if (!apiKey) {
+                alert('Prosím, zadaj najskôr API Kľúč v nastaveniach.');
+                openSettings();
+                return;
+            }
+
+            const input = document.getElementById('implInput').value;
+            if (!input.trim()) return;
+
+            const btn = document.getElementById('btnGenerateImpl');
+            // const outputDiv = document.getElementById('implOutput'); // Changed to textarea value below
+            const statusSpan = document.getElementById('implStatus');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-rounded animate-spin">refresh</span> Generujem...';
+            statusSpan.innerText = 'Pracujem...';
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4-turbo-preview", // Or similar
+                        messages: [
+                            {
+                                role: "system",
+                                content: `You are an expert software architect and prompt engineer. 
+                                Your goal is to create a detailed Implementation Plan Prompt based on the user's request.
+                                You MUST return a JSON object with the following structure:
+                                {
+                                    "title": "Short descriptive title",
+                                    "category": "blue" (for code) or "orange" (productivity),
+                                    "content": "The actual full markdown implementation plan prompt..."
+                                }
+                                The 'content' should be a high-quality, comprehensive prompt that the user can run to get an implementation plan.`
+                            },
+                            { role: "user", content: input }
+                        ],
+                        response_format: { type: "json_object" }
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const result = JSON.parse(data.choices[0].message.content);
+
+                // Show Output in Editable Textarea
+                const outputTextarea = document.getElementById('implOutput');
+                outputTextarea.value = result.content;
+
+                // Save metadata transiently to the button state for when user clicks manual save
+                const saveBtn = document.getElementById('btnSaveImpl');
+                saveBtn.dataset.title = result.title;
+                saveBtn.dataset.category = result.category;
+
+                statusSpan.innerText = 'Vygenerované (Uprav a ulož)';
+                statusSpan.classList.add('text-blue-500');
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('implOutput').value = 'Chyba: ' + error.message;
+                statusSpan.innerText = 'Chyba';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">smart_toy</span> Generovať Plán';
+            }
+        }
+
+
+
+        // --- Views Logic ---
+        function switchView(viewName) {
+            const libView = document.getElementById('view-library');
+            const implView = document.getElementById('view-implementation');
+
+            const tabLib = document.getElementById('tab-library');
+            const tabImpl = document.getElementById('tab-implementation');
+            const subtitle = document.getElementById('header-subtitle');
+
+            if (viewName === 'library') {
+                // Show Library
+                libView.classList.remove('hidden');
+                implView.classList.add('hidden');
+                implView.classList.remove('grid');
+
+                // Style Tabs (H1 mimicking)
+                tabLib.classList.remove('text-slate-400', 'dark:text-slate-500');
+                tabLib.classList.add('text-slate-800', 'dark:text-slate-100');
+
+                tabImpl.classList.add('text-slate-400', 'dark:text-slate-500');
+                tabImpl.classList.remove('text-slate-800', 'dark:text-slate-100');
+
+                // Update Subtitle
+                subtitle.innerText = "Vytváraj, optimalizuj a ukladaj svoje príkazy pre AI";
+            } else {
+                // Show Implementation Plans
+                libView.classList.add('hidden');
+                implView.classList.remove('hidden');
+                implView.classList.add('grid');
+
+                // Style Tabs
+                tabLib.classList.add('text-slate-400', 'dark:text-slate-500');
+                tabLib.classList.remove('text-slate-800', 'dark:text-slate-100');
+
+                tabImpl.classList.remove('text-slate-400', 'dark:text-slate-500');
+                tabImpl.classList.add('text-slate-800', 'dark:text-slate-100');
+
+                // Update Subtitle
+                subtitle.innerText = "Generuj komplexné implementačné plány pomocou AI";
+            }
+        }
+
+        // Save Implementation Plan to Library
+        function saveImplementationPlan() {
+            const implOutput = document.getElementById('implOutput');
+            const planContent = implOutput.value;
+
+            if (!planContent.trim()) {
+                alert('Výstup implementačného plánu je prázdny. Vygenerujte alebo napíšte plán, aby ste ho mohli uložiť.');
+                return;
+            }
+
+            // Create a new prompt object for the implementation plan
+            const newPlanPrompt = {
+                id: Date.now(),
+                title: 'Implementačný plán', // Default title, user can edit later
+                content: planContent,
+                subcategory: 'AI Generated',
+                category: 'blue', // Assuming implementation plans are coding-related
+                date: 'Práve teraz'
+            };
+
+            prompts.unshift(newPlanPrompt); // Add to the beginning of the prompts array
+            renderPrompts(); // Re-render the library to show the new plan
+
+            // Optionally, switch back to the library view
+            switchView('library');
+
+            // Visual feedback
+            const btn = document.getElementById('btnSaveImpl');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span class="material-symbols-rounded">check</span> Uložené do knižnice`;
+            btn.classList.add('bg-green-600', 'dark:bg-green-600', 'text-white');
+            btn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600', 'dark:bg-green-600', 'text-white');
+                btn.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+            }, 2000);
+
+            // Also copy to clipboard
+            copyToClipboard(planContent);
+        }
+        // Uloženie nového promptu (Manuálne cez formulár)
+        function savePrompt() {
+            const titleInput = document.getElementById('promptTitle');
+            const contentInput = document.getElementById('promptContent');
+            const categoryInput = document.getElementById('promptCategory');
+            const subcategoryInput = document.getElementById('promptSubcategory');
+
+            if (!titleInput.value || !contentInput.value) {
+                alert('Prosím, vyplňte názov a obsah promptu.');
+                return;
+            }
+
+            const newPrompt = {
+                id: Date.now(),
+                title: titleInput.value,
+                content: contentInput.value,
+                subcategory: subcategoryInput.value || 'General',
+                category: categoryInput.value,
+                date: 'Práve teraz'
+            };
+
+            prompts.unshift(newPrompt); // Pridať na začiatok
+            currentFilter = 'all'; // Switch to all to see the new item
+            renderPrompts();
+
+            // Reset formulára
+            titleInput.value = '';
+            contentInput.value = '';
+            subcategoryInput.value = '';
+
+            // Vizuálny feedback
+            const btn = document.querySelector('#promptForm button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span class="material-symbols-rounded">check</span> Uložené`;
+            btn.classList.add('bg-green-600', 'dark:bg-green-600', 'text-white');
+            btn.classList.remove('bg-m3-sys-light-primary', 'dark:bg-m3-sys-dark-primary');
+
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('bg-green-600', 'dark:bg-green-600', 'text-white');
+                btn.classList.add('bg-m3-sys-light-primary', 'dark:bg-m3-sys-dark-primary');
+            }, 2000);
+        }
+
+        // Kopírovanie do schránky
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Tu by mohol byť toast notification
+                alert("Prompt skopírovaný do schránky!");
+            });
+        }
+
+        // Zmazanie promptu
+        function deletePrompt(id) {
+            if (confirm('Naozaj chcete zmazať tento prompt?')) {
+                prompts = prompts.filter(p => p.id !== id);
+                renderPrompts();
+            }
+        }
+
+        // Fake AI optimalizácia
+        function optimizePrompt() {
+            const textarea = document.getElementById('promptContent');
+            if (textarea.value.length < 5) return;
+
+            const original = textarea.value;
+            textarea.value = "Optimalizujem...";
+            textarea.disabled = true;
+
+            setTimeout(() => {
+                textarea.value = "Konaj ako expert na danú tému. " + original + " Uisti sa, že odpoveď bude štruktúrovaná a podložená faktami.";
+                textarea.disabled = false;
+            }, 1000);
+        }
+
+        // Inicializácia pri načítaní
+        document.addEventListener('DOMContentLoaded', renderPrompts);
+
+    </script>
+</body>
+
+</html>
