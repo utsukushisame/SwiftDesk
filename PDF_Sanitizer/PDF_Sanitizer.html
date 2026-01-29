@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="sk">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
-    <title>Odstraňovač Metadát z PDF</title>
+    <title>PDF Sanitizer</title>
+    
+    <!-- Favicon: Fixed size attributes and added sizes="any" for correct rendering -->
+    <link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M14 4c0-1.1.9-2 2-2 2-2 1.1-2 2 0 1.1-.9 2-2 2' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M4 14c1.1 0 2-.9 2-2 0-1.1-.9-2-2-2-1.1 0-2 .9-2 2 0 1.1.9 2 2 2' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M14 14c1.1 0 2-.9 2-2 0-1.1-.9-2-2-2-1.1 0-2 .9-2 2 0 1.1.9 2 2 2' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -14,50 +17,50 @@
             theme: {
                 extend: {
                     colors: {
-                        // Material Design 3 Baseline Palette (Purple)
+                        // Material Design 3 Palette (Blue-600 Base: #2563eb)
                         m3: {
-                            primary: '#6750A4',
+                            primary: '#2563eb', // Blue-600
                             onPrimary: '#FFFFFF',
-                            primaryContainer: '#EADDFF',
-                            onPrimaryContainer: '#21005D',
-
-                            secondary: '#625B71',
+                            primaryContainer: '#DBEAFE', // Blue-100
+                            onPrimaryContainer: '#1E3A8A', // Blue-900
+                            
+                            secondary: '#64748B', // Slate-500
                             onSecondary: '#FFFFFF',
-                            secondaryContainer: '#E8DEF8',
-                            onSecondaryContainer: '#1D192B',
-
-                            error: '#B3261E',
+                            secondaryContainer: '#F1F5F9', // Slate-100
+                            onSecondaryContainer: '#0F172A', // Slate-900
+                            
+                            error: '#BA1A1A',
                             onError: '#FFFFFF',
-
-                            background: '#FEF7FF',
-                            onBackground: '#1D1B20',
-
-                            surface: '#FEF7FF',
-                            onSurface: '#1D1B20',
-
-                            surfaceVariant: '#E7E0EC',
-                            onSurfaceVariant: '#49454F',
-
-                            outline: '#79747E',
-
-                            // Dark Mode Baseline
+                            
+                            background: '#F8FAFC', // Slate-50 (Very light blue-grey)
+                            onBackground: '#1E293B',
+                            
+                            surface: '#F8FAFC',
+                            onSurface: '#1E293B',
+                            
+                            surfaceVariant: '#E2E8F0', // Slate-200
+                            onSurfaceVariant: '#475569', // Slate-600
+                            
+                            outline: '#94A3B8',
+                            
+                            // Dark Mode (Optimized for Blue)
                             dark: {
-                                primary: '#D0BCFF',
-                                onPrimary: '#381E72',
-                                primaryContainer: '#4F378B',
-                                onPrimaryContainer: '#EADDFF',
-
-                                background: '#141218',
-                                surface: '#141218',
-                                surfaceContainer: '#211F26', // Elevation 2 equivalent
-
-                                outline: '#938F99',
-                                surfaceVariant: '#49454F'
+                                primary: '#60A5FA', // Blue-400 (Lighter for dark mode)
+                                onPrimary: '#172554', // Blue-950
+                                primaryContainer: '#1E40AF', // Blue-800
+                                onPrimaryContainer: '#DBEAFE', // Blue-100
+                                
+                                background: '#0F172A', // Slate-900
+                                surface: '#0F172A',
+                                surfaceContainer: '#1E293B', // Slate-800
+                                
+                                outline: '#64748B',
+                                surfaceVariant: '#334155' // Slate-700
                             }
                         }
                     },
                     borderRadius: {
-                        'm3': '28px', // Standard corner radius for containers
+                        'm3': '28px', 
                         'm3-sm': '16px',
                     },
                     fontFamily: {
@@ -76,34 +79,24 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-
+        
         body {
             font-family: 'Roboto', sans-serif;
         }
 
-        /* Material Ripple effect simulation */
-        .ripple {
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Custom Scrollbar to match M3 */
         ::-webkit-scrollbar {
             width: 8px;
         }
-
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: transparent; 
         }
-
         ::-webkit-scrollbar-thumb {
-            background: #E7E0EC;
+            background: #CBD5E1; 
             border-radius: 4px;
         }
-
         @media (prefers-color-scheme: dark) {
             ::-webkit-scrollbar-thumb {
-                background: #49454F;
+                background: #475569;
             }
         }
 
@@ -119,42 +112,41 @@
         }
 
         @keyframes rotation {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
+<body class="bg-m3-background text-m3-onBackground dark:bg-m3-dark-background dark:text-gray-100 h-screen flex flex-col transition-colors duration-200">
 
-<body
-    class="bg-m3-background text-m3-onBackground dark:bg-m3-dark-background dark:text-[#E6E1E5] h-screen flex flex-col transition-colors duration-200">
-
-    <!-- Top App Bar (Center Aligned) -->
-    <nav
-        class="h-16 flex items-center justify-center px-4 flex-none sticky top-0 bg-m3-background/95 dark:bg-m3-dark-background/95 backdrop-blur z-20">
-        <h1 class="text-[22px] leading-7 font-normal text-m3-onSurface dark:text-[#E6E1E5]">PDF Sanitizer</h1>
+    <!-- Top App Bar (Updated Design) -->
+    <nav class="h-20 flex items-center justify-center px-4 flex-none sticky top-0 bg-m3-background/95 dark:bg-m3-dark-background/95 backdrop-blur z-20">
+        <!-- Logo Container: Material You Surface-Primary Style -->
+        <div class="flex items-center gap-3 bg-m3-primaryContainer/30 dark:bg-m3-dark-primaryContainer/30 pr-6 pl-2 py-2 rounded-full border border-m3-outline/10 dark:border-white/5">
+            <div class="bg-m3-primary dark:bg-m3-dark-primary text-white dark:text-m3-dark-onPrimary w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
+                <!-- Icon: replace-all -->
+                <i data-lucide="replace-all" class="w-5 h-5"></i>
+            </div>
+            <h1 class="text-xl font-medium text-m3-onSurface dark:text-gray-100 tracking-tight">PDF Sanitizer</h1>
+        </div>
     </nav>
 
     <!-- Main Content -->
     <main class="flex-grow flex flex-col items-center p-4 w-full max-w-screen-md mx-auto overflow-hidden">
-
+        
         <!-- Card Container -->
-        <div
-            class="w-full flex-grow flex flex-col bg-[#F3EDF7] dark:bg-m3-dark-surfaceContainer rounded-m3 overflow-hidden transition-colors duration-200">
-
-            <!-- Upload Area (Surface Variant Styled) -->
+        <div class="w-full flex-grow flex flex-col bg-white dark:bg-m3-dark-surfaceContainer rounded-m3 overflow-hidden shadow-sm border border-m3-surfaceVariant/50 dark:border-none transition-colors duration-200">
+            
+            <!-- Upload Area -->
             <div class="p-4 flex-none">
-                <div id="dropZone"
-                    class="border border-dashed border-m3-outline dark:border-m3-dark-outline rounded-[24px] h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-m3-onSurface/5 dark:hover:bg-white/5 transition-colors group relative">
+                <div id="dropZone" class="border border-dashed border-m3-primary/30 dark:border-m3-dark-primary/30 bg-m3-primary/5 dark:bg-m3-dark-primary/5 rounded-[24px] h-40 flex flex-col items-center justify-center cursor-pointer hover:bg-m3-primary/10 dark:hover:bg-m3-dark-primary/10 transition-colors group relative">
                     <input type="file" id="fileInput" multiple accept=".pdf" class="hidden">
-
-                    <div class="flex flex-col items-center gap-2">
-                        <i data-lucide="upload" class="w-8 h-8 text-m3-primary dark:text-m3-dark-primary mb-1"></i>
-                        <p class="text-sm font-medium text-m3-onSurfaceVariant dark:text-[#CAC4D0]">
+                    
+                    <div class="flex flex-col items-center gap-2 group-hover:scale-105 transition-transform duration-300">
+                        <div class="bg-m3-surface dark:bg-m3-dark-background p-3 rounded-2xl shadow-sm text-m3-primary dark:text-m3-dark-primary">
+                            <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-sm font-medium text-m3-onSurfaceVariant dark:text-gray-400 mt-1">
                             Vyberte alebo potiahnite PDF súbory
                         </p>
                     </div>
@@ -162,68 +154,65 @@
             </div>
 
             <!-- Action Bar -->
-            <div id="actionBar" class="hidden px-6 py-2 flex items-center justify-between flex-none">
-                <span
-                    class="text-sm font-medium text-m3-primary dark:text-m3-dark-primary bg-m3-primaryContainer dark:bg-m3-dark-primaryContainer px-3 py-1 rounded-full">
-                    Súbory: <span id="fileCount">0</span>
+            <div id="actionBar" class="hidden px-6 py-2 flex items-center justify-between flex-none animate-fade-in">
+                <span class="text-sm font-medium text-m3-primary dark:text-m3-dark-primary bg-m3-primaryContainer dark:bg-m3-dark-primaryContainer px-4 py-1.5 rounded-full flex items-center gap-2">
+                    <i data-lucide="files" class="w-4 h-4"></i>
+                    <span id="fileCount">0</span>
                 </span>
-                <button id="clearBtn"
-                    class="text-sm font-medium text-m3-error dark:text-[#FFB4AB] hover:bg-m3-error/10 px-4 py-2 rounded-full transition-colors">
+                <button id="clearBtn" class="text-sm font-medium text-m3-error dark:text-[#FFB4AB] hover:bg-m3-error/10 px-4 py-2 rounded-full transition-colors flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
                     Vymazať všetko
                 </button>
             </div>
 
             <!-- File List -->
             <div class="flex-grow overflow-y-auto px-4 pb-4" id="fileListContainer">
-                <div id="emptyState"
-                    class="h-full flex flex-col items-center justify-center text-m3-onSurfaceVariant/60 dark:text-[#CAC4D0]/50">
-                    <i data-lucide="folder-open" class="w-12 h-12 mb-3 opacity-50"></i>
-                    <p class="text-sm">Zoznam je prázdny</p>
+                <div id="emptyState" class="h-full flex flex-col items-center justify-center text-m3-onSurfaceVariant/40 dark:text-gray-500">
+                    <div class="bg-m3-surfaceVariant/30 dark:bg-white/5 p-6 rounded-full mb-4">
+                        <i data-lucide="file-stack" class="w-10 h-10 opacity-70"></i>
+                    </div>
+                    <p class="text-sm font-medium">Zoznam je prázdny</p>
                 </div>
-                <div class="space-y-1" id="fileList">
+                <div class="space-y-2" id="fileList">
                     <!-- List Items -->
                 </div>
             </div>
 
             <!-- Bottom Actions -->
-            <div
-                class="p-6 border-t border-m3-outline/10 dark:border-white/10 flex flex-col sm:flex-row gap-4 items-center justify-between bg-m3-surface dark:bg-m3-dark-surfaceContainer">
-                <div class="flex items-center gap-2 text-xs text-m3-onSurfaceVariant dark:text-[#CAC4D0]">
-                    <i data-lucide="shield" class="w-4 h-4"></i>
+            <div class="p-6 border-t border-m3-outline/10 dark:border-white/10 flex flex-col sm:flex-row gap-4 items-center justify-between bg-m3-background/50 dark:bg-black/20">
+                 <div class="flex items-center gap-2 text-xs text-m3-onSurfaceVariant dark:text-gray-400 bg-m3-surfaceVariant/50 dark:bg-white/5 px-3 py-2 rounded-lg">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
                     <span>Odstráni sa: Autor, Titul, Metadata...</span>
-                </div>
+                 </div>
 
                 <!-- FAB / Main Button -->
-                <button id="processBtn" disabled
-                    class="w-full sm:w-auto bg-m3-primary dark:bg-m3-dark-primary text-m3-onPrimary dark:text-m3-dark-onPrimary disabled:bg-m3-onSurface/12 disabled:text-m3-onSurface/38 dark:disabled:bg-white/10 dark:disabled:text-white/30 h-10 px-6 rounded-full font-medium text-sm tracking-wide shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
+                <button id="processBtn" disabled class="w-full sm:w-auto bg-m3-primary dark:bg-m3-dark-primary text-white dark:text-m3-dark-onPrimary disabled:bg-m3-onSurface/10 disabled:text-m3-onSurface/40 dark:disabled:bg-white/10 dark:disabled:text-white/30 h-12 px-8 rounded-full font-medium text-sm tracking-wide shadow-lg shadow-m3-primary/20 dark:shadow-none hover:shadow-xl transition-all flex items-center justify-center gap-2 transform active:scale-95">
                     <i data-lucide="sparkles" class="w-4 h-4"></i>
-                    <span>Vyčistiť</span>
+                    <span>Vyčistiť súbory</span>
                 </button>
             </div>
         </div>
     </main>
 
     <!-- Dialog (Modal) -->
-    <div id="successModal"
-        class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 transition-opacity opacity-0"
-        style="transition: opacity 0.2s ease-in-out;">
-        <div class="bg-m3-surface dark:bg-[#2B2930] rounded-[28px] max-w-[312px] w-full p-6 shadow-xl flex flex-col items-center text-center transform scale-95 transition-transform"
-            id="modalContent">
-
-            <i data-lucide="check-circle-2" class="w-10 h-10 text-m3-primary dark:text-m3-dark-primary mb-4"></i>
-
-            <h2 class="text-2xl font-normal text-m3-onSurface dark:text-[#E6E1E5] mb-2">Hotovo</h2>
-            <p class="text-sm text-m3-onSurfaceVariant dark:text-[#C4C7C5] mb-6">
-                Súbory boli úspešne spracované.
+    <div id="successModal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4 transition-opacity opacity-0 backdrop-blur-sm" style="transition: opacity 0.2s ease-in-out;">
+        <div class="bg-white dark:bg-[#1E293B] rounded-[28px] max-w-[340px] w-full p-8 shadow-2xl flex flex-col items-center text-center transform scale-95 transition-transform border border-white/10" id="modalContent">
+            
+            <div class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 w-16 h-16 rounded-full flex items-center justify-center mb-5">
+                <i data-lucide="check" class="w-8 h-8"></i>
+            </div>
+            
+            <h2 class="text-2xl font-normal text-m3-onSurface dark:text-gray-100 mb-2">Hotovo</h2>
+            <p class="text-sm text-m3-onSurfaceVariant dark:text-gray-400 mb-8 leading-relaxed">
+                Vaše súbory boli úspešne zbavené metadát.
             </p>
-
-            <button id="downloadBtn"
-                class="w-full text-m3-primary dark:text-m3-dark-primary hover:bg-m3-primary/10 dark:hover:bg-m3-dark-primary/10 h-10 rounded-full font-medium text-sm transition-colors mb-2">
+            
+            <button id="downloadBtn" class="w-full bg-m3-primary dark:bg-m3-dark-primary text-white dark:text-m3-dark-onPrimary hover:shadow-lg h-12 rounded-full font-medium text-sm transition-all mb-3 flex items-center justify-center gap-2">
+                <i data-lucide="download" class="w-4 h-4"></i>
                 Stiahnuť súbory
             </button>
-
-            <button onclick="resetApp()"
-                class="w-full text-m3-onSurfaceVariant dark:text-[#C4C7C5] hover:bg-m3-onSurface/10 h-10 rounded-full font-medium text-sm transition-colors">
+            
+            <button onclick="resetApp()" class="w-full text-m3-onSurfaceVariant dark:text-gray-400 hover:bg-m3-onSurface/5 dark:hover:bg-white/5 h-12 rounded-full font-medium text-sm transition-colors">
                 Zavrieť
             </button>
         </div>
@@ -251,22 +240,19 @@
 
         // --- Event Listeners ---
         dropZone.addEventListener('click', () => fileInput.click());
-
+        
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            dropZone.classList.add('bg-m3-primaryContainer/30');
-            dropZone.classList.add('dark:bg-m3-dark-primaryContainer/30');
+            dropZone.classList.add('ring-2', 'ring-m3-primary', 'dark:ring-m3-dark-primary');
         });
 
         dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('bg-m3-primaryContainer/30');
-            dropZone.classList.remove('dark:bg-m3-dark-primaryContainer/30');
+            dropZone.classList.remove('ring-2', 'ring-m3-primary', 'dark:ring-m3-dark-primary');
         });
 
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            dropZone.classList.remove('bg-m3-primaryContainer/30');
-            dropZone.classList.remove('dark:bg-m3-dark-primaryContainer/30');
+            dropZone.classList.remove('ring-2', 'ring-m3-primary', 'dark:ring-m3-dark-primary');
             handleFiles(e.dataTransfer.files);
         });
 
@@ -308,7 +294,7 @@
                 emptyState.classList.remove('hidden');
                 actionBar.classList.add('hidden');
                 processBtn.disabled = true;
-                processBtn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>Vyčistiť</span>`;
+                processBtn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>Vyčistiť súbory</span>`;
                 lucide.createIcons();
                 return;
             }
@@ -319,29 +305,29 @@
 
             filesQueue.forEach((item) => {
                 const div = document.createElement('div');
-                // M3 List Item Style
-                div.className = 'flex items-center justify-between p-3 rounded-xl hover:bg-m3-onSurface/5 dark:hover:bg-white/5 transition-colors group';
-
+                // Updated List Item Design
+                div.className = 'flex items-center justify-between p-3 rounded-2xl bg-m3-surfaceVariant/30 dark:bg-white/5 border border-transparent hover:border-m3-primary/20 dark:hover:border-white/10 transition-colors group';
+                
                 let statusIcon = '';
 
                 if (item.status === 'pending') {
-                    statusIcon = `<button onclick="removeFile('${item.id}')" class="text-m3-onSurfaceVariant dark:text-[#CAC4D0] hover:text-m3-error dark:hover:text-[#FFB4AB] p-2 rounded-full hover:bg-m3-onSurface/10"><i data-lucide="x" class="w-5 h-5"></i></button>`;
+                    statusIcon = `<button onclick="removeFile('${item.id}')" class="text-m3-onSurfaceVariant dark:text-gray-400 hover:text-m3-error dark:hover:text-[#FFB4AB] p-2 rounded-full hover:bg-white dark:hover:bg-white/10 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>`;
                 } else if (item.status === 'processing') {
                     statusIcon = `<div class="loader text-m3-primary dark:text-m3-dark-primary"></div>`;
                 } else if (item.status === 'done') {
-                    statusIcon = `<i data-lucide="check" class="w-5 h-5 text-green-600 dark:text-green-300"></i>`;
+                    statusIcon = `<div class="bg-green-100 dark:bg-green-900/30 p-1.5 rounded-full text-green-700 dark:text-green-300"><i data-lucide="check" class="w-4 h-4"></i></div>`;
                 } else if (item.status === 'error') {
                     statusIcon = `<i data-lucide="alert-circle" class="w-5 h-5 text-m3-error dark:text-[#FFB4AB]"></i>`;
                 }
 
                 div.innerHTML = `
-                    <div class="flex items-center gap-4 overflow-hidden">
-                        <div class="w-10 h-10 rounded-full bg-m3-primaryContainer dark:bg-m3-dark-primaryContainer text-m3-onPrimaryContainer dark:text-m3-dark-onPrimaryContainer flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="file" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-xl bg-white dark:bg-white/10 text-m3-primary dark:text-m3-dark-primary flex items-center justify-center flex-shrink-0 shadow-sm">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
                         </div>
                         <div class="min-w-0 flex flex-col">
-                            <span class="text-base text-m3-onSurface dark:text-[#E6E1E5] truncate" title="${item.file.name}">${item.file.name}</span>
-                            <span class="text-xs text-m3-onSurfaceVariant dark:text-[#CAC4D0]">${(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
+                            <span class="text-sm font-medium text-m3-onSurface dark:text-gray-200 truncate" title="${item.file.name}">${item.file.name}</span>
+                            <span class="text-xs text-m3-onSurfaceVariant dark:text-gray-500">${(item.file.size / 1024 / 1024).toFixed(2)} MB</span>
                         </div>
                     </div>
                     <div class="flex-shrink-0 ml-2">
@@ -360,8 +346,8 @@
 
         async function sanitizeFiles() {
             processBtn.disabled = true;
-            processBtn.innerHTML = `<div class="loader w-4 h-4 mr-2"></div><span>Pracujem</span>`;
-
+            processBtn.innerHTML = `<div class="loader w-4 h-4 mr-2"></div><span>Pracujem...</span>`;
+            
             const { PDFDocument } = PDFLib;
             const zip = new JSZip();
             let successCount = 0;
@@ -415,7 +401,7 @@
                 showSuccessModal();
             }
 
-            processBtn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>Vyčistiť</span>`;
+            processBtn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4"></i><span>Vyčistiť súbory</span>`;
         }
 
         function showSuccessModal() {
@@ -444,7 +430,7 @@
             successModal.classList.add('opacity-0');
             modalContent.classList.add('scale-95');
             modalContent.classList.remove('scale-100');
-
+            
             setTimeout(() => {
                 successModal.classList.add('hidden');
                 successModal.classList.remove('flex');
@@ -455,5 +441,4 @@
         }
     </script>
 </body>
-
 </html>
