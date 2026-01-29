@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitálna tabuľa</title>
+    <!-- Favicon / Logo v tabe (Lucide 'kanban-square' na Emerald-600 pozadí) -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23059669'/%3E%3Cg stroke='%23ffffff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Cpath d='M8 7v7'/%3E%3Cpath d='M12 7v4'/%3E%3Cpath d='M16 7v9'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Tailwind CSS pre štýlovanie -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome pre ikony -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        /* Vlastné scrollbary pre stĺpce */
+        .column-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .column-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .column-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .column-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Kartička hover efekt */
+        .notice-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: grab;
+            /* Indikuje, že sa dá chytiť */
+        }
+
+        .notice-card:active {
+            cursor: grabbing;
+        }
+
+        .notice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Drag and Drop vizuál */
+        .drag-over {
+            background-color: #e2e8f0;
+            /* Zvýraznenie stĺpca pri presúvaní */
+            border: 2px dashed #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Hlavička -->
+    <header class="bg-slate-800 text-white p-4 shadow-lg flex justify-between items-center z-10">
+        <div class="flex items-center gap-3">
+            <i class="fa-solid fa-clipboard-list text-2xl text-blue-400"></i>
+            <h1 class="text-xl md:text-2xl font-bold tracking-wide">VO Digitálna tabuľa</h1>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="openProfilesModal()"
+                class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg shadow transition flex items-center gap-2 font-medium text-sm">
+                <i class="fa-solid fa-users"></i> <span class="hidden sm:inline">Zamestnanci</span>
+            </button>
+            <button onclick="openModal()"
+                class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg shadow transition flex items-center gap-2 font-semibold text-sm">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Pridať oznam</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hlavná plocha (Grid) -->
+    <main class="flex-1 overflow-x-auto overflow-y-hidden p-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 h-full min-w-[1250px] md:min-w-0">
+
+            <!-- 1. Stĺpec: Pripravované -->
+            <div class="flex flex-col bg-gray-100 rounded-xl shadow-sm border border-gray-200 h-full"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'prepared')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div class="p-3 bg-blue-100 border-b border-blue-200 rounded-t-xl flex justify-between items-center">
+                    <h2 class="font-bold text-blue-800 uppercase text-sm tracking-wider">
+                        <i class="fa-regular fa-clock mr-2"></i>Pripravované
+                    </h2>
+                    <span id="count-prepared"
+                        class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-prepared" class="flex-1 p-2 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 2. Stĺpec: Vyhlasované -->
+            <div class="flex flex-col bg-gray-100 rounded-xl shadow-sm border border-gray-200 h-full"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'announced')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div class="p-3 bg-green-100 border-b border-green-200 rounded-t-xl flex justify-between items-center">
+                    <h2 class="font-bold text-green-800 uppercase text-sm tracking-wider">
+                        <i class="fa-solid fa-bullhorn mr-2"></i>Vyhlasované
+                    </h2>
+                    <span id="count-announced"
+                        class="bg-green-200 text-green-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-announced" class="flex-1 p-2 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 3. Stĺpec: Vyhodnocované -->
+            <div class="flex flex-col bg-gray-100 rounded-xl shadow-sm border border-gray-200 h-full"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'evaluating')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div class="p-3 bg-amber-100 border-b border-amber-200 rounded-t-xl flex justify-between items-center">
+                    <h2 class="font-bold text-amber-800 uppercase text-sm tracking-wider">
+                        <i class="fa-solid fa-chart-pie mr-2"></i>Vyhodnocované
+                    </h2>
+                    <span id="count-evaluating"
+                        class="bg-amber-200 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-evaluating" class="flex-1 p-2 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 4. Stĺpec: Kontrolované -->
+            <div class="flex flex-col bg-gray-100 rounded-xl shadow-sm border border-gray-200 h-full"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'checked')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div class="p-3 bg-cyan-100 border-b border-cyan-200 rounded-t-xl flex justify-between items-center">
+                    <h2 class="font-bold text-cyan-800 uppercase text-sm tracking-wider">
+                        <i class="fa-solid fa-clipboard-check mr-2"></i>Kontrolované
+                    </h2>
+                    <span id="count-checked"
+                        class="bg-cyan-200 text-cyan-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-checked" class="flex-1 p-2 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 5. Stĺpec: Špeciálne oznamy -->
+            <div class="flex flex-col bg-gray-100 rounded-xl shadow-sm border border-gray-200 h-full"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'special')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div
+                    class="p-3 bg-purple-100 border-b border-purple-200 rounded-t-xl flex justify-between items-center">
+                    <h2 class="font-bold text-purple-800 uppercase text-sm tracking-wider">
+                        <i class="fa-solid fa-star mr-2"></i>Špeciálne
+                    </h2>
+                    <span id="count-special"
+                        class="bg-purple-200 text-purple-800 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-special" class="flex-1 p-2 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modálne okno (Formulár Oznam) -->
+    <div id="modal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 transform transition-all scale-100">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-xl font-bold text-gray-800">Pridať nový oznam</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+
+                <form id="noticeForm" onsubmit="saveNotice(event)">
+                    <input type="hidden" id="noticeId">
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <!-- Typ oznamu -->
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Stĺpec</label>
+                            <select id="noticeType" onchange="toggleDateFields()"
+                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm">
+                                <option value="prepared">Pripravované</option>
+                                <option value="announced">Vyhlasované</option>
+                                <option value="evaluating">Vyhodnocované</option>
+                                <option value="checked">Kontrolované</option>
+                                <option value="special">Špeciálne</option>
+                            </select>
+                        </div>
+                        <!-- Zamestnanec (Nový) -->
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Zodpovedný</label>
+                            <select id="assignedProfile"
+                                class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-sm">
+                                <option value="">-- Nikto --</option>
+                                <!-- Profiles will be loaded here -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Názov -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Nadpis oznamu *</label>
+                        <input type="text" id="title" required
+                            class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Napr. Rekonštrukcia chodníka">
+                    </div>
+
+                    <!-- Popis -->
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Text oznamu</label>
+                        <textarea id="description" rows="3"
+                            class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Detailný popis..."></textarea>
+                    </div>
+
+                    <!-- Dátumové polia (Podmienené) -->
+                    <div id="date-fields"
+                        class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4 transition-all duration-300">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-blue-900 text-xs font-bold mb-1">Dátum vyhlásenia *</label>
+                                <input type="date" id="dateAnnounce"
+                                    class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-blue-900 text-xs font-bold mb-1">Dátum a čas vyhodnotenia
+                                    *</label>
+                                <input type="datetime-local" id="dateEval"
+                                    class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-2 italic"><i class="fa-solid fa-circle-info mr-1"></i>Pre
+                            túto kategóriu sú dátumy povinné.</p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button type="button" onclick="closeModal()"
+                            class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition">Zrušiť</button>
+                        <button type="submit"
+                            class="px-5 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-medium shadow-md transition">Uložiť
+                            oznam</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modálne okno (Správa profilov) -->
+    <div id="profilesModal"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Správa zamestnancov</h3>
+                    <button onclick="closeProfilesModal()" class="text-gray-400 hover:text-red-500 transition">
+                        <i class="fa-solid fa-xmark text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Pridanie nového -->
+                <form onsubmit="addProfile(event)" class="flex gap-2 mb-6">
+                    <input type="text" id="newProfileNick" placeholder="Nick / Meno (napr. Jano)" required
+                        class="flex-1 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    <button type="submit"
+                        class="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded-lg text-sm font-semibold">
+                        <i class="fa-solid fa-plus"></i> Pridať
+                    </button>
+                </form>
+
+                <!-- Zoznam -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-xs font-bold mb-2 uppercase tracking-wide">Aktívni
+                        zamestnanci</label>
+                    <ul id="profilesList" class="space-y-2 max-h-48 overflow-y-auto">
+                        <!-- Profiles rendered here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Stav aplikácie
+        let notices = [];
+        let profiles = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            renderNotices();
+            toggleDateFields();
+        });
+
+        // --- Drag and Drop Logic ---
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev, id) {
+            ev.dataTransfer.setData("text", id);
+            // Pridanie opacity efektu
+            ev.target.classList.add('opacity-50');
+        }
+
+        function drop(ev, targetType) {
+            ev.preventDefault();
+            const id = ev.dataTransfer.getData("text");
+            // Select by ID directly for robustness
+            const draggedElement = document.getElementById(`notice-${id}`);
+            if (draggedElement) draggedElement.classList.remove('opacity-50');
+
+            // Remove highlight
+            const column = ev.currentTarget; // use currentTarget which is the column div
+            if (column) unhighlightColumn(column);
+
+            const noticeIndex = notices.findIndex(n => n.id === id);
+            if (noticeIndex > -1) {
+                const needsDates = (targetType === 'prepared' || targetType === 'announced');
+                const hasDates = (notices[noticeIndex].dateAnnounce && notices[noticeIndex].dateEval);
+
+                notices[noticeIndex].type = targetType;
+                saveData();
+                renderNotices();
+
+                if (needsDates && !hasDates) {
+                    setTimeout(() => {
+                        alert("Pozor: Tento stĺpec vyžaduje dátumy. Prosím doplňte ich.");
+                        openModal(id);
+                    }, 100);
+                }
+            }
+        }
+
+        function highlightColumn(col) {
+            col.classList.add('drag-over');
+        }
+
+        function unhighlightColumn(col) {
+            // Basic implementation: we remove it. 
+            // Ideally we check relatedTarget, but since we are using ondragleave on the container,
+            // standard behavior might flicker. 
+            // A more robust HTML5 DnD pattern often relies on dragover for highlighting.
+            // However, for this simple script, we'll keep it simple but ensure we target the column correctly.
+            col.classList.remove('drag-over');
+        }
+
+
+        // --- Logika Profilov ---
+
+        function openProfilesModal() {
+            renderProfilesList();
+            document.getElementById('profilesModal').classList.remove('hidden');
+        }
+
+        function closeProfilesModal() {
+            document.getElementById('profilesModal').classList.add('hidden');
+        }
+
+        function addProfile(e) {
+            e.preventDefault();
+            const nickInput = document.getElementById('newProfileNick');
+            const nick = nickInput.value.trim();
+
+            if (nick) {
+                profiles.push({ id: Date.now().toString(), nick: nick });
+                nickInput.value = '';
+                saveData();
+                renderProfilesList();
+                renderProfileSelect(); // refresh select v hlavnom formulari
+            }
+        }
+
+        function deleteProfile(id) {
+            if (confirm('Odstrániť tohto zamestnanca?')) {
+                profiles = profiles.filter(p => p.id !== id);
+                // Tiež odstránime referenciu z oznamov? Voliteľné. Necháme tak, len sa prestane zobrazovať nick.
+                saveData();
+                renderProfilesList();
+                renderProfileSelect();
+            }
+        }
+
+        function renderProfilesList() {
+            const list = document.getElementById('profilesList');
+            list.innerHTML = profiles.length ? '' : '<li class="text-gray-400 text-sm italic">Zatiaľ žiadni zamestnanci.</li>';
+
+            profiles.forEach(p => {
+                list.innerHTML += `
+                    <li class="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200">
+                        <span class="font-medium text-gray-700">${escapeHtml(p.nick)}</span>
+                        <button onclick="deleteProfile('${p.id}')" class="text-red-400 hover:text-red-600">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </li>
+                `;
+            });
+        }
+
+        function renderProfileSelect() {
+            const select = document.getElementById('assignedProfile');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Nikto --</option>';
+            profiles.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${escapeHtml(p.nick)}</option>`;
+            });
+            select.value = currentVal; // pokus o zachovanie hodnoty
+        }
+
+
+        // --- Logika Formulára Oznamov ---
+
+        function openModal(editId = null) {
+            const modal = document.getElementById('modal');
+            const form = document.getElementById('noticeForm');
+            const modalTitle = document.getElementById('modal-title');
+
+            // Najprv naplníme select profilmi
+            renderProfileSelect();
+
+            modal.classList.remove('hidden');
+
+            if (editId) {
+                const notice = notices.find(n => n.id === editId);
+                if (!notice) return;
+
+                document.getElementById('noticeId').value = notice.id;
+                document.getElementById('noticeType').value = notice.type;
+                document.getElementById('assignedProfile').value = notice.profileId || '';
+                document.getElementById('title').value = notice.title;
+                document.getElementById('description').value = notice.description;
+                document.getElementById('dateAnnounce').value = notice.dateAnnounce || '';
+                document.getElementById('dateEval').value = notice.dateEval || '';
+                modalTitle.textContent = "Upraviť oznam";
+            } else {
+                form.reset();
+                document.getElementById('noticeId').value = '';
+                document.getElementById('noticeType').value = 'prepared';
+                document.getElementById('dateAnnounce').valueAsDate = new Date();
+                modalTitle.textContent = "Pridať nový oznam";
+            }
+            toggleDateFields();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        function toggleDateFields() {
+            const type = document.getElementById('noticeType').value;
+            const dateContainer = document.getElementById('date-fields');
+            const dateAnnounce = document.getElementById('dateAnnounce');
+            const dateEval = document.getElementById('dateEval');
+
+            const areDatesMandatory = (type === 'prepared' || type === 'announced');
+
+            if (areDatesMandatory) {
+                dateContainer.classList.remove('hidden');
+                dateContainer.classList.remove('opacity-50');
+                dateAnnounce.required = true;
+                dateEval.required = true;
+            } else {
+                if (type === 'special') {
+                    dateContainer.classList.add('hidden');
+                } else {
+                    dateContainer.classList.remove('hidden');
+                    dateContainer.classList.add('opacity-50');
+                }
+                dateAnnounce.required = false;
+                dateEval.required = false;
+            }
+        }
+
+        // --- CRUD Operácie Oznamov ---
+
+        function saveNotice(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('noticeId').value;
+            const type = document.getElementById('noticeType').value;
+            const profileId = document.getElementById('assignedProfile').value;
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const dateAnnounce = document.getElementById('dateAnnounce').value;
+            const dateEval = document.getElementById('dateEval').value;
+
+            const noticeData = {
+                id: id ? id : Date.now().toString(),
+                type,
+                profileId,
+                title,
+                description,
+                dateAnnounce,
+                dateEval,
+                createdAt: new Date().toISOString()
+            };
+
+            if (id) {
+                const index = notices.findIndex(n => n.id === id);
+                notices[index] = noticeData;
+            } else {
+                notices.push(noticeData);
+            }
+
+            saveData();
+            renderNotices();
+            closeModal();
+        }
+
+        function deleteNotice(id) {
+            if (confirm('Naozaj chcete odstrániť tento oznam?')) {
+                notices = notices.filter(n => n.id !== id);
+                saveData();
+                renderNotices();
+            }
+        }
+
+        // --- Renderovanie ---
+
+        function renderNotices() {
+            const columns = {
+                prepared: document.getElementById('col-prepared'),
+                announced: document.getElementById('col-announced'),
+                evaluating: document.getElementById('col-evaluating'),
+                checked: document.getElementById('col-checked'),
+                special: document.getElementById('col-special')
+            };
+
+            const counts = { prepared: 0, announced: 0, evaluating: 0, checked: 0, special: 0 };
+
+            Object.values(columns).forEach(col => col.innerHTML = '');
+
+            notices.forEach(notice => {
+                if (columns[notice.type]) {
+                    counts[notice.type]++;
+                    const card = createCardHTML(notice);
+                    columns[notice.type].innerHTML += card;
+                }
+            });
+
+            document.getElementById('count-prepared').textContent = counts.prepared;
+            document.getElementById('count-announced').textContent = counts.announced;
+            document.getElementById('count-evaluating').textContent = counts.evaluating;
+            document.getElementById('count-checked').textContent = counts.checked;
+            document.getElementById('count-special').textContent = counts.special;
+        }
+
+        function createCardHTML(notice) {
+            // Dátumy
+            let datesHTML = '';
+            if (notice.dateAnnounce || notice.dateEval) {
+                const dAnnounce = notice.dateAnnounce ? new Date(notice.dateAnnounce).toLocaleDateString('sk-SK') : '-';
+                const dEvalObj = notice.dateEval ? new Date(notice.dateEval) : null;
+                const dEval = dEvalObj ? `${dEvalObj.toLocaleDateString('sk-SK')} ${dEvalObj.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}` : '-';
+
+                datesHTML = `
+                    <div class="mt-3 pt-3 border-t border-gray-100 grid grid-cols-1 gap-1 text-xs">
+                        ${notice.dateAnnounce ? `
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span><i class="fa-regular fa-calendar mr-1"></i>Vyhlásenie:</span>
+                            <span class="font-semibold text-gray-800">${dAnnounce}</span>
+                        </div>` : ''}
+                        
+                        ${notice.dateEval ? `
+                        <div class="flex justify-between items-center text-gray-600 mt-1">
+                            <span><i class="fa-regular fa-clock mr-1"></i>Vyhodnotenie:</span>
+                            <span class="font-semibold text-red-600 bg-red-50 px-1 rounded">${dEval}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+            }
+
+            // Nickname badge (iba ak existuje a je priradený)
+            let nickBadge = '';
+            if (notice.profileId) {
+                const profile = profiles.find(p => p.id === notice.profileId);
+                if (profile) {
+                    nickBadge = `
+                        <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-slate-200 mb-2">
+                            <i class="fa-solid fa-user text-slate-400"></i> ${escapeHtml(profile.nick)}
+                        </span>
+                    `;
+                }
+            }
+
+            // Farba prúžku
+            let borderClass = 'border-l-4';
+            if (notice.type === 'prepared') borderClass += ' border-blue-500';
+            else if (notice.type === 'announced') borderClass += ' border-green-500';
+            else if (notice.type === 'evaluating') borderClass += ' border-amber-500';
+            else if (notice.type === 'checked') borderClass += ' border-cyan-500';
+            else borderClass += ' border-purple-500';
+
+            return `
+                <div id="notice-${notice.id}" class="notice-card bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-3 ${borderClass} relative group"
+                     draggable="true" ondragstart="drag(event, '${notice.id}')">
+                    
+                    <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                        <button onclick="openModal('${notice.id}')" class="text-gray-400 hover:text-blue-500 p-1" title="Upraviť">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button onclick="deleteNotice('${notice.id}')" class="text-gray-400 hover:text-red-500 p-1" title="Zmazať">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    
+                    ${nickBadge}
+
+                    <h3 class="font-bold text-gray-800 pr-12 text-sm leading-snug mb-1">${escapeHtml(notice.title)}</h3>
+                    
+                    ${notice.description ? `<p class="text-gray-600 text-xs mt-1 line-clamp-3">${escapeHtml(notice.description)}</p>` : ''}
+                    
+                    ${datesHTML}
+                </div>
+            `;
+        }
+
+        // --- Storage ---
+
+        function loadData() {
+            // Load Notices
+            const savedNotices = localStorage.getItem('nastenka_data');
+            if (savedNotices) {
+                notices = JSON.parse(savedNotices);
+            } else {
+                notices = [{ id: '1', type: 'prepared', title: 'Ukážka', description: 'Skúšobný oznam.', dateAnnounce: '', dateEval: '' }];
+                saveData();
+            }
+
+            // Load Profiles
+            const savedProfiles = localStorage.getItem('nastenka_profiles');
+            if (savedProfiles) {
+                profiles = JSON.parse(savedProfiles);
+            } else {
+                profiles = []; // Začneme s prázdnym zoznamom
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('nastenka_data', JSON.stringify(notices));
+            localStorage.setItem('nastenka_profiles', JSON.stringify(profiles));
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('modal');
+            const pModal = document.getElementById('profilesModal');
+            if (event.target == modal) closeModal();
+            if (event.target == pModal) closeProfilesModal();
+        }
+    </script>
+</body>
+
+</html>
