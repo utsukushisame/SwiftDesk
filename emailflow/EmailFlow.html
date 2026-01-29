@@ -1,26 +1,47 @@
 <!DOCTYPE html>
 <html lang="sk" class="antialiased">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email šablóny</title>
-    <!-- Favicon (Lucide Mail Icon: White stroke on Blue-600 background) -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232563eb'/%3E%3Cg transform='translate(4,4)' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Crect width='20' height='16' x='2' y='4' rx='2'/%3E%3Cpath d='m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7'/%3E%3C/g%3E%3C/svg%3E">
-    
+    <!-- Favicon (Lucide Mail Icon: White stroke on Emerald-600 background) -->
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23059669'/%3E%3Cg transform='translate(6,6)'%3E%3Cpath stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none' d='M2 3h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2'/%3E%3Cpath stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none' d='m20 5-8.97 5.7a1.94 1.94 0 0 1-2.06 0L0 5'/%3E%3C/g%3E%3C/svg%3E">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class', // Enable manual dark mode toggling
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        dark: {
-                            bg: '#0f172a',
-                            surface: '#1e293b',
-                            border: '#334155',
-                            text: '#f8fafc',
-                            textMuted: '#94a3b8'
+                        primary: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        },
+                        surface: {
+                            light: '#ffffff',
+                            dim: '#f8fafc', // Slate 50
+                            dark: '#1e1e1e', // Material dark
+                            variant: '#f0fdf4', // Very light emerald tint
+                            darkVariant: '#2a2a2a',
                         }
+                    },
+                    borderRadius: {
+                        '4xl': '2rem',
+                        '5xl': '2.5rem',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
                     }
                 }
             }
@@ -29,28 +50,51 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        body { font-family: 'Inter', sans-serif; }
-        
-        /* Custom Scrollbar for Dark/Light */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Material You Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+            border: 2px solid transparent;
+            background-clip: content-box;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #94a3b8;
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background-color: #475569;
+        }
+
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background-color: #64748b;
+        }
 
         .variable-highlight {
-            background-color: #e0e7ff;
-            color: #4338ca;
-            padding: 0 4px;
-            border-radius: 4px;
-            font-weight: 500;
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 600;
         }
+
         .dark .variable-highlight {
-            background-color: #312e81;
-            color: #c7d2fe;
+            background-color: #064e3b;
+            color: #a7f3d0;
         }
 
         .preview-content {
@@ -58,112 +102,176 @@
             font-family: sans-serif;
             line-height: 1.6;
         }
-        
+
         /* Loader Animation */
         .loader {
-            border: 3px solid rgba(156, 163, 175, 0.3);
+            border: 3px solid rgba(16, 185, 129, 0.2);
             border-radius: 50%;
-            border-top: 3px solid #3b82f6;
+            border-top: 3px solid #10b981;
             width: 20px;
             height: 20px;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
-        /* Transitions for theme switch */
-        body, div, nav, header, aside, main, input, textarea, button {
-            transition-property: background-color, border-color, color;
+
+        /* Transitions */
+        body,
+        div,
+        nav,
+        header,
+        aside,
+        main,
+        input,
+        textarea,
+        button {
+            transition-property: background-color, border-color, color, transform, box-shadow;
             transition-duration: 200ms;
+        }
+
+        /* Material Inputs */
+        .material-input {
+            background-color: #f1f5f9;
+            /* slate-100 */
+            border: 1px solid transparent;
+        }
+
+        .material-input:focus {
+            background-color: #ffffff;
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .dark .material-input {
+            background-color: #2d2d2d;
+            border-color: transparent;
+        }
+
+        .dark .material-input:focus {
+            background-color: #353535;
+            border-color: #34d399;
         }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 h-screen flex flex-col overflow-hidden text-gray-800 dark:text-gray-100 transition-colors duration-200">
+
+<body
+    class="bg-[#f0f2f5] dark:bg-[#121212] h-screen flex flex-col overflow-hidden text-slate-800 dark:text-gray-100 transition-colors duration-200">
 
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-6 shadow-sm z-10 shrink-0">
-        <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-br from-blue-600 to-indigo-600 text-white p-2 rounded-lg shadow-md">
-                <i class="fa-solid fa-envelope-open-text"></i>
+    <header
+        class="bg-surface-light dark:bg-[#1e1e1e] border-b-0 h-20 flex items-center justify-between px-6 shadow-sm z-10 shrink-0 m-4 rounded-[2rem]">
+        <div class="flex items-center gap-4">
+            <div class="bg-primary-600 text-white p-3 rounded-2xl shadow-lg shadow-primary-500/30">
+                <i class="fa-solid fa-envelope-open-text text-xl"></i>
             </div>
-            <h1 class="font-bold text-xl tracking-tight text-gray-800 dark:text-white">Email<span class="text-blue-600 dark:text-blue-400">Flow</span> <span class="hidden sm:inline-block text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full ml-1 border border-indigo-200 dark:border-indigo-800">AI Powered</span></h1>
+            <div>
+                <h1 class="font-bold text-2xl tracking-tight text-slate-800 dark:text-white leading-none">
+                    Email<span class="text-primary-600 dark:text-primary-400">Flow</span>
+                </h1>
+
+            </div>
         </div>
-        
-        <div class="flex items-center gap-2 sm:gap-2">
-            <button onclick="openSettingsModal()" class="p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 rounded-lg transition-colors" title="Nastavenia (API Key & Téma)">
+
+        <div class="flex items-center gap-2 sm:gap-3">
+            <button onclick="openSettingsModal()"
+                class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-gray-700/50 rounded-full transition-colors"
+                title="Nastavenia">
                 <i class="fa-solid fa-gear text-lg"></i>
             </button>
-            
-            <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 hidden sm:block"></div>
-            
+
+            <div class="h-8 w-px bg-slate-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
+
             <!-- AI Generator Button -->
-            <button onclick="openAiModal()" class="hidden sm:flex px-3 py-2 text-sm font-medium text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 rounded-lg transition-colors items-center shadow-sm" title="Vytvoriť novú šablónu pomocou AI">
-                <i class="fa-solid fa-wand-magic-sparkles mr-2 text-indigo-500 dark:text-indigo-400"></i>Generátor
+            <button onclick="openAiModal()"
+                class="hidden sm:flex px-5 py-2.5 text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-full transition-all shadow-lg shadow-primary-600/20 active:scale-95 items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                Generátor
             </button>
 
-            <!-- AI Reply Button (New) -->
-            <button onclick="openReplyModal()" class="hidden sm:flex px-3 py-2 text-sm font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-800 rounded-lg transition-colors items-center shadow-sm" title="Odpovedať na email pomocou AI">
-                <i class="fa-solid fa-reply mr-2 text-purple-500 dark:text-purple-400"></i>Odpovedať AI
+            <!-- AI Reply Button -->
+            <button onclick="openReplyModal()"
+                class="hidden sm:flex px-5 py-2.5 text-sm font-semibold text-indigo-100 bg-indigo-600 hover:bg-indigo-700 rounded-full transition-all shadow-lg shadow-indigo-600/20 active:scale-95 items-center gap-2">
+                <i class="fa-solid fa-reply"></i>
+                Odpovedať AI
             </button>
 
             <!-- Mobile AI Buttons -->
-             <button onclick="openAiModal()" class="sm:hidden p-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+            <button onclick="openAiModal()"
+                class="sm:hidden w-12 h-12 flex items-center justify-center text-white bg-primary-600 rounded-2xl shadow-lg shadow-primary-600/30">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
             </button>
-            <button onclick="openReplyModal()" class="sm:hidden p-2 text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+            <button onclick="openReplyModal()"
+                class="sm:hidden w-12 h-12 flex items-center justify-center text-white bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-600/30">
                 <i class="fa-solid fa-reply"></i>
             </button>
 
-            <button onclick="createNewTemplate()" class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors" title="Vyčistiť editor">
+            <button onclick="createNewTemplate()"
+                class="px-5 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 bg-surface-dim dark:bg-surface-darkVariant hover:bg-slate-200 dark:hover:bg-gray-600 rounded-full transition-colors border border-transparent"
+                title="Vyčistiť editor">
                 <i class="fa-solid fa-plus mr-2 hidden sm:inline"></i>Nová
             </button>
-            <button onclick="saveCurrentTemplate()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors active:scale-95">
-                <i class="fa-solid fa-floppy-disk mr-2 hidden sm:inline"></i>Uložiť
+            <button onclick="saveCurrentTemplate()"
+                class="w-12 h-12 sm:w-auto sm:h-auto sm:px-5 sm:py-2.5 flex items-center justify-center text-sm font-semibold text-primary-900 bg-primary-200 hover:bg-primary-300 rounded-full transition-colors dark:bg-primary-800 dark:text-primary-100 dark:hover:bg-primary-700">
+                <i class="fa-solid fa-floppy-disk sm:mr-2"></i><span class="hidden sm:inline">Uložiť</span>
             </button>
         </div>
     </header>
 
     <!-- Main Content -->
-    <div class="flex flex-1 overflow-hidden">
-        
-        <!-- Sidebar: Saved Templates (Hidden on mobile) -->
-        <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col z-0 hidden md:flex shrink-0">
-            <div class="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                <h2 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Uložené šablóny</h2>
+    <div class="flex flex-1 overflow-hidden px-4 pb-4 gap-4">
+
+        <!-- Sidebar: Saved Templates -->
+        <aside
+            class="w-72 bg-white dark:bg-[#1e1e1e] rounded-[2rem] flex flex-col z-0 hidden md:flex shrink-0 shadow-sm border border-transparent dark:border-gray-800">
+            <div class="p-6 pb-2">
+                <h2 class="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-2">Uložené
+                    šablóny</h2>
             </div>
-            <div id="templateList" class="flex-1 overflow-y-auto p-2 space-y-1">
+            <div id="templateList" class="flex-1 overflow-y-auto px-4 py-2 space-y-2">
                 <!-- Templates injected here -->
-                <div class="text-center p-4 text-gray-400 dark:text-gray-600 text-sm italic">Žiadne šablóny</div>
+                <div class="text-center p-8 text-slate-400 dark:text-gray-600 text-sm italic">
+                    Žiadne šablóny zatiaľ...
+                </div>
             </div>
         </aside>
 
         <!-- Editor Area -->
-        <main class="flex-1 flex overflow-hidden relative">
-            
+        <main class="flex-1 flex overflow-hidden relative gap-4">
+
             <!-- Left Column: Edit -->
-            <!-- Changed layout logic for wide screens: flex-1 ensures it takes remaining space -->
-            <div class="flex-1 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-y-auto">
-                <div class="p-4 sm:p-6 space-y-5 h-full flex flex-col">
-                    
+            <div
+                class="flex-1 flex flex-col bg-white dark:bg-[#1e1e1e] rounded-[2rem] shadow-sm border border-transparent dark:border-gray-800 overflow-hidden">
+                <div class="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
+
                     <!-- Metadata -->
-                    <div class="space-y-4 shrink-0">
+                    <div class="space-y-5 shrink-0">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Názov šablóny</label>
-                            <input type="text" id="templateName" placeholder="Napr. Mesačný report" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all dark:text-white dark:placeholder-gray-500">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-2 ml-1">Názov
+                                šablóny</label>
+                            <input type="text" id="templateName" placeholder="Napr. Mesačný report"
+                                class="material-input w-full px-5 py-3 rounded-2xl outline-none transition-all dark:text-white dark:placeholder-gray-500">
                         </div>
                         <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Predmet emailu</label>
-                                <button onclick="suggestSubjectAI()" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 flex items-center hover:bg-indigo-50 dark:hover:bg-indigo-900/30 px-2 py-1 rounded transition-colors">
-                                    <i class="fa-solid fa-lightbulb mr-1"></i> Navrhnúť
+                            <div class="flex justify-between items-center mb-2 ml-1">
+                                <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300">Predmet
+                                    emailu</label>
+                                <button onclick="suggestSubjectAI()"
+                                    class="text-xs font-medium text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 px-3 py-1.5 rounded-full transition-colors flex items-center">
+                                    <i class="fa-solid fa-lightbulb mr-1.5"></i> AI Návrh
                                 </button>
                             </div>
-                            <div class="relative">
-                                <input type="text" id="emailSubject" placeholder="Predmet: Report za {mesiac}" class="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-medium pr-10 dark:text-white dark:placeholder-gray-500">
-                                <div id="subjectLoader" class="hidden absolute right-3 top-2.5">
+                            <div class="relative group">
+                                <input type="text" id="emailSubject" placeholder="Predmet: Report za {mesiac}"
+                                    class="material-input w-full px-5 py-3 rounded-2xl outline-none transition-all font-medium pr-10 dark:text-white dark:placeholder-gray-500">
+                                <div id="subjectLoader" class="hidden absolute right-4 top-3.5">
                                     <div class="loader w-5 h-5 border-2"></div>
                                 </div>
                             </div>
@@ -171,31 +279,40 @@
                     </div>
 
                     <!-- Variable Config -->
-                    <div class="bg-blue-50 dark:bg-slate-800/50 border border-blue-100 dark:border-slate-700 rounded-xl p-4 shrink-0">
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-sm font-bold text-blue-800 dark:text-blue-300 flex items-center">
-                                <i class="fa-solid fa-sliders mr-2"></i>Dynamické premenné
+                    <div class="bg-primary-50 dark:bg-primary-900/10 rounded-3xl p-5 shrink-0">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-primary-800 dark:text-primary-300 flex items-center">
+                                <span class="bg-primary-200 dark:bg-primary-800 p-1.5 rounded-lg mr-2"><i
+                                        class="fa-solid fa-sliders text-primary-700 dark:text-primary-300"></i></span>
+                                Dynamické premenné
                             </h3>
-                            <span class="text-xs text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-1 rounded">Autodetekcia {...}</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary-700 dark:text-primary-400 bg-white/50 dark:bg-black/20 px-2 py-1 rounded-md">Autodetekcia
+                                {...}</span>
                         </div>
-                        <div id="variablesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div id="variablesContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <!-- Inputs injected here -->
                         </div>
                     </div>
 
-                    <!-- Body Editor (Flex grow to fill space) -->
-                    <div class="flex-1 flex flex-col min-h-[300px]">
-                        <div class="flex justify-between items-end mb-2 shrink-0">
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Telo emailu <span class="text-xs text-gray-400 dark:text-gray-500 font-normal ml-2">(HTML ok)</span>
+                    <!-- Body Editor -->
+                    <div class="flex-1 flex flex-col min-h-[600px]">
+                        <div class="flex justify-between items-end mb-2 shrink-0 ml-1">
+                            <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300">
+                                Telo emailu
                             </label>
-                            <button onclick="improveBodyAI()" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 px-3 py-1.5 rounded-md transition-all flex items-center shadow-sm">
+                            <button onclick="improveBodyAI()"
+                                class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-3 py-1.5 rounded-full transition-all flex items-center">
                                 <i class="fa-solid fa-sparkles mr-1.5"></i> Vylepšiť
                             </button>
                         </div>
                         <div class="relative flex-1 h-full">
-                            <textarea id="emailBody" class="w-full h-full p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none dark:text-gray-100 dark:placeholder-gray-600" placeholder="Sem napíš text emailu..."></textarea>
-                            <div id="bodyLoader" class="hidden absolute right-4 bottom-4 bg-white/80 dark:bg-gray-800/80 p-2 rounded-full shadow-sm backdrop-blur-sm">
+                            <textarea id="emailBody"
+                                class="material-input w-full h-full p-5 rounded-2xl font-mono text-base outline-none resize-none dark:text-gray-100 dark:placeholder-gray-600 leading-relaxed overflow-hidden"
+                                placeholder="Sem napíš text emailu..." rows="15" style="min-height: 400px;"
+                                oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight < 400 ? 400 : this.scrollHeight) + 'px'"></textarea>
+                            <div id="bodyLoader"
+                                class="hidden absolute right-4 bottom-4 bg-white/90 dark:bg-gray-800/90 p-2 rounded-full shadow-md backdrop-blur-sm">
                                 <div class="loader"></div>
                             </div>
                         </div>
@@ -204,34 +321,41 @@
             </div>
 
             <!-- Right Column: Preview -->
-            <!-- Adjusted width classes: w-[35%] on XL screens allows editor to be 65% wide -->
-            <div class="hidden lg:flex w-[45%] xl:w-[35%] bg-gray-50 dark:bg-gray-900 flex-col border-l border-gray-200 dark:border-gray-700 shrink-0">
-                <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm">
-                    <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                        <i class="fa-regular fa-eye mr-2"></i>Live Náhľad
+            <div
+                class="hidden lg:flex w-[45%] xl:w-[40%] bg-surface-dim dark:bg-[#121212] flex-col shrink-0 rounded-[2rem] overflow-hidden border border-slate-200 dark:border-gray-800">
+                <div class="p-5 bg-white dark:bg-[#1e1e1e] flex justify-between items-center shadow-sm z-10">
+                    <h2 class="text-sm font-bold text-slate-700 dark:text-gray-300 uppercase tracking-widest pl-2">
+                        <i class="fa-regular fa-eye mr-2 text-primary-500"></i>Náhľad
                     </h2>
                     <div class="flex gap-2">
-                         <button onclick="downloadEml()" title="Stiahnuť pre Outlook" class="p-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                            <i class="fa-solid fa-file-arrow-down text-lg"></i>
+                        <button onclick="downloadEml()" title="Stiahnuť pre Outlook"
+                            class="w-9 h-9 flex items-center justify-center text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                            <i class="fa-solid fa-download"></i>
                         </button>
-                        <button onclick="copyToClipboard()" title="Kopírovať do schránky" class="p-2 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors">
-                            <i class="fa-regular fa-copy text-lg"></i>
+                        <button onclick="copyToClipboard()" title="Kopírovať do schránky"
+                            class="w-9 h-9 flex items-center justify-center text-slate-600 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                            <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="flex-1 p-6 overflow-y-auto">
+                <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
                     <!-- Email Client Simulator -->
-                    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 min-h-[500px] flex flex-col">
+                    <div
+                        class="bg-white dark:bg-gray-800 shadow-xl shadow-gray-200/50 dark:shadow-none rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700 min-h-[500px] flex flex-col">
                         <!-- Header -->
-                        <div class="bg-gray-50 dark:bg-gray-700/50 p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
-                            <div class="flex text-sm">
-                                <span class="text-gray-500 dark:text-gray-400 w-20 text-right mr-3">Predmet:</span>
-                                <span id="previewSubject" class="font-semibold text-gray-900 dark:text-white break-words"></span>
+                        <div
+                            class="bg-gray-50/80 dark:bg-gray-700/30 p-5 border-b border-gray-100 dark:border-gray-700 space-y-3 backdrop-blur-sm">
+                            <div class="flex items-start text-sm gap-4">
+                                <span
+                                    class="text-gray-400 dark:text-gray-500 font-medium w-16 text-right pt-0.5">Predmet:</span>
+                                <span id="previewSubject"
+                                    class="font-bold text-gray-900 dark:text-white break-words text-base"></span>
                             </div>
                         </div>
                         <!-- Body -->
-                        <div id="previewBody" class="p-8 text-gray-800 dark:text-gray-200 preview-content flex-1"></div>
+                        <div id="previewBody"
+                            class="p-8 text-gray-800 dark:text-gray-200 preview-content flex-1 text-base"></div>
                     </div>
                 </div>
             </div>
@@ -240,58 +364,76 @@
     </div>
 
     <!-- AI Generation Modal -->
-    <div id="aiModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform transition-all scale-100 border border-gray-200 dark:border-gray-700">
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-                <h3 class="text-lg font-bold flex items-center">
-                    <i class="fa-solid fa-robot mr-2"></i> Generátor šablón
+    <div id="aiModal"
+        class="fixed inset-0 bg-gray-900/40 backdrop-blur-md hidden flex items-center justify-center z-50 transition-opacity">
+        <div
+            class="bg-white dark:bg-[#1e1e1e] rounded-[2rem] shadow-2xl w-full max-w-lg mx-4 overflow-hidden transform transition-all scale-100 border border-white/20">
+            <div class="bg-gradient-to-br from-primary-600 to-emerald-600 p-8 text-white">
+                <h3 class="text-2xl font-bold flex items-center mb-2">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-3 text-primary-200"></i> AI Generátor
                 </h3>
-                <p class="text-indigo-100 text-sm mt-1">Popíš, aký email potrebuješ.</p>
+                <p class="text-primary-100 text-sm opacity-90">Popíš, aký email potrebuješ a ja ho vytvorím.</p>
             </div>
-            
-            <div class="p-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Zadanie:</label>
-                <textarea id="aiPrompt" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-none dark:text-white" placeholder="Napr.: Zdvorilé odmietnutie ponuky práce..."></textarea>
-                
-                <div class="mt-6 flex justify-end gap-3">
-                    <button onclick="closeModal('aiModal')" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">Zrušiť</button>
-                    <button onclick="generateTemplateAI()" id="btnGenerate" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-md transition-all flex items-center">
+
+            <div class="p-8">
+                <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-3 ml-1">Zadanie pre
+                    AI</label>
+                <textarea id="aiPrompt"
+                    class="material-input w-full p-4 rounded-2xl outline-none h-32 resize-none dark:text-white"
+                    placeholder="Napr.: Zdvorilé odmietnutie ponuky práce, ale s ponechaním otvorených dverí do budúcna..."></textarea>
+
+                <div class="mt-8 flex justify-end gap-3">
+                    <button onclick="closeModal('aiModal')"
+                        class="px-6 py-3 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700/50 rounded-full font-medium transition-colors">Zrušiť</button>
+                    <button onclick="generateTemplateAI()" id="btnGenerate"
+                        class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-full shadow-lg shadow-primary-600/30 transition-all flex items-center active:scale-95">
                         <span id="btnGenText">Vygenerovať</span>
-                        <div id="btnGenLoader" class="loader w-4 h-4 border-white border-t-transparent ml-2 hidden"></div>
+                        <div id="btnGenLoader" class="loader w-4 h-4 border-white/40 border-t-white ml-2 hidden"></div>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- AI Reply Modal (New) -->
-    <div id="replyModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all scale-100 border border-gray-200 dark:border-gray-700 flex flex-col max-h-[90vh]">
-            <div class="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white shrink-0">
-                <h3 class="text-lg font-bold flex items-center">
-                    <i class="fa-solid fa-reply mr-2"></i> AI Asistent Odpovedí
+    <!-- AI Reply Modal -->
+    <div id="replyModal"
+        class="fixed inset-0 bg-gray-900/40 backdrop-blur-md hidden flex items-center justify-center z-50">
+        <div
+            class="bg-white dark:bg-[#1e1e1e] rounded-[2rem] shadow-2xl w-full max-w-2xl mx-4 overflow-hidden transform transition-all scale-100 border border-white/20 flex flex-col max-h-[90vh]">
+            <div class="bg-gradient-to-br from-indigo-600 to-violet-600 p-8 text-white shrink-0">
+                <h3 class="text-2xl font-bold flex items-center mb-2">
+                    <i class="fa-solid fa-reply mr-3 text-indigo-200"></i> Asistent Odpovedí
                 </h3>
-                <p class="text-purple-100 text-sm mt-1">Vlož email, ktorý si dostal, a ja naň odpoviem.</p>
+                <p class="text-indigo-100 text-sm opacity-90">Vlož email ktorý si dostal a ja navrhnem odpoveď.</p>
             </div>
-            
-            <div class="p-6 overflow-y-auto flex-1">
-                <div class="space-y-4">
+
+            <div class="p-8 overflow-y-auto flex-1 custom-scrollbar">
+                <div class="space-y-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Prijatý email (text):</label>
-                        <textarea id="receivedEmail" class="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none h-32 resize-none dark:text-white text-sm" placeholder="Vlož sem text emailu, na ktorý chceš odpovedať..."></textarea>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-3 ml-1">Prijatý
+                            email</label>
+                        <textarea id="receivedEmail"
+                            class="material-input w-full p-4 rounded-2xl outline-none h-32 resize-none dark:text-white text-sm"
+                            placeholder="Vlož sem text emailu..."></textarea>
                     </div>
-                    
+
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tvoja inštrukcia k odpovedi:</label>
-                        <textarea id="replyInstructions" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none h-20 resize-none dark:text-white text-sm" placeholder="Napr.: Súhlasím s termínom, ale budem meškať 10 minút. Poďakuj."></textarea>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-3 ml-1">Tvoja
+                            inštrukcia</label>
+                        <textarea id="replyInstructions"
+                            class="material-input w-full p-4 rounded-2xl outline-none h-24 resize-none dark:text-white text-sm"
+                            placeholder="Napr.: Súhlasím s termínom, ale budem meškať 10 minút. Buď veľmi zdvorilý."></textarea>
                     </div>
                 </div>
 
-                <div class="mt-6 flex justify-end gap-3">
-                    <button onclick="closeModal('replyModal')" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">Zrušiť</button>
-                    <button onclick="generateReplyAI()" id="btnReply" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-md transition-all flex items-center">
+                <div class="mt-8 flex justify-end gap-3">
+                    <button onclick="closeModal('replyModal')"
+                        class="px-6 py-3 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-gray-700/50 rounded-full font-medium transition-colors">Zrušiť</button>
+                    <button onclick="generateReplyAI()" id="btnReply"
+                        class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-full shadow-lg shadow-indigo-600/30 transition-all flex items-center active:scale-95">
                         <span id="btnReplyText">Vytvoriť odpoveď</span>
-                        <div id="btnReplyLoader" class="loader w-4 h-4 border-white border-t-transparent ml-2 hidden"></div>
+                        <div id="btnReplyLoader" class="loader w-4 h-4 border-white/40 border-t-white ml-2 hidden">
+                        </div>
                     </button>
                 </div>
             </div>
@@ -299,52 +441,67 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
-                <h3 class="font-bold text-gray-800 dark:text-white"><i class="fa-solid fa-gear mr-2"></i>Nastavenia</h3>
-                <button onclick="closeModal('settingsModal')" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+    <div id="settingsModal"
+        class="fixed inset-0 bg-gray-900/40 backdrop-blur-md hidden flex items-center justify-center z-50">
+        <div
+            class="bg-white dark:bg-[#1e1e1e] rounded-[2rem] shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-white/20">
+            <div
+                class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white flex items-center"><i
+                        class="fa-solid fa-gear mr-3 text-slate-400"></i>Nastavenia</h3>
+                <button onclick="closeModal('settingsModal')"
+                    class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors">
                     <i class="fa-solid fa-times"></i>
                 </button>
             </div>
-            
-            <div class="p-6 space-y-6">
+
+            <div class="p-8 space-y-8">
                 <!-- Theme Toggle -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Vzhľad aplikácie</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button onclick="setTheme('light')" id="themeBtnLight" class="p-2 rounded-lg border text-sm flex flex-col items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                            <i class="fa-regular fa-sun text-lg text-yellow-500"></i> Svetlý
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-4 ml-1">Vzhľad
+                        aplikácie</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button onclick="setTheme('light')" id="themeBtnLight"
+                            class="p-3 rounded-2xl border-2 text-sm flex flex-col items-center gap-2 hover:bg-slate-50 dark:hover:bg-gray-800 transition-all font-medium">
+                            <i class="fa-regular fa-sun text-xl text-amber-500"></i> Svetlý
                         </button>
-                        <button onclick="setTheme('dark')" id="themeBtnDark" class="p-2 rounded-lg border text-sm flex flex-col items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                            <i class="fa-solid fa-moon text-lg text-blue-500"></i> Tmavý
+                        <button onclick="setTheme('dark')" id="themeBtnDark"
+                            class="p-3 rounded-2xl border-2 text-sm flex flex-col items-center gap-2 hover:bg-slate-50 dark:hover:bg-gray-800 transition-all font-medium">
+                            <i class="fa-solid fa-moon text-xl text-indigo-500"></i> Tmavý
                         </button>
-                        <button onclick="setTheme('system')" id="themeBtnSystem" class="p-2 rounded-lg border text-sm flex flex-col items-center gap-1 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                            <i class="fa-solid fa-desktop text-lg text-gray-500"></i> Auto
+                        <button onclick="setTheme('system')" id="themeBtnSystem"
+                            class="p-3 rounded-2xl border-2 text-sm flex flex-col items-center gap-2 hover:bg-slate-50 dark:hover:bg-gray-800 transition-all font-medium">
+                            <i class="fa-solid fa-desktop text-xl text-slate-500"></i> Auto
                         </button>
                     </div>
                 </div>
 
                 <!-- API Key Input -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gemini API Kľúč</label>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Pre trvalé používanie AI funkcií vlož svoj kľúč. Bude uložený iba v tvojom prehliadači.</p>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-gray-300 mb-2 ml-1">Gemini API
+                        Kľúč</label>
                     <div class="flex gap-2">
                         <div class="relative flex-1">
-                            <input type="password" id="userApiKey" placeholder="sk-..." class="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white">
-                            <i class="fa-solid fa-key absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                            <input type="password" id="userApiKey" placeholder="sk-..."
+                                class="material-input w-full pl-10 pr-4 py-3 rounded-2xl text-sm outline-none dark:text-white">
+                            <i class="fa-solid fa-key absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
                         </div>
-                        <button onclick="saveApiKey()" class="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors">Uložiť</button>
+                        <button onclick="saveApiKey()"
+                            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-2xl text-sm font-bold transition-colors shadow-lg shadow-primary-600/20">Uložiť</button>
                     </div>
-                    <p id="apiKeyStatus" class="text-xs mt-1 text-gray-400 h-4"></p>
+                    <div class="flex justify-between items-center mt-2 px-1">
+                        <p class="text-[10px] text-slate-400 dark:text-gray-500">Uložené bezpečne v prehliadači.</p>
+                        <p id="apiKeyStatus" class="text-xs font-medium text-slate-400 h-4"></p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-50">
-        <i class="fa-solid fa-check-circle text-green-400 dark:text-green-600"></i>
+    <div id="toast"
+        class="fixed bottom-8 right-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-4 z-50 font-medium">
+        <i class="fa-solid fa-circle-check text-primary-400 dark:text-primary-600 text-xl"></i>
         <span id="toastMessage">Akcia úspešná</span>
     </div>
 
@@ -355,21 +512,21 @@
 
         // State
         let templates = [];
-        let variableValues = {}; 
-        
+        let variableValues = {};
+
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             loadTemplates();
             loadApiKey();
-            
+
             if (templates.length === 0) loadExampleTemplate();
             else selectTemplate(templates[0].id);
 
             // Listeners
             document.getElementById('emailBody').addEventListener('input', updatePreview);
             document.getElementById('emailSubject').addEventListener('input', updatePreview);
-            
+
             // Modal outside clicks
             ['aiModal', 'settingsModal', 'replyModal'].forEach(id => {
                 document.getElementById(id).addEventListener('click', (e) => {
@@ -396,13 +553,13 @@
 
             // Reset buttons styling
             Object.values(buttons).forEach(btn => {
-                btn.classList.remove('bg-blue-50', 'dark:bg-blue-900', 'border-blue-500', 'text-blue-700', 'dark:text-blue-300');
+                btn.classList.remove('bg-primary-50', 'dark:bg-primary-900', 'border-primary-500', 'text-primary-700', 'dark:text-primary-300');
                 btn.classList.add('border-gray-200', 'dark:border-gray-600');
             });
 
             // Highlight active
             buttons[mode].classList.remove('border-gray-200', 'dark:border-gray-600');
-            buttons[mode].classList.add('bg-blue-50', 'dark:bg-blue-900', 'border-blue-500', 'text-blue-700', 'dark:text-blue-300');
+            buttons[mode].classList.add('bg-primary-50', 'dark:bg-primary-900', 'border-primary-500', 'text-primary-700', 'dark:text-primary-300');
 
             // Apply theme
             if (mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -419,23 +576,23 @@
             const storedKey = localStorage.getItem('user_gemini_api_key');
             const input = document.getElementById('userApiKey');
             const status = document.getElementById('apiKeyStatus');
-            
+
             if (storedKey) {
                 input.value = storedKey;
                 status.textContent = "Kľúč je uložený.";
-                status.classList.add('text-green-500');
+                status.classList.add('text-primary-500');
             }
         }
 
         function saveApiKey() {
             const input = document.getElementById('userApiKey');
             const key = input.value.trim();
-            
+
             if (key) {
                 localStorage.setItem('user_gemini_api_key', key);
                 showToast("API kľúč uložený");
                 document.getElementById('apiKeyStatus').textContent = "Kľúč je uložený.";
-                document.getElementById('apiKeyStatus').className = "text-xs mt-1 text-green-500 h-4";
+                document.getElementById('apiKeyStatus').className = "text-xs mt-1 text-primary-500 h-4";
             } else {
                 localStorage.removeItem('user_gemini_api_key');
                 showToast("API kľúč odstránený");
@@ -464,7 +621,7 @@
                 mesiac_cislo: (now.getMonth() + 1).toString().padStart(2, '0'),
                 den: now.getDate(),
                 den_nazov: days[now.getDay()],
-                cas: now.toLocaleTimeString('sk-SK', {hour: '2-digit', minute:'2-digit'}),
+                cas: now.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }),
                 vcera: yesterday.toLocaleDateString('sk-SK')
             };
         }
@@ -472,7 +629,7 @@
         function extractVariables(text) {
             const regex = /\{([^}]+)\}/g;
             const matches = [...text.matchAll(regex)];
-            return [...new Set(matches.map(m => m[1]))]; 
+            return [...new Set(matches.map(m => m[1]))];
         }
 
         function autoFillDateVariables() {
@@ -485,7 +642,7 @@
         function updatePreview() {
             const subjectInput = document.getElementById('emailSubject').value;
             const bodyInput = document.getElementById('emailBody').value;
-            
+
             const subjectVars = extractVariables(subjectInput);
             const bodyVars = extractVariables(bodyInput);
             const allVars = [...new Set([...subjectVars, ...bodyVars])];
@@ -501,7 +658,7 @@
                 renderedSubject = renderedSubject.replace(regex, val);
                 renderedBody = renderedBody.replace(regex, val);
             });
-            
+
             document.getElementById('previewSubject').textContent = renderedSubject;
             document.getElementById('previewBody').innerHTML = renderedBody
                 .replace(/</g, "&lt;")
@@ -512,7 +669,7 @@
         function renderVariableInputs(vars) {
             const container = document.getElementById('variablesContainer');
             const existingInputs = Array.from(container.querySelectorAll('input')).map(i => i.dataset.varName);
-            
+
             Array.from(container.children).forEach(child => {
                 const input = child.querySelector('input');
                 if (input && !vars.includes(input.dataset.varName)) child.remove();
@@ -539,13 +696,13 @@
                     div.appendChild(input);
                     container.appendChild(div);
                 } else {
-                     const input = container.querySelector(`input[data-var-name="${v}"]`);
-                     if(input && input.value !== variableValues[v] && variableValues[v] !== undefined) {
-                         input.value = variableValues[v];
-                     }
+                    const input = container.querySelector(`input[data-var-name="${v}"]`);
+                    if (input && input.value !== variableValues[v] && variableValues[v] !== undefined) {
+                        input.value = variableValues[v];
+                    }
                 }
             });
-            
+
             if (vars.length === 0) {
                 container.innerHTML = '<div class="col-span-2 text-center text-gray-400 dark:text-gray-500 text-sm py-2">Žiadne premenné nenájdené. Pridaj {nieco} do textu.</div>';
             }
@@ -555,7 +712,7 @@
 
         async function callGemini(prompt) {
             const key = getApiKey();
-            if(!key) {
+            if (!key) {
                 openSettingsModal();
                 showToast("Najprv vlož API kľúč", true);
                 throw new Error("Missing API Key");
@@ -594,7 +751,7 @@
 
             const btnText = document.getElementById('btnGenText');
             const loader = document.getElementById('btnGenLoader');
-            
+
             btnText.textContent = "Generujem...";
             loader.classList.remove('hidden');
 
@@ -612,14 +769,14 @@
                 let result = await callGemini(prompt);
                 result = result.replace(/```json/g, '').replace(/```/g, '').trim();
                 const data = JSON.parse(result);
-                
+
                 document.getElementById('emailSubject').value = data.subject;
                 document.getElementById('emailBody').value = data.body;
                 updatePreview();
                 closeModal('aiModal');
                 showToast("Šablóna vygenerovaná! ✨");
             } catch (err) {
-                if(err.message !== "Missing API Key") showToast("Chyba pri generovaní.", true);
+                if (err.message !== "Missing API Key") showToast("Chyba pri generovaní.", true);
             } finally {
                 btnText.textContent = "Vygenerovať";
                 loader.classList.add('hidden');
@@ -637,7 +794,7 @@
 
             const btnText = document.getElementById('btnReplyText');
             const loader = document.getElementById('btnReplyLoader');
-            
+
             btnText.textContent = "Spracovávam...";
             loader.classList.remove('hidden');
 
@@ -662,16 +819,16 @@
                 let result = await callGemini(prompt);
                 result = result.replace(/```json/g, '').replace(/```/g, '').trim();
                 const data = JSON.parse(result);
-                
+
                 document.getElementById('emailSubject').value = data.subject;
                 document.getElementById('emailBody').value = data.body;
                 document.getElementById('templateName').value = "Odpoveď na email";
-                
+
                 updatePreview();
                 closeModal('replyModal');
                 showToast("Odpoveď vytvorená! ✨");
             } catch (err) {
-                if(err.message !== "Missing API Key") showToast("Chyba pri generovaní odpovede.", true);
+                if (err.message !== "Missing API Key") showToast("Chyba pri generovaní odpovede.", true);
             } finally {
                 btnText.textContent = "Vytvoriť odpoveď";
                 loader.classList.add('hidden');
@@ -699,7 +856,7 @@
                 updatePreview();
                 showToast("Text vylepšený! ✨");
             } catch (err) {
-                 if(err.message !== "Missing API Key") showToast("Nepodarilo sa vylepšiť text", true);
+                if (err.message !== "Missing API Key") showToast("Nepodarilo sa vylepšiť text", true);
             } finally {
                 loader.classList.add('hidden');
             }
@@ -724,7 +881,7 @@
                 updatePreview();
                 showToast("Predmet navrhnutý! ✨");
             } catch (err) {
-                if(err.message !== "Missing API Key") showToast("Chyba pri návrhu", true);
+                if (err.message !== "Missing API Key") showToast("Chyba pri návrhu", true);
             } finally {
                 loader.classList.add('hidden');
             }
@@ -765,7 +922,7 @@
             list.innerHTML = '';
             templates.slice().reverse().forEach((t) => {
                 const div = document.createElement('div');
-                div.className = "p-3 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-gray-700 group border border-transparent hover:border-blue-100 dark:hover:border-gray-600 transition-all";
+                div.className = "p-3 rounded-lg cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-700 group border border-transparent hover:border-primary-100 dark:hover:border-gray-600 transition-all";
                 div.onclick = () => selectTemplate(t.id);
                 div.innerHTML = `
                     <div class="flex justify-between items-start">
@@ -786,14 +943,14 @@
                 document.getElementById('templateName').value = t.name;
                 document.getElementById('emailSubject').value = t.subject;
                 document.getElementById('emailBody').value = t.body;
-                autoFillDateVariables(); 
+                autoFillDateVariables();
                 updatePreview();
             }
         }
 
         function deleteTemplate(e, id) {
             e.stopPropagation();
-            if(confirm('Naozaj vymazať?')) {
+            if (confirm('Naozaj vymazať?')) {
                 templates = templates.filter(t => t.id !== id);
                 saveTemplatesToStorage();
                 renderTemplateList();
@@ -862,4 +1019,5 @@
 
     </script>
 </body>
+
 </html>
