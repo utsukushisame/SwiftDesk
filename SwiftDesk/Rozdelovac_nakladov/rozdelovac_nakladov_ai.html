@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI rozdeľovač nákladov</title>
+    
+    <!-- PWA Settings -->
+    <meta name="theme-color" content="#7c3aed">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="application-name" content="Výdavky AI">
+    <meta name="apple-mobile-web-app-title" content="Výdavky AI">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Markdown parser for AI responses -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .input-field { transition: all 0.2s; }
+        .input-field:focus { ring: 2px; outline: none; }
+        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid #ffffff;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen pb-20">
+
+    <!-- PWA Installation Script & Manifest Injection -->
+    <script>
+        // 1. Generate Dynamic Icon (SVG) - Brain Circuit
+        // Background: Violet-600 (#7c3aed), Icon: White (#ffffff)
+        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <rect width="512" height="512" rx="100" fill="#7c3aed"/>
+            <g transform="translate(106, 106) scale(12.5)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
+                <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
+                <path d="M12 18v4" />
+                <path d="M4.5 22h15" />
+                <circle cx="4.5" cy="22" r="1" fill="#ffffff" stroke="none"/>
+                <circle cx="19.5" cy="22" r="1" fill="#ffffff" stroke="none"/>
+            </g>
+        </svg>`;
+        
+        // Encode for URL
+        const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(iconSvg)));
+
+        // 2. Inject Favicon
+        const linkIcon = document.createElement('link');
+        linkIcon.rel = 'icon';
+        linkIcon.href = iconUrl;
+        document.head.appendChild(linkIcon);
+
+        const linkApple = document.createElement('link');
+        linkApple.rel = 'apple-touch-icon';
+        linkApple.href = iconUrl;
+        document.head.appendChild(linkApple);
+
+        // 3. Inject Manifest
+        const manifest = {
+            "name": "AI rozdeľovač nákladov",
+            "short_name": "Výdavky AI",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#f1f5f9",
+            "theme_color": "#7c3aed",
+            "icons": [
+                { "src": iconUrl, "sizes": "192x192", "type": "image/svg+xml" },
+                { "src": iconUrl, "sizes": "512x512", "type": "image/svg+xml" }
+            ]
+        };
+        const linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(manifest));
+        document.head.appendChild(linkManifest);
+    </script>
+
+    <div class="max-w-6xl mx-auto bg-white md:rounded-2xl shadow-xl overflow-hidden min-h-screen md:min-h-0 relative">
+        <!-- Header -->
+        <div class="bg-indigo-600 p-6 text-white text-center relative">
+            <h1 class="text-2xl font-bold uppercase tracking-wider flex justify-center items-center gap-2">
+                <i class="fas fa-robot"></i> AI Rozdeľovač
+            </h1>
+            <p class="text-indigo-200 text-sm mt-1">Skenuj bločky & generuj správy</p>
+            
+            <button id="install-btn" onclick="installApp()" class="hidden absolute top-4 right-4 bg-white text-indigo-600 text-xs font-bold px-3 py-2 rounded-full shadow-lg hover:bg-indigo-50 transition animate-pulse">
+                <i class="fas fa-download mr-1"></i> Inštalovať
+            </button>
+        </div>
+
+        <div class="p-4 md:p-6 grid gap-6 md:gap-8">
+            
+            <!-- AI Settings & API Key -->
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                <button onclick="toggleApiKey()" class="flex items-center justify-between w-full text-left">
+                    <h2 class="text-sm font-bold text-indigo-800 flex items-center gap-2">
+                        <i class="fas fa-key text-yellow-500"></i> Gemini API Kľúč
+                    </h2>
+                    <i id="chevron-icon" class="fas fa-chevron-down text-indigo-400 text-xs transition-transform"></i>
+                </button>
+                <div id="api-key-container" class="hidden mt-3">
+                    <p class="text-xs text-slate-500 mb-2">Pre funkcie AI (skenovanie, zhrnutie) zadajte svoj Google Gemini API kľúč. Kľúč sa uloží len vo vašom zariadení.</p>
+                    <div class="flex gap-2">
+                        <input type="password" id="api-key-input" placeholder="Vložte API kľúč (AIza...)" class="input-field flex-1 p-2 border border-indigo-200 rounded text-sm bg-white">
+                        <button onclick="saveApiKey()" class="bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-indigo-700">Uložiť</button>
+                    </div>
+                    <div class="mt-1">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-indigo-500 underline hover:text-indigo-700">Získať API kľúč zadarmo</a>
+                    </div>
+                </div>
+                <div id="api-key-status" class="hidden mt-2 text-xs font-bold text-green-600 flex items-center gap-1">
+                    <i class="fas fa-check-circle"></i> Kľúč je uložený a pripravený
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide"><i class="fas fa-sliders-h mr-2"></i>Konfigurácia</h2>
+                <div class="flex flex-wrap items-end gap-4">
+                    <div class="flex-1 min-w-[100px]">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Počet osôb</label>
+                        <input type="number" id="config-people" value="7" min="2" max="20" class="input-field w-full p-2 border border-slate-300 rounded text-center font-bold text-lg text-slate-700">
+                    </div>
+                    <div class="flex-1 min-w-[100px]">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Počet platieb</label>
+                        <input type="number" id="config-payments" value="3" min="1" max="20" class="input-field w-full p-2 border border-slate-300 rounded text-center font-bold text-lg text-slate-700">
+                    </div>
+                    <button onclick="applyConfig()" class="w-full md:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-6 rounded shadow-sm transition">
+                        <i class="fas fa-sync-alt mr-2"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Names -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2"><i class="fas fa-users mr-2 text-indigo-500"></i>1. Kto sa skladá?</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3" id="names-container"></div>
+            </div>
+
+            <!-- Payments with AI Scan -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <h2 class="text-lg font-semibold text-slate-800"><i class="fas fa-receipt mr-2 text-green-500"></i>2. Platby</h2>
+                    
+                    <!-- AI Scan Button -->
+                    <div>
+                        <input type="file" id="receipt-upload" accept="image/*" class="hidden" onchange="handleReceiptUpload(this)">
+                        <button onclick="document.getElementById('receipt-upload').click()" class="text-xs bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-2 rounded-lg shadow hover:opacity-90 transition flex items-center gap-2">
+                            <i class="fas fa-camera"></i> <span class="hidden sm:inline">Skenovať Bloček (AI)</span>
+                            <span id="scan-spinner" class="spinner hidden"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid gap-4" id="payments-container"></div>
+            </div>
+
+            <!-- Results -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold"><i class="fas fa-list-ol mr-2"></i>Výsledok</h2>
+                    <button onclick="window.print()" class="text-xs bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded transition">
+                        <i class="fas fa-print mr-1"></i> PDF
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100 border-b">
+                            <tr id="table-header-row"></tr>
+                        </thead>
+                        <tbody id="result-body"></tbody>
+                        <tfoot class="bg-slate-50 font-bold text-slate-800 border-t-2 border-slate-200">
+                            <tr id="table-footer-row"></tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <!-- AI Summary Generation -->
+                <div class="p-4 bg-indigo-50 border-t border-indigo-100">
+                    <button id="btn-generate-summary" onclick="generateAiSummary()" class="w-full bg-white border border-indigo-200 text-indigo-600 font-bold py-3 rounded-lg hover:bg-indigo-50 transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fas fa-magic text-purple-500"></i> <span>Vygenerovať správu pre skupinu (AI)</span>
+                        <span id="summary-spinner" class="spinner hidden !border-slate-300 !border-t-indigo-600"></span>
+                    </button>
+                    
+                    <div id="ai-summary-result" class="hidden mt-4 bg-white p-4 rounded border border-indigo-200 text-sm text-slate-700 relative group">
+                        <h4 class="text-xs font-bold text-purple-600 uppercase mb-2">✨ Návrh správy:</h4>
+                        <div id="ai-summary-text" class="prose prose-sm max-w-none"></div>
+                        <button onclick="copySummary()" class="absolute top-2 right-2 text-slate-400 hover:text-indigo-600 p-2" title="Kopírovať">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-xs text-slate-400 pb-2">
+                Logika: Suma sa delí medzi (Počet všetkých - Počet neplatiacich). AI funkcie vyžadujú API kľúč.
+            </div>
+
+        </div>
+    </div>
+
+    <!-- AI Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm hidden z-50 transition-opacity duration-300">
+        Správa
+    </div>
+
+    <script>
+        // --- GEMINI AI LOGIC ---
+        
+        // Helper to get API key
+        function getApiKey() {
+            return localStorage.getItem('gemini_api_key') || '';
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('api-key-input');
+            if (input.value.trim().length > 0) {
+                localStorage.setItem('gemini_api_key', input.value.trim());
+                checkApiKey();
+                showToast("API Kľúč uložený! ✅");
+                toggleApiKey(); // Close the drawer
+            }
+        }
+
+        function checkApiKey() {
+            const key = getApiKey();
+            if (key) {
+                document.getElementById('api-key-status').classList.remove('hidden');
+                document.getElementById('api-key-input').value = key;
+            }
+        }
+
+        function toggleApiKey() {
+            const container = document.getElementById('api-key-container');
+            const icon = document.getElementById('chevron-icon');
+            container.classList.toggle('hidden');
+            if (container.classList.contains('hidden')) {
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // Feature 1: Scan Receipt (Image to Text)
+        async function handleReceiptUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                alert("Prosím, najprv zadajte váš Gemini API kľúč v nastaveniach hore.");
+                input.value = ''; 
+                toggleApiKey(); // Open settings
+                return;
+            }
+
+            const btn = input.nextElementSibling; // The button
+            const spinner = document.getElementById('scan-spinner');
+            
+            // UI Loading state
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            spinner.classList.remove('hidden');
+
+            try {
+                const base64Data = await fileToBase64(file);
+                // Remove data prefix for API
+                const base64Content = base64Data.split(',')[1];
+                const mimeType = file.type;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: "Analyze this receipt image. Extract the Merchant Name/Category and the Total Amount. Return ONLY a JSON object with keys 'description' (string) and 'amount' (number). Example: {\"description\": \"Tesco\", \"amount\": 23.50}. Do not format as markdown." },
+                                { inline_data: { mime_type: mimeType, data: base64Content } }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) throw new Error(data.error.message);
+
+                const text = data.candidates[0].content.parts[0].text;
+                // Basic JSON cleanup if model wraps in ```json ... ```
+                const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                const result = JSON.parse(cleanJson);
+
+                // Add to state
+                addPaymentFromAI(result.description, result.amount);
+                showToast(`Pridané: ${result.description} (${result.amount}€) ✨`);
+
+            } catch (error) {
+                console.error(error);
+                alert("Chyba pri skenovaní: " + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                spinner.classList.add('hidden');
+                input.value = ''; // Reset input
+            }
+        }
+
+        // Feature 2: Generate Summary (Text to Text)
+        async function generateAiSummary() {
+            const apiKey = getApiKey();
+            if (!apiKey) {
+                alert("Prosím, najprv zadajte váš Gemini API kľúč v nastaveniach hore.");
+                toggleApiKey();
+                return;
+            }
+
+            const btn = document.getElementById('btn-generate-summary');
+            const spinner = document.getElementById('summary-spinner');
+            const resultDiv = document.getElementById('ai-summary-result');
+            const textDiv = document.getElementById('ai-summary-text');
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            try {
+                // Prepare context data
+                const context = {
+                    people: state.names,
+                    payments: state.payments,
+                    // We need calculation results too, but we can let AI infer or we calculate briefly
+                    note: "Generate a friendly, fun Slovak message for a group chat (WhatsApp). Summarize who pays what total based on the logic: Expenses are split among everyone except those marked as exempt. Use emojis."
+                };
+                
+                // Get totals for better context
+                const totals = calculateTotalsForAI();
+                context.calculated_totals = totals;
+
+                const prompt = `Act as a helpful financial assistant. Here is the expense data for a group trip/event: ${JSON.stringify(context)}. 
+                Write a short, clear, and fun summary message in Slovak language. 
+                - List who needs to pay how much in total. 
+                - Be polite. 
+                - Use emojis.
+                - Do not explain the math, just the results.`;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+
+                const text = data.candidates[0].content.parts[0].text;
+                textDiv.innerHTML = marked.parse(text);
+                resultDiv.classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                alert("Chyba AI: " + error.message);
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Helper: Calculate totals for AI prompt context
+        function calculateTotalsForAI() {
+            const personCount = state.names.length;
+            let personTotals = new Array(personCount).fill(0);
+            
+            state.payments.forEach((p) => {
+                const amount = parseFloat(p.amount) || 0;
+                if (amount > 0) {
+                    const uniqueExempts = new Set(p.exemptIndices);
+                    const payingCount = personCount - uniqueExempts.size;
+                    if (payingCount > 0) {
+                        const share = amount / payingCount;
+                        state.names.forEach((_, idx) => {
+                            if (!uniqueExempts.has(idx)) personTotals[idx] += share;
+                        });
+                    }
+                }
+            });
+            
+            // Map names to totals
+            let result = {};
+            state.names.forEach((name, idx) => {
+                result[name] = personTotals[idx].toFixed(2);
+            });
+            return result;
+        }
+
+        function addPaymentFromAI(desc, amount) {
+            // Find first empty payment slot or create new
+            let emptyIdx = state.payments.findIndex(p => p.amount === 0 && p.desc.startsWith('Platba'));
+            
+            if (emptyIdx !== -1) {
+                // Update existing empty slot
+                state.payments[emptyIdx].desc = desc;
+                state.payments[emptyIdx].amount = amount;
+                
+                // Update input values directly to reflect change
+                const inputs = document.getElementById('payments-container').children[emptyIdx].querySelectorAll('input');
+                inputs[0].value = desc; // desc input
+                inputs[1].value = amount; // amount input
+            } else {
+                // Add new payment row
+                const personCount = state.names.length;
+                const newPayment = {
+                    desc: desc,
+                    amount: amount,
+                    exemptIndices: [0] // Default exempt
+                };
+                state.payments.push(newPayment);
+                
+                // Update config input
+                document.getElementById('config-payments').value = state.payments.length;
+                renderPaymentInputs();
+            }
+            calculateAndRenderTable();
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function copySummary() {
+            const text = document.getElementById('ai-summary-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Skopírované! 📋");
+            });
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.classList.remove('hidden');
+            t.classList.remove('opacity-0');
+            setTimeout(() => {
+                t.classList.add('opacity-0');
+                setTimeout(() => t.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // --- APP LOGIC (EXISTING) ---
+        // PWA Install
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.classList.remove('hidden');
+        });
+        async function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') installBtn.classList.add('hidden');
+                deferredPrompt = null;
+            }
+        }
+
+        let state = {
+            names: [],
+            payments: [] 
+        };
+
+        function init() {
+            checkApiKey();
+            applyConfig();
+        }
+
+        function applyConfig() {
+            const personCount = parseInt(document.getElementById('config-people').value) || 2;
+            const paymentCount = parseInt(document.getElementById('config-payments').value) || 1;
+            
+            // 1. Resize Names array
+            const oldNames = [...state.names];
+            state.names = [];
+            for (let i = 0; i < personCount; i++) {
+                state.names.push(oldNames[i] || `Osoba ${i + 1}`);
+            }
+
+            // 2. Resize Payments array
+            const oldPayments = [...state.payments];
+            state.payments = [];
+            
+            // If user explicitly asks for more payments via input, ensure we respect that count
+            // even if oldPayments had fewer. If less, we slice.
+            const targetCount = Math.max(paymentCount, oldPayments.length > 0 ? oldPayments.length : paymentCount); 
+            // Actually, reset logic dictates we respect the INPUT count mostly, but let's try to keep data if increasing
+            
+            for (let i = 0; i < paymentCount; i++) {
+                let newPayment = {
+                    desc: `Platba ${i + 1}`,
+                    amount: 0,
+                    exemptIndices: [0] 
+                };
+
+                if (oldPayments[i]) {
+                    newPayment.desc = oldPayments[i].desc;
+                    newPayment.amount = oldPayments[i].amount;
+                    let restoredIndices = [...oldPayments[i].exemptIndices];
+                    restoredIndices = restoredIndices.filter(idx => idx < personCount);
+                    
+                    const maxExempt = Math.max(0, personCount - 1);
+                    if (restoredIndices.length > maxExempt) {
+                        restoredIndices = restoredIndices.slice(0, maxExempt);
+                    }
+                    newPayment.exemptIndices = restoredIndices;
+                } else {
+                     newPayment.exemptIndices = [(i % personCount)];
+                     if (newPayment.exemptIndices[0] >= personCount) newPayment.exemptIndices = [0];
+                }
+                state.payments.push(newPayment);
+            }
+
+            renderUI();
+        }
+
+        function renderUI() {
+            renderNamesInputs();
+            renderPaymentInputs();
+            calculateAndRenderTable();
+        }
+
+        function renderNamesInputs() {
+            const container = document.getElementById('names-container');
+            container.innerHTML = '';
+            
+            state.names.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wide">Meno ${index + 1}</label>
+                    <input type="text" value="${name}" 
+                        class="w-full p-2 border border-slate-200 rounded text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 input-field bg-slate-50 focus:bg-white"
+                        onchange="updateName(${index}, this.value)">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderPaymentInputs() {
+            const container = document.getElementById('payments-container');
+            container.innerHTML = '';
+
+            const personCount = state.names.length;
+            const maxExempt = Math.max(0, personCount - 1);
+
+            state.payments.forEach((payment, index) => {
+                const div = document.createElement('div');
+                div.className = "grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-slate-50 p-4 rounded-lg border border-slate-200";
+                
+                const currentExemptCount = payment.exemptIndices.length;
+
+                // Build dropdowns
+                let selectsHtml = '';
+                if (currentExemptCount > 0) {
+                    for(let k=0; k < currentExemptCount; k++) {
+                        let options = '';
+                        state.names.forEach((name, pIdx) => {
+                            const selected = (pIdx === payment.exemptIndices[k]) ? 'selected' : '';
+                            options += `<option value="${pIdx}" ${selected}>${name}</option>`;
+                        });
+                        
+                        selectsHtml += `
+                            <select class="input-field w-full p-2 mb-1 border border-red-200 bg-white rounded text-red-700 text-sm focus:border-red-500"
+                                onchange="updatePaymentExemptIndex(${index}, ${k}, this.value)">
+                                ${options}
+                            </select>
+                        `;
+                    }
+                } else {
+                    selectsHtml = `<div class="text-xs text-gray-400 italic p-2 mt-1"><i class="fas fa-check-circle text-green-500 mr-1"></i>Všetci platia</div>`;
+                }
+
+                div.innerHTML = `
+                    <div class="md:col-span-4 mt-1">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Popis</label>
+                        <input type="text" value="${payment.desc}" 
+                            class="input-field w-full p-2 border border-gray-300 rounded focus:border-indigo-500 focus:ring-indigo-500 bg-white" 
+                            onchange="updatePayment(${index}, 'desc', this.value)">
+                    </div>
+                    <div class="md:col-span-3 mt-1">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Suma (€)</label>
+                        <input type="number" inputmode="decimal" value="${payment.amount === 0 ? '' : payment.amount}" placeholder="0.00" min="0" step="0.01" 
+                            class="input-field w-full p-2 border border-gray-300 rounded focus:border-indigo-500 focus:ring-indigo-500 font-mono text-lg bg-white" 
+                            onchange="updatePayment(${index}, 'amount', this.value)">
+                    </div>
+                    <div class="md:col-span-5 bg-red-100/30 p-3 rounded border border-red-100 mt-2 md:mt-0">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-[10px] font-bold text-red-500 uppercase flex items-center"><i class="fas fa-user-slash mr-1"></i>Kto neplatí?</label>
+                            <div class="flex items-center gap-2 bg-white rounded border border-red-100 px-2 py-1">
+                                <span class="text-[10px] text-red-400 uppercase font-bold">Počet:</span>
+                                <input type="number" inputmode="numeric" min="0" max="${maxExempt}" value="${currentExemptCount}" 
+                                    class="w-10 text-center text-sm font-bold text-red-700 focus:outline-none"
+                                    onchange="updatePaymentExemptCount(${index}, this.value)">
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            ${selectsHtml}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function calculateAndRenderTable() {
+            const personCount = state.names.length;
+            
+            // Header
+            const thead = document.getElementById('table-header-row');
+            let headerHtml = '<th class="px-4 py-3 bg-slate-50 sticky left-0 z-10 border-b">Osoba</th>';
+            state.payments.forEach((p, i) => {
+                headerHtml += `<th class="px-4 py-3 border-b min-w-[100px]">${p.desc}</th>`;
+            });
+            headerHtml += '<th class="px-4 py-3 bg-indigo-50 text-indigo-700 font-bold border-l border-b text-right sticky right-0 z-10">SPOLU</th>';
+            thead.innerHTML = headerHtml;
+
+            // Calculations
+            let personTotals = new Array(personCount).fill(0);
+            let paymentShares = state.names.map(() => new Array(state.payments.length).fill(0));
+            let paymentTotals = new Array(state.payments.length).fill(0);
+            let grandTotal = 0;
+
+            state.payments.forEach((p, pIdx) => {
+                const amount = parseFloat(p.amount) || 0;
+                paymentTotals[pIdx] = amount;
+                grandTotal += amount;
+
+                if (amount > 0) {
+                    const uniqueExempts = new Set(p.exemptIndices);
+                    const payingCount = personCount - uniqueExempts.size;
+                    
+                    if (payingCount > 0) {
+                        const share = amount / payingCount;
+                        state.names.forEach((_, personIdx) => {
+                            if (!uniqueExempts.has(personIdx)) {
+                                paymentShares[personIdx][pIdx] = share;
+                                personTotals[personIdx] += share;
+                            } else {
+                                paymentShares[personIdx][pIdx] = -1; 
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Render Body
+            const tbody = document.getElementById('result-body');
+            tbody.innerHTML = '';
+
+            state.names.forEach((name, personIdx) => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-white border-b hover:bg-slate-50 transition";
+                
+                let cells = `<td class="px-4 py-4 font-medium text-slate-900 sticky left-0 bg-white border-r md:border-r-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] md:shadow-none">${name}</td>`;
+                
+                state.payments.forEach((p, pIdx) => {
+                    const shareVal = paymentShares[personIdx][pIdx];
+                    const isExempt = (shareVal === -1);
+                    
+                    const cellClass = isExempt ? "text-slate-300 italic text-xs" : "font-mono text-slate-700";
+                    const cellContent = isExempt ? "neplatí" : formatMoney(shareVal);
+                    
+                    cells += `<td class="px-4 py-4 ${cellClass}">${cellContent}</td>`;
+                });
+
+                cells += `<td class="px-4 py-4 text-right font-bold font-mono text-indigo-600 bg-indigo-50 border-l border-indigo-100 sticky right-0 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] md:shadow-none">${formatMoney(personTotals[personIdx])}</td>`;
+                
+                tr.innerHTML = cells;
+                tbody.appendChild(tr);
+            });
+
+            // Footer
+            const tfoot = document.getElementById('table-footer-row');
+            let footerHtml = '<td class="px-4 py-3 sticky left-0 bg-slate-50 z-10 border-t-2 border-slate-200">CELKOM</td>';
+            paymentTotals.forEach(t => {
+                footerHtml += `<td class="px-4 py-3 font-mono border-t-2 border-slate-200">${formatMoney(t)}</td>`;
+            });
+            footerHtml += `<td class="px-4 py-3 text-right bg-indigo-50 text-indigo-700 font-mono border-t-2 border-slate-200 sticky right-0 z-10">${formatMoney(grandTotal)}</td>`;
+            tfoot.innerHTML = footerHtml;
+        }
+
+        // --- UPDATERS ---
+        function updateName(index, value) {
+            state.names[index] = value;
+            renderPaymentInputs(); 
+            calculateAndRenderTable();
+        }
+
+        function updatePayment(index, field, value) {
+            if (field === 'amount') value = parseFloat(value);
+            state.payments[index][field] = value;
+            calculateAndRenderTable();
+        }
+
+        function updatePaymentExemptCount(paymentIndex, newCountStr) {
+            let newCount = parseInt(newCountStr);
+            const personCount = state.names.length;
+            const maxExempt = Math.max(0, personCount - 1);
+            if (isNaN(newCount) || newCount < 0) newCount = 0;
+            if (newCount > maxExempt) newCount = maxExempt;
+
+            let indices = state.payments[paymentIndex].exemptIndices;
+            if (newCount > indices.length) {
+                while (indices.length < newCount) {
+                    let candidate = 0;
+                    while(indices.includes(candidate) && candidate < personCount) candidate++;
+                    if (candidate >= personCount) candidate = 0;
+                    indices.push(candidate);
+                }
+            } else if (newCount < indices.length) {
+                indices = indices.slice(0, newCount);
+            }
+            state.payments[paymentIndex].exemptIndices = indices;
+            renderPaymentInputs(); 
+            calculateAndRenderTable();
+        }
+
+        function updatePaymentExemptIndex(paymentIndex, slotIndex, value) {
+            state.payments[paymentIndex].exemptIndices[slotIndex] = parseInt(value);
+            calculateAndRenderTable();
+        }
+
+        function formatMoney(amount) {
+            return amount.toFixed(2) + ' €';
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

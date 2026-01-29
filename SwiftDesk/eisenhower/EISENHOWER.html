@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eisenhowerova matica</title>
+    <!-- Favicon (Tab Logo) - Emerald-600 background, White lines -->
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23059669'/%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7' rx='1'/%3E%3Crect x='14' y='3' width='7' height='7' rx='1'/%3E%3Crect x='14' y='14' width='7' height='7' rx='1'/%3E%3Crect x='3' y='14' width='7' height='7' rx='1'/%3E%3C/g%3E%3C/svg%3E">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- Flatpickr for Custom Datepicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/sk.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#1e293b' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --q1-color: #ef4444;
+            --q2-color: #3b82f6;
+            --q3-color: #eab308;
+            --q4-color: #6b7280;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Flatpickr Customization */
+        .flatpickr-calendar {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+            border: none !important;
+        }
+
+        .dark .flatpickr-calendar {
+            background: #1e293b;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .dark .flatpickr-day {
+            color: #cbd5e1;
+        }
+
+        .dark .flatpickr-day:hover {
+            background: #334155;
+        }
+
+        .dark .flatpickr-months .flatpickr-month {
+            color: #fff;
+            fill: #fff;
+        }
+
+        .dark .flatpickr-current-month .flatpickr-monthDropdown-months {
+            background: #1e293b;
+        }
+
+        .dark .flatpickr-weekday {
+            color: #94a3b8;
+        }
+
+        .dark .flatpickr-time {
+            border-top: 1px solid #334155;
+        }
+
+        .dark .flatpickr-time input {
+            color: #fff;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .dark .custom-scroll::-webkit-scrollbar-thumb {
+            background: #475569;
+        }
+
+        .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .task-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: manipulation;
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            cursor: grabbing;
+        }
+
+        .drop-zone {
+            transition: background-color 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px dashed #94a3b8;
+        }
+
+        .dark .drop-zone.drag-over {
+            background-color: rgba(30, 41, 59, 0.8);
+            border-color: #475569;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .timer-running {
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin-fast {
+            animation: spin 0.8s linear infinite;
+        }
+    </style>
+</head>
+
+<body
+    class="h-screen flex flex-col overflow-hidden bg-[#f8fafc] text-[#1e293b] dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
+
+    <!-- Navbar -->
+    <header
+        class="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 md:px-6 py-3 flex flex-col lg:flex-row justify-between items-center gap-4 z-20 shadow-sm transition-colors duration-300">
+        <!-- Title & Logo -->
+        <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+            <div class="flex items-center gap-3">
+                <div
+                    class="bg-emerald-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow-md dark:shadow-none shrink-0 overflow-hidden">
+                    <!-- Lucide Layout Grid Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="7" x="3" y="3" rx="1" />
+                        <rect width="7" height="7" x="14" y="3" rx="1" />
+                        <rect width="7" height="7" x="14" y="14" rx="1" />
+                        <rect width="7" height="7" x="3" y="14" rx="1" />
+                    </svg>
+                </div>
+                <h1
+                    class="text-lg font-bold text-gray-800 dark:text-white leading-tight whitespace-nowrap tracking-tight">
+                    Eisenhowerova matica</h1>
+            </div>
+
+            <!-- Mobile Toggle for Settings -->
+            <button onclick="app.ui.openModal('settingsModal')"
+                class="flex lg:hidden items-center text-gray-600 dark:text-slate-400 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition"><i
+                    class="fas fa-cog text-xl"></i></button>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-col md:flex-row items-center w-full lg:w-auto gap-3">
+            <div
+                class="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center bg-gray-50 dark:bg-slate-800/50 p-1 rounded-xl border border-gray-100 dark:border-slate-700">
+                <!-- Stats -->
+                <button onclick="app.ui.toggleStats()"
+                    class="flex items-center gap-2 text-gray-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition text-sm font-medium"
+                    title="Štatistiky">
+                    <i class="fas fa-chart-pie"></i> <span class="hidden md:inline">Produktivita</span>
+                </button>
+
+                <!-- Completed -->
+                <button onclick="app.ui.toggleCompleted()"
+                    class="flex items-center gap-2 text-gray-600 dark:text-slate-400 hover:text-green-600 hover:bg-white dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition text-sm font-medium"
+                    title="Splnené úlohy">
+                    <i class="fas fa-check-circle"></i> <span class="hidden md:inline">Splnené</span>
+                </button>
+
+                <!-- Settings Button -->
+                <button onclick="app.ui.openModal('settingsModal')"
+                    class="hidden lg:flex items-center gap-2 text-gray-600 dark:text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition text-sm font-medium"
+                    title="Nastavenia">
+                    <i class="fas fa-cog"></i> <span class="hidden md:inline">Nastavenia</span>
+                </button>
+            </div>
+
+            <div class="flex w-full md:w-auto gap-2">
+                <!-- AI Sort Button -->
+                <button id="magicAddBtn" onclick="app.ai.autoSort()"
+                    class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 px-3 py-2 rounded-xl transition text-sm font-bold flex items-center gap-2 whitespace-nowrap border border-purple-200 dark:border-purple-800/50 shadow-sm"
+                    title="Pretriediť všetky existujúce úlohy cez AI">
+                    <i class="fas fa-star"></i> <span class="hidden md:inline">AI Triediť</span>
+                </button>
+
+                <!-- Input Wrapper -->
+                <div class="relative flex-1 group min-w-[200px] lg:min-w-[250px]">
+                    <input type="text" id="taskInput" placeholder="Nová úloha..."
+                        class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition shadow-sm text-sm text-gray-800 dark:text-white dark:placeholder-slate-500"
+                        onkeydown="if(event.key === 'Enter') app.tasks.add()">
+
+                    <div class="absolute right-1.5 top-1.5 flex gap-1">
+                        <!-- Standard Add Button -->
+                        <button onclick="app.tasks.add()"
+                            class="p-1 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition"
+                            title="Pridať s detailmi">
+                            <i class="fas fa-plus text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Smart Add Button -->
+                <button onclick="app.ui.openModal('smartAddModal')"
+                    class="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white px-3 py-2 rounded-xl shadow-md transition text-sm font-bold shrink-0"
+                    title="Smart Import (z textu)">
+                    <i class="fas fa-robot"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Matrix Grid -->
+    <main class="flex-1 p-4 overflow-hidden relative">
+        <div class="grid grid-cols-1 md:grid-cols-2 grid-rows-2 h-full gap-4 max-w-7xl mx-auto">
+
+            <!-- Q1 -->
+            <section
+                class="flex flex-col bg-red-50/50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30 overflow-hidden relative group transition-colors">
+                <div
+                    class="px-4 py-3 bg-red-100/80 dark:bg-red-900/40 border-b border-red-200 dark:border-red-900/50 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    <h2 class="font-bold text-red-800 dark:text-red-200 text-sm uppercase tracking-wide">
+                        <i class="fas fa-fire-alt"></i> 1. Urob hneď
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.tasks.sort('q1')"
+                            class="text-xs text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800/50 p-1 rounded"
+                            title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
+                        <span
+                            class="text-[10px] font-bold bg-white/50 dark:bg-black/30 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-800/50">Súrne
+                            & Dôležité</span>
+                    </div>
+                </div>
+                <div id="q1" class="drop-zone flex-1 p-3 overflow-y-auto custom-scroll space-y-2"
+                    ondragover="app.dnd.allowDrop(event)" ondrop="app.dnd.drop(event, 'q1')"
+                    ondragleave="app.dnd.leave(event)">
+                </div>
+            </section>
+
+            <!-- Q2 -->
+            <section
+                class="flex flex-col bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/30 overflow-hidden relative group transition-colors">
+                <div
+                    class="px-4 py-3 bg-blue-100/80 dark:bg-blue-900/40 border-b border-blue-200 dark:border-blue-900/50 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    <h2 class="font-bold text-blue-800 dark:text-blue-200 text-sm uppercase tracking-wide">
+                        <i class="fas fa-calendar-check"></i> 2. Naplánuj
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.tasks.sort('q2')"
+                            class="text-xs text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/50 p-1 rounded"
+                            title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
+                        <span
+                            class="text-[10px] font-bold bg-white/50 dark:bg-black/30 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800/50">Nesúrne
+                            & Dôležité</span>
+                    </div>
+                </div>
+                <div id="q2" class="drop-zone flex-1 p-3 overflow-y-auto custom-scroll space-y-2"
+                    ondragover="app.dnd.allowDrop(event)" ondrop="app.dnd.drop(event, 'q2')"
+                    ondragleave="app.dnd.leave(event)"></div>
+            </section>
+
+            <!-- Q3 -->
+            <section
+                class="flex flex-col bg-yellow-50/50 dark:bg-yellow-950/20 rounded-2xl border border-yellow-100 dark:border-yellow-900/30 overflow-hidden relative group transition-colors">
+                <div
+                    class="px-4 py-3 bg-yellow-100/80 dark:bg-yellow-900/40 border-b border-yellow-200 dark:border-yellow-900/50 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    <h2 class="font-bold text-yellow-800 dark:text-yellow-200 text-sm uppercase tracking-wide">
+                        <i class="fas fa-user-clock"></i> 3. Deleguj
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.tasks.sort('q3')"
+                            class="text-xs text-yellow-600 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 p-1 rounded"
+                            title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
+                        <span
+                            class="text-[10px] font-bold bg-white/50 dark:bg-black/30 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full border border-yellow-200 dark:border-yellow-800/50">Súrne
+                            & Nedôležité</span>
+                    </div>
+                </div>
+                <div id="q3" class="drop-zone flex-1 p-3 overflow-y-auto custom-scroll space-y-2"
+                    ondragover="app.dnd.allowDrop(event)" ondrop="app.dnd.drop(event, 'q3')"
+                    ondragleave="app.dnd.leave(event)"></div>
+            </section>
+
+            <!-- Q4 -->
+            <section
+                class="flex flex-col bg-gray-100/50 dark:bg-slate-900/50 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden relative group transition-colors">
+                <div
+                    class="px-4 py-3 bg-gray-200/80 dark:bg-slate-800/80 border-b border-gray-300 dark:border-slate-700 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    <h2 class="font-bold text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wide">
+                        <i class="fas fa-trash-alt"></i> 4. Vymaž
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.tasks.sort('q4')"
+                            class="text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 p-1 rounded"
+                            title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
+                        <span
+                            class="text-[10px] font-bold bg-white/50 dark:bg-black/30 text-gray-600 dark:text-slate-400 px-2 py-0.5 rounded-full border border-gray-300 dark:border-slate-600">Nesúrne
+                            & Nedôležité</span>
+                    </div>
+                </div>
+                <div id="q4" class="drop-zone flex-1 p-3 overflow-y-auto custom-scroll space-y-2"
+                    ondragover="app.dnd.allowDrop(event)" ondrop="app.dnd.drop(event, 'q4')"
+                    ondragleave="app.dnd.leave(event)"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Stopwatch Widget (Left Side) -->
+    <div id="stopwatchWidget"
+        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden z-40 transition-all duration-300 transform"
+        data-open="true">
+        <div class="bg-cyan-700 dark:bg-cyan-900 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
+            onclick="app.stopwatch.toggleCollapse()">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-stopwatch"></i>
+                <span class="font-bold text-sm">Stopky</span>
+            </div>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="swCollapseIcon"></i>
+        </div>
+        <div class="p-5 bg-white dark:bg-slate-900 relative">
+            <div class="text-center mb-6">
+                <div id="swDisplay"
+                    class="text-5xl font-mono font-bold text-gray-800 dark:text-white tracking-tight leading-none">
+                    00:00:00</div>
+                <div class="text-xs font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400 mt-2">Meranie
+                    Času</div>
+            </div>
+            <div class="flex gap-3">
+                <button id="swMainBtn" onclick="app.stopwatch.toggle()"
+                    class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fas fa-play text-xs"></i> Štart
+                </button>
+                <button onclick="app.stopwatch.reset()"
+                    class="px-4 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-600 dark:text-slate-300 rounded-xl transition">
+                    <i class="fas fa-redo text-sm"></i>
+                </button>
+            </div>
+            <button id="swSaveBtn" onclick="app.stopwatch.openSaveModal()"
+                class="w-full mt-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold text-sm shadow hidden">
+                <i class="fas fa-save mr-1"></i> Uložiť Čas
+            </button>
+        </div>
+    </div>
+
+    <!-- Pomodoro Widget (Right Side) -->
+    <div id="pomodoroWidget"
+        class="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden z-40 transition-all duration-300 transform"
+        data-open="true">
+        <div class="bg-gray-900 dark:bg-slate-950 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
+            onclick="app.timer.toggleCollapse()">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" id="timerIndicator" style="display:none">
+                </div>
+                <span class="font-bold text-sm">Pomodoro</span>
+            </div>
+            <i class="fas fa-chevron-down transition-transform duration-300" id="collapseIcon"></i>
+        </div>
+        <div class="p-5 bg-white dark:bg-slate-900 relative">
+            <div class="text-center mb-6">
+                <div id="timerDisplay" class="text-6xl font-mono font-bold text-gray-800 dark:text-white">25:00</div>
+                <p id="currentTaskLabel" class="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate px-2 h-4">--
+                    Žiadna úloha --</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button onclick="app.timer.setMode(25, 'work')"
+                    class="text-xs py-1.5 rounded bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">25m
+                    Práca</button>
+                <button onclick="app.timer.setMode(5, 'break')"
+                    class="text-xs py-1.5 rounded bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">5m
+                    Pauza</button>
+                <button onclick="app.timer.setMode(15, 'break')"
+                    class="text-xs py-1.5 rounded bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">15m
+                    Pauza</button>
+            </div>
+            <div class="flex items-center gap-2 mb-4 pt-3 border-t border-gray-100 dark:border-slate-800">
+                <input type="number" id="customTime"
+                    class="w-12 text-center text-xs border rounded py-1 dark:bg-slate-800 dark:text-white" value="45">
+                <button onclick="app.timer.setCustom()"
+                    class="text-xs bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded dark:text-white">Nastaviť</button>
+            </div>
+            <div class="flex gap-3">
+                <button id="mainBtn" onclick="app.timer.toggle()"
+                    class="flex-1 bg-gray-900 dark:bg-indigo-600 text-white py-2.5 rounded-xl font-bold">Štart</button>
+                <button onclick="app.timer.reset()"
+                    class="px-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 rounded-xl"><i
+                        class="fas fa-redo"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- StopWatch Save Modal -->
+    <div id="swSaveModal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm border border-transparent dark:border-slate-800">
+            <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2"><i
+                    class="fas fa-save text-cyan-500"></i> Uložiť Čas</h3>
+            <div class="space-y-3">
+                <div>
+                    <label
+                        class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Úloha</label>
+                    <select id="swTaskSelect"
+                        class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                        <option value="">-- Vyberte úlohu --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Kedy</label>
+                    <input type="text" id="swDateInput"
+                        class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Trvanie
+                        (minúty)</label>
+                    <input type="number" id="swDurationInput"
+                        class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                </div>
+            </div>
+            <div class="mt-5 flex gap-2">
+                <button onclick="app.stopwatch.confirmSave()"
+                    class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded font-bold transition">Uložiť</button>
+                <button onclick="app.ui.closeModal('swSaveModal')"
+                    class="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 py-2 rounded transition">Zrušiť</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Toast -->
+    <div id="aiToast"
+        class="fixed bottom-24 right-4 md:right-96 z-50 transform translate-y-20 opacity-0 transition-all duration-500 pointer-events-none bg-white dark:bg-slate-800 p-4 rounded-xl shadow-xl border border-indigo-100 dark:border-slate-700 w-72">
+        <div class="flex gap-3">
+            <i class="fas fa-star text-yellow-400 mt-1"></i>
+            <div>
+                <h4 class="font-bold text-sm dark:text-white">Tip od AI</h4>
+                <p id="aiToastMessage" class="text-xs text-gray-600 dark:text-slate-300 italic">...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4 dark:text-white">Nastavenia</h3>
+
+            <!-- Deadline Settings Section -->
+            <div class="mb-6 border-b border-gray-100 dark:border-slate-800 pb-4">
+                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">Farby a
+                    Termíny</label>
+                <div id="deadlineSettingsList" class="space-y-2 mb-3">
+                    <!-- Dynamic Rules Rendered Here -->
+                </div>
+                <button onclick="app.settings.addRule()"
+                    class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1">
+                    <i class="fas fa-plus"></i> Pridať pravidlo
+                </button>
+                <button onclick="app.settings.resetRules()"
+                    class="text-xs text-gray-400 hover:text-gray-600 mt-2 block">Resetovať na predvolené</button>
+            </div>
+            <div class="mb-6 border-b border-gray-100 dark:border-slate-800 pb-4">
+                <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-2">Vzhľad</label>
+                <div class="flex gap-2">
+                    <button onclick="app.theme.toggle()"
+                        class="flex-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 py-2 rounded text-xs font-bold dark:text-white flex items-center justify-center gap-2">
+                        <i class="fas fa-moon dark:hidden"></i><i class="fas fa-sun hidden dark:block"></i> Prepnúť
+                    </button>
+                    <button onclick="app.theme.resetToSystem()"
+                        class="flex-1 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 py-2 rounded text-xs font-bold dark:text-white">
+                        Automaticky
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">API Kľúč</label>
+                <input type="password" id="apiKeyInput"
+                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+            </div>
+            <div class="flex gap-2 mb-4">
+                <button onclick="app.backup.download()"
+                    class="flex-1 bg-gray-100 dark:bg-slate-800 py-2 rounded text-xs font-bold dark:text-white">Záloha
+                    (JSON)</button>
+                <button onclick="app.backup.exportExcel()"
+                    class="flex-1 bg-green-50 text-green-700 border border-green-200 py-2 rounded text-xs font-bold">Stiahnuť
+                    Excel</button>
+                <button onclick="document.getElementById('backupInput').click()"
+                    class="flex-1 bg-gray-100 dark:bg-slate-800 py-2 rounded text-xs font-bold dark:text-white">Obnoviť</button>
+                <input type="file" id="backupInput" class="hidden" accept=".json" onchange="app.backup.restore(this)">
+            </div>
+            <button onclick="app.settings.save()"
+                class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Uložiť</button>
+            <button onclick="app.ui.closeModal('settingsModal')"
+                class="w-full mt-2 text-gray-500 text-sm">Zrušiť</button>
+        </div>
+    </div>
+
+    <!-- Smart Add Modal -->
+    <div id="smartAddModal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-lg">
+            <h3 class="text-xl font-bold mb-4 dark:text-white">Smart Add</h3>
+            <textarea id="smartInputText" rows="4"
+                class="w-full border rounded p-2 text-sm mb-4 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                placeholder="Text..."></textarea>
+            <button id="smartAnalyzeBtn" onclick="app.ai.analyzeSmartAdd()"
+                class="w-full bg-purple-600 text-white py-2 rounded font-bold mb-4">Analyzovať</button>
+            <div id="smartResult" class="hidden space-y-3">
+                <input type="text" id="smartTitle" class="w-full border-b p-1 dark:bg-transparent dark:text-white">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="smartDate" class="w-full border-b p-1 dark:bg-transparent dark:text-white"
+                        placeholder="Čas">
+                    <input type="number" id="smartEst" class="w-full border-b p-1 dark:bg-transparent dark:text-white">
+                </div>
+                <select id="smartQ" class="w-full border-b p-1 dark:bg-transparent dark:text-white">
+                    <option value="q1" class="dark:text-black">1. Urob hneď</option>
+                    <option value="q2" class="dark:text-black">2. Naplánuj</option>
+                    <option value="q3" class="dark:text-black">3. Deleguj</option>
+                    <option value="q4" class="dark:text-black">4. Vymaž</option>
+                </select>
+                <button onclick="app.tasks.saveSmartTask()"
+                    class="w-full bg-green-600 text-white py-2 rounded font-bold">Pridať</button>
+            </div>
+            <button onclick="app.ui.closeModal('smartAddModal')"
+                class="w-full mt-2 text-gray-500 text-sm">Zrušiť</button>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4 dark:text-white" id="editorTitle">Úloha</h3>
+            <input type="text" id="editName"
+                class="w-full border rounded p-2 mb-4 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                placeholder="Názov">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <input type="text" id="editDate"
+                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    placeholder="Termín...">
+                <input type="number" id="editEst"
+                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                    placeholder="Min">
+            </div>
+            <div class="mb-4">
+                <div id="modalSubList" class="space-y-2 mb-2"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="modalSubInput"
+                        class="flex-1 border rounded p-1 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        placeholder="Podúloha..." onkeydown="if(event.key === 'Enter') app.tasks.addTempSub()">
+                    <button onclick="app.tasks.addTempSub()"
+                        class="bg-gray-200 dark:bg-slate-700 px-3 rounded">+</button>
+                </div>
+            </div>
+            <input type="hidden" id="editId">
+            <div class="flex gap-2">
+                <button onclick="app.tasks.saveEditor()" class="flex-1 bg-indigo-600 text-white py-2 rounded font-bold"
+                    id="editorSaveBtn">Uložiť</button>
+                <button onclick="app.ui.closeModal('editModal')"
+                    class="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 py-2 rounded">Zrušiť</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Modal -->
+    <div id="completedModal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold dark:text-white">Splnené</h3>
+                <button onclick="app.ui.closeModal('completedModal')" class="text-gray-500"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div id="completedList" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+        </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-3xl relative">
+            <button onclick="app.ui.toggleStats()" class="absolute top-4 right-4 text-gray-400"><i
+                    class="fas fa-times text-lg"></i></button>
+            <h3 class="text-xl font-bold mb-6 dark:text-white">Prehľad Produktivity</h3>
+
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+                <div class="bg-gray-100 dark:bg-slate-800 rounded-lg p-1 flex">
+                    <button onclick="app.stats.setView('day')" id="viewDayBtn"
+                        class="px-3 py-1.5 rounded text-xs">Deň</button>
+                    <button onclick="app.stats.setView('week')" id="viewWeekBtn"
+                        class="px-3 py-1.5 rounded text-xs">Týždeň</button>
+                    <button onclick="app.stats.setView('month')" id="viewMonthBtn"
+                        class="px-3 py-1.5 rounded text-xs">Mesiac</button>
+                    <button onclick="app.stats.setView('year')" id="viewYearBtn"
+                        class="px-3 py-1.5 rounded text-xs">Rok</button>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="app.stats.move(-1)"
+                        class="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center dark:text-white"><i
+                            class="fas fa-chevron-left"></i></button>
+                    <span id="statsDateLabel" class="text-sm font-bold w-32 text-center dark:text-white">...</span>
+                    <button onclick="app.stats.move(1)"
+                        class="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center dark:text-white"><i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <div class="h-64 w-full flex items-end justify-between gap-1 pb-2" id="statsChart"></div>
+            <div class="flex justify-between text-[10px] text-gray-400 font-medium uppercase h-4" id="statsLabels">
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-100 dark:border-slate-800 grid grid-cols-2 gap-4 text-center">
+                <div class="p-3 bg-indigo-50 dark:bg-slate-800 rounded-xl">
+                    <div class="text-xs text-indigo-400 uppercase font-bold mb-1">Celkový Čas</div>
+                    <div class="text-2xl font-bold dark:text-white" id="statsTotalTime">0m</div>
+                </div>
+                <div class="p-3 bg-indigo-50 dark:bg-slate-800 rounded-xl">
+                    <div class="text-xs text-indigo-400 uppercase font-bold mb-1">Sedenia</div>
+                    <div class="text-2xl font-bold dark:text-white" id="statsTotalSessions">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Modal -->
+    <div id="alertModal" class="hidden fixed inset-0 bg-gray-900/50 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm text-center">
+            <h3 id="alertTitle" class="text-lg font-bold mb-2 dark:text-white">Upozornenie</h3>
+            <p id="alertMsg" class="text-sm text-gray-500 dark:text-slate-400 mb-6">Správa...</p>
+            <button onclick="document.getElementById('alertModal').classList.add('hidden')"
+                class="w-full bg-gray-900 dark:bg-slate-700 text-white py-2 rounded font-bold">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const safeSetText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
+
+        const app = {
+            data: {
+                tasks: [],
+                stats: {},
+                apiKey: "",
+                tempSubs: [],
+                deadlineSettings: [
+                    { id: 'OVERDUE', label: 'Po termíne', color: '#7f1d1d', threshold: 0 },   // Burgundy (Past)
+                    { id: 'URGENT', label: 'Moje nervy (48h)', color: '#ef4444', threshold: 48 }, // Red (Today/Tmrw)
+                    { id: 'COMFORT', label: 'Pohodička (7 dní)', color: '#eab308', threshold: 168 }, // Yellow (Week)
+                    { id: 'SAFE', label: 'Ďaleká budúcnosť', color: '#10b981', threshold: null } // Green (Far)
+                ]
+            },
+
+            init() {
+                this.theme.init();
+                this.storage.load();
+                this.ui.render();
+                if (window.innerWidth < 768) {
+                    this.timer.toggleCollapse(true);
+                    this.stopwatch.toggleCollapse(true);
+                }
+
+                const fpConfig = { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "j.n.Y H:i", time_24hr: true, locale: "sk" };
+                flatpickr("#editDate", fpConfig);
+                flatpickr("#smartDate", fpConfig);
+                flatpickr("#swDateInput", fpConfig);
+            },
+
+            theme: {
+                init() {
+                    const sys = window.matchMedia('(prefers-color-scheme: dark)');
+                    sys.addEventListener('change', e => {
+                        if (!localStorage.getItem('em_theme')) document.documentElement.classList.toggle('dark', e.matches);
+                    });
+                    this.apply();
+                },
+                apply() {
+                    const pref = localStorage.getItem('em_theme');
+                    const sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.classList.toggle('dark', pref === 'dark' || (!pref && sys));
+                },
+                toggle() {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    localStorage.setItem('em_theme', isDark ? 'light' : 'dark');
+                    this.apply();
+                },
+                resetToSystem() {
+                    localStorage.removeItem('em_theme');
+                    this.apply();
+                    app.ui.notify("Režim", "Nastavené podľa systému.");
+                    app.ui.closeModal('settingsModal');
+                }
+            },
+
+            storage: {
+                load() {
+                    try {
+                        const t = localStorage.getItem('em_tasks_v2');
+                        const s = localStorage.getItem('em_stats_v2');
+                        const k = localStorage.getItem('em_apikey_v2');
+                        const ds = localStorage.getItem('em_deadline_settings');
+                        app.data.tasks = t ? JSON.parse(t) : [];
+                        app.data.stats = s ? JSON.parse(s) : {};
+                        app.data.apiKey = k || "";
+                        if (ds) app.data.deadlineSettings = JSON.parse(ds);
+                        const apiInput = document.getElementById('apiKeyInput');
+                        if (apiInput) apiInput.value = app.data.apiKey;
+                    } catch (e) { app.data.tasks = []; app.data.stats = {}; }
+                },
+                save() {
+                    localStorage.setItem('em_tasks_v2', JSON.stringify(app.data.tasks));
+                    localStorage.setItem('em_stats_v2', JSON.stringify(app.data.stats));
+                    localStorage.setItem('em_apikey_v2', app.data.apiKey);
+                    localStorage.setItem('em_deadline_settings', JSON.stringify(app.data.deadlineSettings));
+                }
+            },
+
+            settings: {
+                save() {
+                    app.data.apiKey = document.getElementById('apiKeyInput').value.trim();
+                    app.settings.saveRulesFromUI();
+                    app.storage.save();
+                    app.ui.render(); // Re-render to apply new colors
+                    app.ui.closeModal('settingsModal');
+                },
+                renderDeadlineSettings() {
+                    const cont = document.getElementById('deadlineSettingsList');
+                    if (!cont) return;
+                    cont.innerHTML = '';
+                    app.data.deadlineSettings.forEach((rule, idx) => {
+                        const isLast = idx === app.data.deadlineSettings.length - 1;
+                        const div = document.createElement('div');
+                        div.className = "flex items-center gap-2 text-sm";
+                        div.innerHTML = `
+                            <input type="color" class="w-8 h-8 rounded cursor-pointer border-0 p-0" value="${rule.color}" onchange="app.data.deadlineSettings[${idx}].color = this.value">
+                            <input type="text" class="flex-1 border rounded px-2 py-1 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-white" value="${rule.label}" onchange="app.data.deadlineSettings[${idx}].label = this.value">
+                            ${rule.threshold !== null ? `
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] text-gray-400">&lt;</span>
+                                    <input type="number" class="w-14 border rounded px-2 py-1 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-white" value="${rule.threshold}" onchange="app.data.deadlineSettings[${idx}].threshold = parseFloat(this.value)">
+                                    <span class="text-[10px] text-gray-400">h</span>
+                                </div>
+                                <button onclick="app.settings.removeRule(${idx})" class="text-red-400 hover:text-red-600 px-1"><i class="fas fa-times"></i></button>
+                            ` : '<span class="text-[10px] text-gray-400 w-16 text-center">Inak</span>'}
+                        `;
+                        cont.appendChild(div);
+                    });
+                },
+                addRule() {
+                    // Add before the last "Safe" rule
+                    const last = app.data.deadlineSettings.pop();
+                    app.data.deadlineSettings.push({ id: 'NEW_' + Date.now(), label: 'Nové pravidlo', color: '#6366f1', threshold: 24 });
+                    if (last) app.data.deadlineSettings.push(last);
+                    this.renderDeadlineSettings();
+                },
+                removeRule(idx) {
+                    app.data.deadlineSettings.splice(idx, 1);
+                    this.renderDeadlineSettings();
+                },
+                saveRulesFromUI() {
+                    // Values are updated directly via onchange in DOM, but we sort by threshold to ensure logic works
+                    const safe = app.data.deadlineSettings.filter(r => r.threshold === null);
+                    const others = app.data.deadlineSettings.filter(r => r.threshold !== null).sort((a, b) => a.threshold - b.threshold);
+                    app.data.deadlineSettings = [...others, ...safe];
+                },
+                resetRules() {
+                    if (confirm("Resetovať nastavenia farieb?")) {
+                        app.data.deadlineSettings = [
+                            { id: 'OVERDUE', label: 'Po termíne', color: '#7f1d1d', threshold: 0 },
+                            { id: 'URGENT', label: 'Moje nervy (48h)', color: '#ef4444', threshold: 48 },
+                            { id: 'COMFORT', label: 'Pohodička (7 dní)', color: '#eab308', threshold: 168 },
+                            { id: 'SAFE', label: 'Ďaleká budúcnosť', color: '#10b981', threshold: null }
+                        ];
+                        this.renderDeadlineSettings();
+                    }
+                }
+            },
+
+            backup: {
+                download() {
+                    const b = new Blob([JSON.stringify(app.data)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(b);
+                    a.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                },
+                exportCSV() {
+                    const tasks = app.data.tasks.map(t => ({
+                        ID: t.id,
+                        Date: t.dl ? t.dl : '',
+                        Activity: t.text,
+                        Subtasks: (t.subs || []).map(s => s.text).join(' | '),
+                        Duration: t.est || 0,
+                        Status: t.done ? 'Done' : 'Active',
+                        Quadrant: t.q
+                    }));
+
+                    const ws = XLSX.utils.json_to_sheet(tasks);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Tasks");
+                    XLSX.writeFile(wb, `Eisenhower_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+                },
+                exportExcel() {
+                    this.exportCSV();
+                },
+                restore(inp) {
+                    const f = inp.files[0];
+                    if (!f) return;
+                    const r = new FileReader();
+                    r.onload = e => {
+                        try {
+                            const d = JSON.parse(e.target.result);
+                            if (d.tasks) {
+                                if (confirm("Zlúčiť s existujúcimi dátami? (Cancel = Prepísať)")) {
+                                    const existIds = new Set(app.data.tasks.map(t => t.id));
+                                    const newTasks = d.tasks.filter(t => !existIds.has(t.id));
+                                    app.data.tasks = [...app.data.tasks, ...newTasks];
+                                    app.data.stats = { ...d.stats, ...app.data.stats };
+                                } else {
+                                    app.data = d;
+                                }
+                                app.storage.save();
+                                app.ui.render();
+                                app.ui.notify("Hotovo", "Dáta obnovené.");
+                            }
+                        } catch (err) { alert("Chyba súboru"); }
+                        inp.value = '';
+                    };
+                    r.readAsText(f);
+                }
+            },
+
+            stopwatch: {
+                startTime: null,
+                interval: null,
+                elapsed: 0,
+                running: false,
+
+                toggle() { if (this.running) this.pause(); else this.start(); },
+                start() {
+                    if (this.running) return;
+                    this.running = true;
+                    this.startTime = Date.now() - (this.elapsed * 1000);
+                    this.interval = setInterval(() => this.tick(), 100);
+                    this.updateUI();
+                },
+                pause() {
+                    this.running = false;
+                    clearInterval(this.interval);
+                    this.updateUI();
+                },
+                reset() { this.pause(); this.elapsed = 0; this.updateUI(); },
+                tick() {
+                    const now = Date.now();
+                    this.elapsed = Math.floor((now - this.startTime) / 1000);
+                    this.updateUI();
+                },
+                updateUI() {
+                    const hrs = Math.floor(this.elapsed / 3600);
+                    const mins = Math.floor((this.elapsed % 3600) / 60);
+                    const secs = this.elapsed % 60;
+                    const timeStr = `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    safeSetText('swDisplay', timeStr);
+                    const btn = document.getElementById('swMainBtn');
+                    if (btn) {
+                        btn.innerHTML = this.running ? '<i class="fas fa-pause mr-1"></i> Pauza' : '<i class="fas fa-play mr-1"></i> Štart';
+                        btn.className = `flex-1 py-2.5 rounded-xl font-bold text-white transition flex items-center justify-center gap-2 shadow-md ${this.running ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-cyan-600 hover:bg-cyan-700'}`;
+                    }
+                    const saveBtn = document.getElementById('swSaveBtn');
+                    if (saveBtn) {
+                        if (!this.running && this.elapsed > 0) saveBtn.classList.remove('hidden');
+                        else saveBtn.classList.add('hidden');
+                    }
+                },
+                toggleCollapse(force) {
+                    const w = document.getElementById('stopwatchWidget');
+                    const i = document.getElementById('swCollapseIcon');
+                    const isOpen = w.getAttribute('data-open') === 'true';
+                    const shouldClose = force !== undefined ? force : isOpen;
+                    if (shouldClose) {
+                        w.style.transform = 'translateY(calc(100% - 3.5rem))';
+                        if (i) i.style.transform = 'rotate(180deg)';
+                        w.setAttribute('data-open', 'false');
+                    } else {
+                        w.style.transform = 'translateY(0)';
+                        if (i) i.style.transform = 'rotate(0deg)';
+                        w.setAttribute('data-open', 'true');
+                    }
+                },
+                openSaveModal() {
+                    const activeTasks = app.data.tasks.filter(t => !t.done);
+                    const select = document.getElementById('swTaskSelect');
+                    select.innerHTML = '<option value="">-- Vyberte úlohu --</option>' + activeTasks.map(t => `<option value="${t.id}">${t.text}</option>`).join('');
+                    const now = new Date();
+                    const fp = document.getElementById('swDateInput')._flatpickr;
+                    if (fp) fp.setDate(now);
+                    let mins = Math.round(this.elapsed / 60);
+                    if (mins < 1) mins = 1;
+                    document.getElementById('swDurationInput').value = mins;
+                    app.ui.openModal('swSaveModal');
+                },
+                confirmSave() {
+                    const taskId = document.getElementById('swTaskSelect').value;
+                    const dateStr = document.getElementById('swDateInput').value;
+                    const duration = parseInt(document.getElementById('swDurationInput').value);
+                    if (!dateStr || !duration) { alert("Vyplňte dátum a trvanie."); return; }
+                    const dateKey = dateStr.split('T')[0];
+                    app.data.stats[dateKey] = (app.data.stats[dateKey] || 0) + duration;
+                    if (taskId) {
+                        const task = app.data.tasks.find(t => t.id === taskId);
+                        if (task) task.spent = (task.spent || 0) + duration;
+                    }
+                    app.storage.save();
+                    app.ui.closeModal('swSaveModal');
+                    app.ui.notify("Uložené", `Zaznamenaných ${duration} minút.`);
+                    this.reset();
+                }
+            },
+
+            stats: {
+                view: 'week',
+                date: new Date(),
+                log(mins) {
+                    const k = new Date().toISOString().split('T')[0];
+                    app.data.stats[k] = (app.data.stats[k] || 0) + mins;
+                    app.storage.save();
+                },
+                setView(v) { this.view = v; this.date = new Date(); this.render(); },
+                move(offset) {
+                    const d = new Date(this.date);
+                    if (this.view === 'day') d.setDate(d.getDate() + offset);
+                    else if (this.view === 'week') d.setDate(d.getDate() + (offset * 7));
+                    else if (this.view === 'month') d.setMonth(d.getMonth() + offset);
+                    else if (this.view === 'year') d.setFullYear(d.getFullYear() + offset);
+                    this.date = d;
+                    this.render();
+                },
+                getLabel() {
+                    const opts = { year: 'numeric', month: 'long', day: 'numeric' };
+                    if (this.view === 'day') return this.date.toLocaleDateString('sk-SK', opts);
+                    if (this.view === 'month') return this.date.toLocaleDateString('sk-SK', { month: 'long', year: 'numeric' });
+                    if (this.view === 'year') return this.date.getFullYear().toString();
+                    if (this.view === 'week') {
+                        const start = new Date(this.date);
+                        const day = start.getDay() || 7;
+                        if (day !== 1) start.setHours(-24 * (day - 1));
+                        const end = new Date(start);
+                        end.setDate(end.getDate() + 6);
+                        return `${start.getDate()}.${start.getMonth() + 1}. - ${end.getDate()}.${end.getMonth() + 1}.`;
+                    }
+                },
+                getData() {
+                    let labels = [], values = [], total = 0;
+                    const d = new Date(this.date);
+                    if (this.view === 'week') {
+                        const day = d.getDay() || 7;
+                        if (day !== 1) d.setHours(-24 * (day - 1));
+                        for (let i = 0; i < 7; i++) {
+                            const dateStr = d.toISOString().split('T')[0];
+                            const val = app.data.stats[dateStr] || 0;
+                            values.push(val);
+                            labels.push(d.toLocaleDateString('sk-SK', { weekday: 'short' }));
+                            total += val;
+                            d.setDate(d.getDate() + 1);
+                        }
+                    } else if (this.view === 'month') {
+                        const year = d.getFullYear(), month = d.getMonth();
+                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                        for (let i = 1; i <= daysInMonth; i++) {
+                            const current = new Date(year, month, i, 12);
+                            const dateStr = current.toISOString().split('T')[0];
+                            const val = app.data.stats[dateStr] || 0;
+                            values.push(val);
+                            labels.push(i % 5 === 0 || i === 1 ? i.toString() : '');
+                            total += val;
+                        }
+                    } else if (this.view === 'year') {
+                        const year = d.getFullYear();
+                        for (let i = 0; i < 12; i++) {
+                            let monthTotal = 0;
+                            const daysInM = new Date(year, i + 1, 0).getDate();
+                            for (let j = 1; j <= daysInM; j++) {
+                                const current = new Date(year, i, j, 12);
+                                const dateStr = current.toISOString().split('T')[0];
+                                monthTotal += (app.data.stats[dateStr] || 0);
+                            }
+                            values.push(monthTotal);
+                            labels.push(new Date(year, i, 1).toLocaleDateString('sk-SK', { month: 'short' }));
+                            total += monthTotal;
+                        }
+                    } else if (this.view === 'day') {
+                        const dateStr = d.toISOString().split('T')[0];
+                        const val = app.data.stats[dateStr] || 0;
+                        values.push(val);
+                        labels.push('Dnes');
+                        total = val;
+                    }
+                    return { labels, values, total, max: Math.max(...values, 10) };
+                },
+                render() {
+                    ['viewDayBtn', 'viewWeekBtn', 'viewMonthBtn', 'viewYearBtn'].forEach(id => {
+                        const btn = document.getElementById(id);
+                        if (btn) {
+                            if (id.toLowerCase().includes(this.view)) {
+                                btn.classList.add('bg-white', 'dark:bg-slate-700', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                                btn.classList.remove('text-gray-600', 'dark:text-slate-400', 'hover:bg-white');
+                            } else {
+                                btn.classList.remove('bg-white', 'dark:bg-slate-700', 'text-indigo-600', 'dark:text-indigo-400', 'shadow-sm');
+                                btn.classList.add('text-gray-600', 'dark:text-slate-400', 'hover:bg-white');
+                            }
+                        }
+                    });
+                    const dateLabel = document.getElementById('statsDateLabel');
+                    if (dateLabel) dateLabel.innerText = this.getLabel();
+                    const data = this.getData();
+                    safeSetText('statsTotalTime', `${data.total}m`);
+                    safeSetText('statsTotalSessions', Math.floor(data.total / 25));
+                    const chart = document.getElementById('statsChart');
+                    const labelsContainer = document.getElementById('statsLabels');
+                    if (!chart || !labelsContainer) return;
+                    chart.innerHTML = '';
+                    labelsContainer.innerHTML = '';
+                    if (this.view === 'day') {
+                        const pct = Math.min((data.total / 300) * 100, 100);
+                        chart.innerHTML = `<div class="w-full h-full flex items-center justify-center"><div class="relative w-32 h-32 rounded-full border-8 border-indigo-100 dark:border-slate-700 flex items-center justify-center"><div class="text-xl font-bold text-indigo-600 dark:text-indigo-400">${data.total}m</div></div></div>`;
+                        return;
+                    }
+                    data.values.forEach((val, i) => {
+                        const h = (val / data.max) * 100;
+                        const bar = document.createElement('div');
+                        let widthClass = 'w-full';
+                        if (this.view === 'month') widthClass = 'w-[3%]';
+                        bar.className = `${widthClass} rounded-t-sm transition-all duration-500 relative group bg-indigo-500 dark:bg-indigo-600 hover:bg-indigo-400`;
+                        bar.style.height = `${h}%`;
+                        bar.innerHTML = `<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-10">${val}m</div>`;
+                        chart.appendChild(bar);
+                        const label = document.createElement('div');
+                        label.className = "w-full text-center truncate";
+                        label.innerText = data.labels[i];
+                        if (this.view === 'month') label.style.fontSize = '8px';
+                        labelsContainer.appendChild(label);
+                    });
+                }
+            },
+
+            tasks: {
+                add() {
+                    const input = document.getElementById('taskInput');
+                    if (!input) return;
+                    const text = input.value.trim();
+                    input.value = '';
+                    app.tasks.openEditor(null, text);
+                },
+                saveSmartTask() {
+                    const title = document.getElementById('smartTitle').value;
+                    if (!title) return;
+                    const newTask = { id: 't' + Date.now(), text: title, q: document.getElementById('smartQ').value, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false };
+                    app.data.tasks.push(newTask);
+                    document.getElementById('smartInputText').value = '';
+                    document.getElementById('smartResult').classList.add('hidden');
+                    app.storage.save();
+                    app.ui.render();
+                    app.ui.closeModal('smartAddModal');
+                },
+                delete(id) {
+                    if (confirm("Vymazať túto úlohu?")) {
+                        app.data.tasks = app.data.tasks.filter(t => t.id !== id);
+                        app.storage.save();
+                        app.ui.render();
+                    }
+                },
+                complete(id) {
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (t) {
+                        t.done = true;
+                        t.completedAt = new Date().toISOString();
+                        app.storage.save();
+                        app.ui.render();
+                    }
+                },
+                restore(id) {
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (t) { t.done = false; app.storage.save(); app.ui.render(); app.ui.renderCompleted(); }
+                },
+                deleteCompleted(id) {
+                    if (confirm("Naozaj vymazať túto úlohu z histórie?")) {
+                        app.data.tasks = app.data.tasks.filter(t => t.id !== id);
+                        app.storage.save();
+                        app.ui.renderCompleted();
+                    }
+                },
+                openEditor(id, prefillTitle = '') {
+                    document.getElementById('modalSubInput').value = '';
+                    if (id) {
+                        const task = app.data.tasks.find(t => t.id === id);
+                        if (!task) return;
+                        document.getElementById('editId').value = id;
+                        document.getElementById('editName').value = task.text;
+                        const fp = document.getElementById('editDate')._flatpickr;
+                        if (fp) fp.setDate(task.dl || "");
+                        document.getElementById('editEst').value = task.est || '';
+                        app.data.tempSubs = JSON.parse(JSON.stringify(task.subs || []));
+                        safeSetText('editorTitle', 'Upraviť');
+                    } else {
+                        document.getElementById('editId').value = "";
+                        document.getElementById('editName').value = prefillTitle || '';
+                        const fp = document.getElementById('editDate')._flatpickr;
+                        if (fp) fp.clear();
+                        document.getElementById('editEst').value = '';
+                        safeSetText('editorTitle', 'Nová úloha');
+                        app.data.tempSubs = [];
+                    }
+                    app.tasks.renderModalSubs();
+                    app.ui.openModal('editModal');
+                    setTimeout(() => document.getElementById('editName').focus(), 150);
+                },
+                saveEditor() {
+                    const id = document.getElementById('editId').value;
+                    const text = document.getElementById('editName').value.trim();
+                    const dl = document.getElementById('editDate').value;
+                    const est = document.getElementById('editEst').value;
+                    if (!text) { app.ui.showToast("Zadajte názov úlohy"); return; }
+                    if (id) {
+                        const task = app.data.tasks.find(t => t.id === id);
+                        if (task) {
+                            task.text = text; task.dl = dl; task.est = est; task.subs = JSON.parse(JSON.stringify(app.data.tempSubs));
+                        }
+                    } else {
+                        const newTask = { id: 't' + Date.now(), text: text, q: 'q1', dl: dl, est: est, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false };
+                        app.data.tasks.push(newTask);
+                    }
+                    app.storage.save();
+                    app.ui.render();
+                    app.ui.closeModal('editModal');
+                },
+                addTempSub() {
+                    const input = document.getElementById('modalSubInput');
+                    const val = input.value.trim();
+                    if (val) {
+                        app.data.tempSubs.push({ text: val, done: false });
+                        input.value = '';
+                        app.tasks.renderModalSubs();
+                    }
+                },
+                removeTempSub(index) {
+                    app.data.tempSubs.splice(index, 1);
+                    app.tasks.renderModalSubs();
+                },
+                renderModalSubs() {
+                    const container = document.getElementById('modalSubList');
+                    container.innerHTML = '';
+                    app.data.tempSubs.forEach((sub, i) => {
+                        const div = document.createElement('div');
+                        div.className = "flex justify-between items-center text-xs bg-gray-50 dark:bg-slate-800 p-2 rounded border border-gray-100 dark:border-slate-700";
+                        div.innerHTML = `<span class="truncate text-gray-700 dark:text-slate-300">${sub.text}</span><button onclick="app.tasks.removeTempSub(${i})" class="text-red-400 hover:text-red-600"><i class="fas fa-times"></i></button>`;
+                        container.appendChild(div);
+                    });
+                },
+                toggleSub(taskId, idx) {
+                    const t = app.data.tasks.find(t => t.id === taskId);
+                    if (t && t.subs[idx]) { t.subs[idx].done = !t.subs[idx].done; app.storage.save(); app.ui.render(); }
+                },
+                sort(q) {
+                    const c = document.getElementById(q);
+                    const cards = Array.from(c.children);
+                    cards.sort((a, b) => {
+                        const tA = app.data.tasks.find(x => x.id === a.id);
+                        const tB = app.data.tasks.find(x => x.id === b.id);
+                        if (!tA.dl) return 1; if (!tB.dl) return -1;
+                        return new Date(tA.dl) - new Date(tB.dl);
+                    });
+                    cards.forEach(el => c.appendChild(el));
+                }
+            },
+            dnd: {
+                drag(e) { e.dataTransfer.setData('id', e.target.id); },
+                drop(e, q) {
+                    e.preventDefault();
+                    const id = e.dataTransfer.getData('id');
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (t) { t.q = q; app.storage.save(); app.ui.render(); }
+                    e.currentTarget.classList.remove('bg-gray-100', 'dark:bg-slate-800');
+                },
+                allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('bg-gray-100', 'dark:bg-slate-800'); },
+                mobileMove(id, q) {
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (t) { t.q = q; app.storage.save(); app.ui.render(); }
+                }
+            },
+            timer: {
+                int: null, end: null, rem: 1500, run: false, mode: 'work',
+                toggle() { this.run ? this.pause() : this.start(); },
+                start() {
+                    if (this.remaining <= 0) return;
+                    this.run = true;
+                    this.end = Date.now() + this.rem * 1000;
+                    this.int = setInterval(() => this.tick(), 1000);
+                    this.updateUI();
+                },
+                pause() {
+                    this.run = false;
+                    clearInterval(this.int);
+                    this.updateUI();
+                },
+                tick() {
+                    const left = Math.ceil((this.end - Date.now()) / 1000);
+                    if (left <= 0) this.finish();
+                    else { this.rem = left; this.updateUI(); }
+                },
+                finish() {
+                    this.pause();
+                    this.playBeep();
+                    if (this.mode === 'work') {
+                        app.stats.log(Math.round((this.initRem || 1500) / 60));
+                        app.ai.genTip();
+                        app.ui.notify("Hotovo", "Daj si pauzu");
+                        this.setMode(5, 'break');
+                    } else {
+                        app.ui.notify("Koniec", "Späť do práce");
+                        this.setMode(25, 'work');
+                    }
+                },
+                reset() { this.pause(); this.setMode(this.mode === 'work' ? 25 : 5, this.mode); },
+                setMode(m, t) {
+                    this.pause();
+                    this.mode = t;
+                    this.rem = m * 60;
+                    this.initRem = this.rem;
+                    this.updateUI();
+                },
+                setCustom() {
+                    const v = parseInt(document.getElementById('customTime').value);
+                    if (v) this.setMode(v, 'work');
+                },
+                setTask(id) {
+                    const t = app.data.tasks.find(x => x.id === id);
+                    safeSetText('currentTaskLabel', t ? t.text : "-- Žiadna úloha --");
+                    this.toggleCollapse(false);
+                },
+                updateUI() {
+                    const m = Math.floor(this.rem / 60).toString().padStart(2, '0');
+                    const s = (this.rem % 60).toString().padStart(2, '0');
+                    safeSetText('timerDisplay', `${m}:${s}`);
+                    document.title = this.run ? `(${m}:${s}) AI Matrix` : 'Eisenhower AI';
+                    const btn = document.getElementById('mainBtn');
+                    if (btn) {
+                        btn.innerText = this.run ? 'Pauza' : 'Štart';
+                        btn.className = `flex-1 py-2.5 rounded-xl font-bold text-white transition ${this.run ? 'bg-yellow-500' : 'bg-gray-900 dark:bg-indigo-600'}`;
+                    }
+                },
+                toggleCollapse(force) {
+                    const w = document.getElementById('pomodoroWidget');
+                    const i = document.getElementById('collapseIcon');
+                    const isOpen = w.getAttribute('data-open') === 'true';
+                    const shouldClose = force !== undefined ? force : isOpen;
+                    if (shouldClose) {
+                        w.style.transform = 'translateY(calc(100% - 3.5rem))';
+                        if (i) i.style.transform = 'rotate(180deg)';
+                        w.setAttribute('data-open', 'false');
+                    } else {
+                        w.style.transform = 'translateY(0)';
+                        if (i) i.style.transform = 'rotate(0deg)';
+                        w.setAttribute('data-open', 'true');
+                    }
+                },
+                playBeep() {
+                    if (!window.AudioContext && !window.webkitAudioContext) return;
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        osc.connect(ctx.destination);
+                        osc.start();
+                        osc.stop(ctx.currentTime + 0.2);
+                    } catch (e) { }
+                }
+            },
+            ai: {
+                async call(p) {
+                    const key = app.data.apiKey || SYSTEM_KEY;
+                    if (!key) { app.ui.showAlert("Chýba API Kľúč", "Vložte API kľúč v nastaveniach."); app.ui.openModal('settingsModal'); return null; }
+                    try {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: p }] }] })
+                        });
+                        const data = await res.json();
+                        if (data.error) throw new Error(data.error.message);
+                        return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    } catch (e) { console.error("AI Error", e); app.ui.showAlert("Chyba AI", "Nepodarilo sa spojiť."); return null; }
+                },
+                async breakdown(taskId) {
+                    const task = app.data.tasks.find(t => t.id === taskId);
+                    if (!task) return;
+                    const res = await this.call(`Break down "${task.text}" into 3 simple subtasks in Slovak. Plain text lines.`);
+                    if (res) {
+                        const lines = res.split('\n').filter(l => l.trim().length > 0);
+                        const subs = lines.map(l => ({ text: l.replace(/^[-*•]\s*/, '').trim(), done: false }));
+                        task.subs = [...task.subs, ...subs];
+                        app.storage.save();
+                        app.ui.render();
+                    }
+                },
+                async analyzeSmartAdd() {
+                    const text = document.getElementById('smartInputText').value;
+                    if (!text) return;
+                    const res = await this.call(`Extract JSON from text: {"title":string, "dl":YYYY-MM-DDThh:mm, "est":number, "q": "q1"|"q2"|"q3"|"q4"}. Text: ${text}`);
+                    if (res) {
+                        try {
+                            const d = JSON.parse(res.match(/\{[\s\S]*\}/)[0]);
+                            document.getElementById('smartTitle').value = d.title || '';
+                            const fp = document.getElementById('smartDate')._flatpickr;
+                            if (fp) fp.setDate(d.dl || "");
+                            document.getElementById('smartEst').value = d.est || '';
+                            if (d.q) document.getElementById('smartQ').value = d.q;
+                            document.getElementById('smartResult').classList.remove('hidden');
+                        } catch (e) { }
+                    }
+                },
+                async magicAdd() {
+                    const input = document.getElementById('taskInput');
+                    const text = input.value.trim();
+                    if (!text) { app.ui.showToast("Napíšte najprv názov úlohy!"); return; }
+                    const res = await this.call(`Classify "${text}" to q1, q2, q3, or q4. Return ONLY code.`);
+                    if (res) {
+                        let q = res.trim().toLowerCase();
+                        if (q.includes('q1')) q = 'q1'; else if (q.includes('q2')) q = 'q2'; else if (q.includes('q3')) q = 'q3'; else if (q.includes('q4')) q = 'q4'; else q = 'q1';
+                        app.data.tasks.push({ id: 't' + Date.now(), text: text, q: q, dl: '', est: '', subs: [], done: false });
+                        input.value = '';
+                        app.storage.save();
+                        app.ui.render();
+                        app.ui.showToast(`Pridané do kvadrantu ${q.toUpperCase()}`);
+                    }
+                },
+                async autoSort() {
+                    const tasks = app.data.tasks.filter(t => !t.done);
+                    if (tasks.length === 0) {
+                        app.ui.showToast("Žiadne úlohy na triedenie.");
+                        return;
+                    }
+
+                    const btn = document.getElementById('magicAddBtn');
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i> <span class="hidden 2xl:inline">Pracujem...</span>';
+                    btn.disabled = true;
+
+                    const now = new Date();
+                    const prompt = `
+                    I act as a Matrix Eisenhower sorter.
+                    Current time: ${now.toLocaleString('sk-SK')}.
+                    
+                    Here is the list of tasks:
+                    ${tasks.map(t => `ID: ${t.id}, Text: "${t.text}", Deadline: ${t.dl || "None"}, Est: ${t.est || "?"}m`).join('\n')}
+                    
+                    Assign each task to one quadrant:
+                    q1: Urgent & Important (Do immediately, deadline is close or passed)
+                    q2: Not Urgent & Important (Plan, high value but deadline far)
+                    q3: Urgent & Not Important (Delegate, deadline close but low value)
+                    q4: Not Urgent & Not Important (Delete/Later)
+                    
+                    Return a JSON object where keys are task IDs and values are quadrant codes ("q1", "q2", "q3", "q4").
+                    Example: {"t123": "q1", "t456": "q2"}
+                    Return ONLY valid JSON.
+                    `;
+
+                    try {
+                        const res = await this.call(prompt);
+                        if (res) {
+                            let jsonStr = res.replace(/```json/g, '').replace(/```/g, '').trim();
+                            const mapping = JSON.parse(jsonStr);
+
+                            let movedCount = 0;
+                            tasks.forEach(t => {
+                                if (mapping[t.id] && mapping[t.id] !== t.q) {
+                                    t.q = mapping[t.id];
+                                    movedCount++;
+                                }
+                            });
+
+                            app.storage.save();
+                            app.ui.render();
+                            app.ui.showToast(`Pretriedené ${movedCount} úloh.`);
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        app.ui.showToast("Chyba pri triedení.");
+                    } finally {
+                        btn.innerHTML = origHtml;
+                        btn.disabled = false;
+                    }
+                },
+                async genTip() {
+                    if (!app.data.apiKey && !SYSTEM_KEY) return;
+                    const res = await this.call("Short motivational quote in Slovak.");
+                    if (res) app.ui.showToast(res);
+                }
+            },
+            ui: {
+                render() {
+                    ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).innerHTML = '');
+                    app.data.tasks.filter(t => !t.done).forEach(t => {
+                        const el = document.createElement('div');
+                        el.className = `task-card bg-white dark:bg-slate-800 p-3 rounded-lg shadow border-l-4 mb-2 group relative border-gray-200 dark:border-slate-700 ${t.q === 'q1' ? 'border-l-red-500' : t.q === 'q2' ? 'border-l-blue-500' : t.q === 'q3' ? 'border-l-yellow-500' : 'border-l-gray-500'}`;
+                        el.draggable = true;
+                        el.id = t.id;
+                        el.addEventListener('dragstart', app.dnd.drag);
+                        let subHTML = '';
+                        if (t.subs && t.subs.length) {
+                            subHTML = `<div class="mt-2 space-y-1">${t.subs.map((s, i) => `<div class="flex items-center text-xs gap-2 text-gray-600 dark:text-gray-400"><input type="checkbox" ${s.done ? 'checked' : ''} onclick="app.tasks.toggleSub('${t.id}',${i})"><span class="${s.done ? 'line-through' : ''}">${s.text}</span></div>`).join('')}</div>`;
+                        }
+                        el.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="app.tasks.complete('${t.id}')" class="w-4 h-4 rounded-full border border-gray-300 hover:bg-green-500 hover:border-green-500"></button>
+                                        <span class="text-sm font-medium dark:text-white">${t.text}</span>
+                                    </div>
+                                    ${(() => {
+                                if (!t.dl) return `<div class="text-[10px] text-gray-400 mt-1 pl-6">${t.est ? '⏱ ' + t.est + 'm' : ''}</div>`;
+
+                                const now = new Date();
+                                const dlDate = new Date(t.dl);
+                                const diffHours = (dlDate - now) / (1000 * 60 * 60);
+
+                                // Find matching rule
+                                let matchedRule = app.data.deadlineSettings.find(r => r.threshold !== null && diffHours < r.threshold);
+                                if (!matchedRule) matchedRule = app.data.deadlineSettings.find(r => r.threshold === null); // Fallback/Safe
+                                const color = matchedRule ? matchedRule.color : '#9ca3af';
+
+                                return `<div class="text-[10px] font-bold mt-1 pl-6 flex items-center gap-2" style="color: ${color}">
+                                            <span>📅 ${dlDate.toLocaleDateString('sk-SK')} ${dlDate.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}</span>
+                                            ${t.est ? '<span class="text-gray-400 font-normal">⏱ ' + t.est + 'm</span>' : ''}
+                                        </div>`;
+                            })()}
+                                    <div class="pl-6">${subHTML}</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="app.timer.setTask('${t.id}')" class="text-gray-400 hover:text-indigo-500"><i class="fas fa-play"></i></button>
+                                <button onclick="app.ai.breakdown('${t.id}')" class="text-gray-400 hover:text-purple-500"><i class="fas fa-star"></i></button>
+                                <button onclick="app.tasks.openEditor('${t.id}')" class="text-gray-400 hover:text-blue-500"><i class="fas fa-pen"></i></button>
+                                <button onclick="app.tasks.delete('${t.id}')" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
+                             <select onchange="app.dnd.mobileMove('${t.id}', this.value)" class="md:hidden mt-2 w-full text-xs border bg-transparent rounded dark:text-white dark:border-slate-600"><option value="" disabled selected>Presunúť...</option><option value="q1">Urob hneď</option><option value="q2">Naplánuj</option><option value="q3">Deleguj</option><option value="q4">Vymaž</option></select>
+                        `;
+                        document.getElementById(t.q).appendChild(el);
+                    });
+                },
+                openModal(id) {
+                    document.getElementById(id).classList.remove('hidden');
+                    if (id === 'settingsModal') app.settings.renderDeadlineSettings();
+                },
+                closeModal(id) { document.getElementById(id).classList.add('hidden'); },
+                toggleCompleted() {
+                    const m = document.getElementById('completedModal');
+                    if (m.classList.contains('hidden')) {
+                        m.classList.remove('hidden');
+                        const c = document.getElementById('completedList');
+                        c.innerHTML = app.data.tasks.filter(t => t.done).map(t => `<div class="flex justify-between p-2 border-b dark:border-slate-700"><span class="line-through text-gray-500">${t.text}</span><button onclick="app.tasks.restore('${t.id}')" class="text-blue-500 text-xs">Vrátiť</button></div>`).join('') || '<p class="text-center text-gray-400 text-sm">Žiadne</p>';
+                    } else m.classList.add('hidden');
+                },
+                toggleStats() {
+                    const m = document.getElementById('statsModal');
+                    if (m.classList.contains('hidden')) { m.classList.remove('hidden'); app.stats.render(); }
+                    else m.classList.add('hidden');
+                },
+                showToast(msg) {
+                    const t = document.getElementById('aiToast');
+                    safeSetText('aiToastMessage', msg);
+                    t.classList.remove('translate-y-20', 'opacity-0');
+                    setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 4000);
+                },
+                notify(title, msg) {
+                    if (Notification.permission === "granted") new Notification(title, { body: msg });
+                    else alert(title + ": " + msg);
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+
+</html>
