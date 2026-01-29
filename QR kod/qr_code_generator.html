@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Generátor</title>
+    <!-- Favicon (Ikona na tabe) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23ea580c'/%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='7' height='7'/%3E%3Crect x='14' y='3' width='7' height='7'/%3E%3Crect x='3' y='14' width='7' height='7'/%3E%3Cpath d='M14 14h.01'/%3E%3Cpath d='M17 14h.01'/%3E%3Cpath d='M20 14h.01'/%3E%3Cpath d='M14 17h.01'/%3E%3Cpath d='M17 17h.01'/%3E%3Cpath d='M20 17h.01'/%3E%3Cpath d='M14 20h.01'/%3E%3Cpath d='M17 20h.01'/%3E%3Cpath d='M20 20h.01'/%3E%3C/g%3E%3C/svg%3E">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Načítanie knižnice pre pokročilé štýlovanie QR kódov -->
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .color-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.5rem;
+            height: 2.5rem;
+            width: 100%;
+            cursor: pointer;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        .color-input-wrapper:hover {
+            border-color: #cbd5e1;
+        }
+        .color-input-wrapper.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+            background-size: 10px 10px;
+            background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+            background-color: #fff;
+        }
+        input[type="color"] {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+        /* Custom checkbox */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #68D391;
+        }
+
+        /* Loading animation */
+        .thinking-dots::after {
+            content: ' .';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { color: rgba(0,0,0,0); text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0);}
+            40% { color: white; text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0);}
+            60% { text-shadow: .25em 0 0 white, .5em 0 0 rgba(0,0,0,0);}
+            80%, 100% { text-shadow: .25em 0 0 white, .5em 0 0 white;}
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- Ľavý panel: Nastavenia -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 bg-gray-50 border-r border-gray-100 overflow-y-auto max-h-[90vh]">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-qrcode text-indigo-600"></i>
+                    QR Generátor
+                </h1>
+                <p class="text-gray-500 text-sm mt-1">Vytvorte si vlastný dizajn QR kódu</p>
+            </div>
+
+            <!-- AI Dizajnér Section -->
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-xl border border-indigo-100 mb-8 shadow-sm">
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
+                    <h2 class="font-semibold text-gray-800">AI Dizajnér</h2>
+                    <span class="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full uppercase font-bold tracking-wide">Gemini</span>
+                </div>
+                <p class="text-xs text-gray-600 mb-3">Popíšte tému (napr. "Lesná príroda", "Cyberpunk", "Luxusná zlatá") a AI navrhne farby a tvary.</p>
+                <div class="flex gap-2">
+                    <input type="text" id="ai-prompt" class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Napr. Svieže leto...">
+                    <button id="btn-generate-ai" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap">
+                        <span id="ai-btn-text">Navrhnúť</span>
+                        <i class="fa-solid fa-bolt"></i>
+                    </button>
+                </div>
+                
+                <!-- API Settings Toggle -->
+                <div class="mt-3 pt-2 border-t border-indigo-200/50">
+                    <button id="toggle-api-settings" class="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 focus:outline-none transition-colors">
+                        <i class="fa-solid fa-gear"></i> Nastavenia API
+                    </button>
+                    <div id="api-settings-panel" class="hidden mt-2 animate-fade-in">
+                        <label class="block text-[11px] font-semibold text-gray-600 mb-1">Vlastný Gemini API Kľúč</label>
+                        <input type="password" id="custom-api-key" class="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="sk-...">
+                        <p class="text-[10px] text-gray-500 mt-1 italic">Ak AI nefunguje alebo používate aplikáciu lokálne, vložte kľúč z Google AI Studio.</p>
+                    </div>
+                </div>
+
+                <p id="ai-error" class="text-xs text-red-500 mt-2 hidden"></p>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Vstupný text/URL -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Obsah (URL alebo Text)</label>
+                    <textarea id="qr-content" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none resize-none" placeholder="https://priklad.sk alebo váš text...">https://priklad.sk</textarea>
+                </div>
+
+                <!-- Tvary -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tvar bodiek</label>
+                        <select id="dots-type" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="square">Štvorce (Klasik)</option>
+                            <option value="dots">Bodky</option>
+                            <option value="rounded">Zaoblené</option>
+                            <option value="classy">Classy</option>
+                            <option value="classy-rounded">Classy Zaoblené</option>
+                            <option value="extra-rounded">Extra Zaoblené</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tvar rohov</label>
+                        <select id="corners-type" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="square">Hranaté</option>
+                            <option value="dot">Bodka</option>
+                            <option value="extra-rounded">Zaoblené</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Farby -->
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Farba bodiek -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Farba bodiek</label>
+                            <div class="flex items-center gap-2">
+                                <div class="color-input-wrapper w-10 h-10 flex-shrink-0">
+                                    <input type="color" id="dots-color" value="#4f46e5">
+                                </div>
+                                <span id="dots-color-text" class="text-sm text-gray-500 font-mono uppercase">#4f46e5</span>
+                            </div>
+                        </div>
+                         <!-- Farba rohov -->
+                         <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Farba rohov</label>
+                            <div class="flex items-center gap-2">
+                                <div class="color-input-wrapper w-10 h-10 flex-shrink-0">
+                                    <input type="color" id="corners-color" value="#4f46e5">
+                                </div>
+                                <span id="corners-color-text" class="text-sm text-gray-500 font-mono uppercase">#4f46e5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Farba pozadia -->
+                    <div class="pt-2 border-t border-gray-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Farba pozadia</label>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="bg-transparent" class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="bg-transparent" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">Priehľadné</label>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="color-input-wrapper w-10 h-10 flex-shrink-0 border" id="bg-color-wrapper">
+                                <input type="color" id="bg-color" value="#ffffff">
+                            </div>
+                            <span id="bg-color-text" class="text-sm text-gray-500 font-mono uppercase">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logo (Voliteľné) -->
+                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Logo (Voliteľné)</label>
+                    <input type="file" id="logo-input" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"/>
+                    <p class="text-xs text-gray-400 mt-1">Odporúčané: PNG s priehľadným pozadím.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Pravý panel: Náhľad a Stiahnutie -->
+        <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col items-center justify-center bg-white relative checkerboard-bg">
+            
+            <div class="absolute top-4 right-4 bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider z-10">
+                Náhľad
+            </div>
+
+            <!-- Pozadie šachovnice pre náhľad transparentnosti -->
+            <style>
+                .checkerboard-bg {
+                    background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+                    background-size: 20px 20px;
+                    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+                }
+            </style>
+
+            <!-- Kontajner pre QR kód -->
+            <div id="canvas-container" class="bg-white p-4 rounded-xl shadow-lg border border-gray-100 mb-8 flex items-center justify-center relative transition-colors duration-300">
+                <!-- Tu sa vygeneruje QR kód -->
+            </div>
+
+            <div class="w-full max-w-xs space-y-3 relative z-10">
+                <button id="btn-download-png" class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-lg shadow-indigo-200">
+                    <i class="fa-solid fa-download"></i>
+                    Stiahnuť ako PNG
+                </button>
+                <button id="btn-download-svg" class="w-full flex items-center justify-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-lg border border-gray-300 transition-colors">
+                    <i class="fa-solid fa-file-code"></i>
+                    Stiahnuť ako SVG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicializácia premenných
+        let qrCode;
+        const defaultContent = "https://priklad.sk";
+        let currentLogo = null;
+        const apiKey = ""; // System provides this
+
+        // Elementy
+        const contentInput = document.getElementById('qr-content');
+        const dotsTypeInput = document.getElementById('dots-type');
+        const cornersTypeInput = document.getElementById('corners-type');
+        
+        const dotsColorInput = document.getElementById('dots-color');
+        const cornersColorInput = document.getElementById('corners-color');
+        const bgColorInput = document.getElementById('bg-color');
+        const bgTransparentInput = document.getElementById('bg-transparent');
+        
+        const logoInput = document.getElementById('logo-input');
+        
+        const dotsColorText = document.getElementById('dots-color-text');
+        const cornersColorText = document.getElementById('corners-color-text');
+        const bgColorText = document.getElementById('bg-color-text');
+        const bgColorWrapper = document.getElementById('bg-color-wrapper');
+
+        const canvasContainer = document.getElementById('canvas-container');
+
+        // AI Elementy
+        const aiPromptInput = document.getElementById('ai-prompt');
+        const btnGenerateAi = document.getElementById('btn-generate-ai');
+        const aiBtnText = document.getElementById('ai-btn-text');
+        const aiErrorMsg = document.getElementById('ai-error');
+        
+        // API Key settings
+        const toggleApiBtn = document.getElementById('toggle-api-settings');
+        const apiSettingsPanel = document.getElementById('api-settings-panel');
+        const customApiKeyInput = document.getElementById('custom-api-key');
+
+        toggleApiBtn.addEventListener('click', () => {
+            apiSettingsPanel.classList.toggle('hidden');
+        });
+
+
+        // Inicializácia QR kódu
+        function initQR() {
+            qrCode = new QRCodeStyling({
+                width: 300,
+                height: 300,
+                type: "svg",
+                data: defaultContent,
+                image: "",
+                dotsOptions: {
+                    color: dotsColorInput.value,
+                    type: dotsTypeInput.value
+                },
+                backgroundOptions: {
+                    color: bgColorInput.value,
+                },
+                imageOptions: {
+                    crossOrigin: "anonymous",
+                    margin: 10
+                },
+                cornersSquareOptions: {
+                    type: cornersTypeInput.value,
+                    color: cornersColorInput.value
+                },
+                cornersDotOptions: {
+                    type: cornersTypeInput.value,
+                    color: cornersColorInput.value 
+                }
+            });
+
+            qrCode.append(canvasContainer);
+        }
+
+        // Funkcia na aktualizáciu
+        function updateQR() {
+            const isTransparent = bgTransparentInput.checked;
+            const bgColor = isTransparent ? 'transparent' : bgColorInput.value;
+
+            // UI update pre transparentnosť
+            if (isTransparent) {
+                bgColorWrapper.classList.add('disabled');
+                bgColorText.textContent = 'Transparent';
+                canvasContainer.style.backgroundColor = 'transparent';
+                canvasContainer.style.boxShadow = 'none';
+                canvasContainer.style.border = 'none';
+            } else {
+                bgColorWrapper.classList.remove('disabled');
+                bgColorText.textContent = bgColorInput.value;
+                canvasContainer.style.backgroundColor = bgColorInput.value;
+                canvasContainer.style.boxShadow = '';
+                canvasContainer.style.border = '';
+            }
+
+            const options = {
+                data: contentInput.value || defaultContent,
+                dotsOptions: {
+                    color: dotsColorInput.value,
+                    type: dotsTypeInput.value
+                },
+                backgroundOptions: {
+                    color: bgColor,
+                },
+                cornersSquareOptions: {
+                    type: cornersTypeInput.value,
+                    color: cornersColorInput.value
+                },
+                cornersDotOptions: {
+                    type: cornersTypeInput.value,
+                    color: cornersColorInput.value
+                }
+            };
+
+            // Aktualizácia textu farieb v UI
+            dotsColorText.textContent = dotsColorInput.value;
+            cornersColorText.textContent = cornersColorInput.value;
+
+            // Pridanie loga ak existuje
+            if (currentLogo) {
+                options.image = currentLogo;
+            } else {
+                options.image = "";
+            }
+
+            qrCode.update(options);
+        }
+
+        // --- GEMINI API INTEGRATION ---
+        
+        async function callGemini(promptText) {
+            // Get user key or fallback to system key
+            const userKey = customApiKeyInput.value.trim();
+            const effectiveApiKey = userKey || apiKey;
+
+            if (!effectiveApiKey) {
+                 throw new Error("Chýba API kľúč. Prosím zadajte API kľúč v nastaveniach.");
+            }
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${effectiveApiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: promptText }] }]
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        btnGenerateAi.addEventListener('click', async () => {
+            const prompt = aiPromptInput.value.trim();
+            if (!prompt) return;
+
+            // UI State - Loading
+            const originalText = aiBtnText.textContent;
+            aiBtnText.textContent = "Rozmýšľam";
+            aiBtnText.classList.add('thinking-dots');
+            btnGenerateAi.disabled = true;
+            aiErrorMsg.classList.add('hidden');
+
+            try {
+                // System prompt to force JSON format
+                const systemInstruction = `
+                    You are a professional graphic designer specializing in QR codes.
+                    Based on the user's description (theme/mood), generate a color palette and shape selection.
+                    
+                    Return ONLY a raw JSON object (no markdown, no code blocks) with the following structure:
+                    {
+                        "dotsColor": "#hexcode",
+                        "cornersColor": "#hexcode",
+                        "bgColor": "#hexcode",
+                        "dotsType": "one of: square, dots, rounded, classy, classy-rounded, extra-rounded",
+                        "cornersType": "one of: square, dot, extra-rounded"
+                    }
+
+                    IMPORTANT:
+                    1. Ensure HIGH CONTRAST between dots/corners and background for scannability.
+                    2. If the theme is "transparent" or implies no background, set bgColor to "#ffffff" but I will handle transparency separately in UI logic if needed, but usually just give a solid color that fits.
+                    3. Do not include comments or extra text.
+                `;
+
+                const finalPrompt = `${systemInstruction}\n\nUser Theme Description: "${prompt}"`;
+                
+                const resultText = await callGemini(finalPrompt);
+                
+                // Clean up potential markdown formatting
+                const cleanJson = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const design = JSON.parse(cleanJson);
+
+                // Apply logic
+                if (design.dotsColor) {
+                    dotsColorInput.value = design.dotsColor;
+                    dotsColorText.textContent = design.dotsColor;
+                }
+                if (design.cornersColor) {
+                    cornersColorInput.value = design.cornersColor;
+                    cornersColorText.textContent = design.cornersColor;
+                }
+                if (design.bgColor) {
+                    bgColorInput.value = design.bgColor;
+                    bgColorText.textContent = design.bgColor;
+                    bgTransparentInput.checked = false; // Reset transparency on new generation
+                }
+                if (design.dotsType) {
+                    // Check if value exists in options
+                    if ([...dotsTypeInput.options].some(o => o.value === design.dotsType)) {
+                        dotsTypeInput.value = design.dotsType;
+                    }
+                }
+                if (design.cornersType) {
+                    if ([...cornersTypeInput.options].some(o => o.value === design.cornersType)) {
+                        cornersTypeInput.value = design.cornersType;
+                    }
+                }
+
+                updateQR();
+
+            } catch (error) {
+                console.error(error);
+                let msg = "Nepodarilo sa vygenerovať dizajn. ";
+                if (error.message.includes("API kľúč")) {
+                    msg += "Prosím skontrolujte API kľúč v nastaveniach.";
+                } else {
+                    msg += "Skúste iný popis.";
+                }
+                aiErrorMsg.textContent = msg;
+                aiErrorMsg.classList.remove('hidden');
+            } finally {
+                // UI State - Reset
+                aiBtnText.textContent = originalText;
+                aiBtnText.classList.remove('thinking-dots');
+                btnGenerateAi.disabled = false;
+            }
+        });
+
+
+        // Spracovanie nahrania loga
+        logoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentLogo = e.target.result;
+                    updateQR();
+                }
+                reader.readAsDataURL(file);
+            } else {
+                currentLogo = null;
+                updateQR();
+            }
+        });
+
+        // Event Listenery
+        contentInput.addEventListener('input', updateQR);
+        dotsTypeInput.addEventListener('change', updateQR);
+        cornersTypeInput.addEventListener('change', updateQR);
+        
+        dotsColorInput.addEventListener('input', updateQR);
+        cornersColorInput.addEventListener('input', updateQR);
+        bgColorInput.addEventListener('input', updateQR);
+        bgTransparentInput.addEventListener('change', updateQR);
+
+        // Tlačidlá na stiahnutie
+        document.getElementById('btn-download-png').addEventListener('click', () => {
+            qrCode.download({ name: "moj-qr-kod", extension: "png" });
+        });
+
+        document.getElementById('btn-download-svg').addEventListener('click', () => {
+            qrCode.download({ name: "moj-qr-kod", extension: "svg" });
+        });
+
+        // Spustenie pri načítaní
+        document.addEventListener('DOMContentLoaded', initQR);
+
+    </script>
+</body>
+</html>
