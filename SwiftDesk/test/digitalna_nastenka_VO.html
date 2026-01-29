@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digitálna tabuľa</title>
+    <!-- Favicon / Logo v tabe (Lucide 'kanban-square' na Emerald-600 pozadí) -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23059669'/%3E%3Cg stroke='%23ffffff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Cpath d='M8 7v7'/%3E%3Cpath d='M12 7v4'/%3E%3Cpath d='M16 7v9'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Tailwind CSS pre štýlovanie -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        // Material You Semantic Tokens
+                        surface: 'var(--md-sys-color-surface)',
+                        'surface-container': 'var(--md-sys-color-surface-container)',
+                        'surface-variant': 'var(--md-sys-color-surface-variant)',
+                        'on-surface': 'var(--md-sys-color-on-surface)',
+                        'on-surface-variant': 'var(--md-sys-color-on-surface-variant)',
+                        primary: 'var(--md-sys-color-primary)',
+                        'on-primary': 'var(--md-sys-color-on-primary)',
+                        'primary-container': 'var(--md-sys-color-primary-container)',
+                        'on-primary-container': 'var(--md-sys-color-on-primary-container)',
+                        outline: 'var(--md-sys-color-outline)',
+                    },
+                    boxShadow: {
+                        'elevation-1': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+                        'elevation-2': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+                        'elevation-3': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome pre ikony -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Light Theme - Material Design 3 Inspired (Emerald/Nature) */
+            --md-sys-color-surface: #f8fcf9;
+            --md-sys-color-surface-container: #eff5f1;
+            --md-sys-color-surface-variant: #dde5e0;
+            --md-sys-color-on-surface: #191c1a;
+            --md-sys-color-on-surface-variant: #404943;
+            --md-sys-color-primary: #006c4c;
+            --md-sys-color-on-primary: #ffffff;
+            --md-sys-color-primary-container: #89f8c7;
+            --md-sys-color-on-primary-container: #002114;
+            --md-sys-color-outline: #707974;
+        }
+
+        .dark {
+            /* Dark Theme */
+            --md-sys-color-surface: #101412;
+            --md-sys-color-surface-container: #1d2522;
+            /* Trochu svetlejšia ako bg */
+            --md-sys-color-surface-variant: #2d3632;
+            --md-sys-color-on-surface: #e1e3df;
+            --md-sys-color-on-surface-variant: #c0c9c2;
+            --md-sys-color-primary: #6dddae;
+            --md-sys-color-on-primary: #003825;
+            --md-sys-color-primary-container: #005138;
+            --md-sys-color-on-primary-container: #89f8c7;
+            --md-sys-color-outline: #89938d;
+        }
+
+        body {
+            background-color: var(--md-sys-color-surface);
+            color: var(--md-sys-color-on-surface);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Vlastné scrollbary pre stĺpce */
+        .column-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .column-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .column-scroll::-webkit-scrollbar-thumb {
+            background-color: var(--md-sys-color-outline);
+            opacity: 0.2;
+            border-radius: 99px;
+            border: 2px solid transparent;
+            /* Padding effect */
+            background-clip: content-box;
+        }
+
+        /* Dark mode scrollbar fix */
+        .dark .column-scroll::-webkit-scrollbar-thumb {
+            background-color: var(--md-sys-color-on-surface-variant);
+        }
+
+        .column-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: var(--md-sys-color-primary);
+        }
+
+        /* Kartička hover efekt */
+        .notice-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: grab;
+        }
+
+        .notice-card:active {
+            cursor: grabbing;
+        }
+
+        .notice-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .notice-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Drag and Drop vizuál */
+        .drag-over {
+            background-color: var(--md-sys-color-primary-container) !important;
+            border: 2px dashed var(--md-sys-color-primary);
+        }
+
+        /* Loading overlay */
+        #loading-overlay {
+            backdrop-filter: blur(4px);
+        }
+
+        /* Glassmorphism for modals */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+        }
+
+        .dark .glass-panel {
+            background: rgba(30, 30, 30, 0.9);
+        }
+
+        /* Fade transition */
+        .fade-enter {
+            opacity: 0;
+        }
+
+        .fade-enter-active {
+            opacity: 1;
+            transition: opacity 200ms ease-in;
+        }
+
+        .fade-exit {
+            opacity: 1;
+        }
+
+        .fade-exit-active {
+            opacity: 0;
+            transition: opacity 200ms ease-out;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Hlavička -->
+    <header
+        class="bg-surface-container/80 backdrop-blur-md border-b border-outline/10 text-on-surface p-4 flex justify-between items-center z-10 sticky top-0 transition-colors duration-300">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <i class="fa-solid fa-clipboard-list text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-on-surface">Digitálna tabuľa</h1>
+                <div id="status-indicator"
+                    class="text-[11px] font-medium text-on-surface-variant/70 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-slate-400 inline-block transition-colors"></span>
+                    <span id="status-text">Offline</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="refreshDataManual()"
+                class="hover:bg-primary/10 text-on-surface-variant hover:text-primary w-10 h-10 rounded-full transition flex items-center justify-center"
+                title="Obnoviť dáta">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+            <button onclick="openProfilesModal()"
+                class="hover:bg-primary/10 text-on-surface-variant hover:text-primary px-4 py-2 rounded-full transition flex items-center gap-2 font-medium text-sm">
+                <i class="fa-solid fa-users"></i> <span class="hidden sm:inline">Zamestnanci</span>
+            </button>
+            <button onclick="openSettingsModal()"
+                class="hover:bg-primary/10 text-on-surface-variant hover:text-primary w-10 h-10 rounded-full transition flex items-center justify-center"
+                title="Nastavenia">
+                <i class="fa-solid fa-cog"></i>
+            </button>
+            <button onclick="openModal()"
+                class="bg-primary hover:bg-primary/90 text-on-primary px-5 py-2 rounded-full shadow-elevation-1 hover:shadow-elevation-2 transition flex items-center gap-2 font-semibold text-sm ml-2">
+                <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Nový oznam</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hlavná plocha (Grid) -->
+    <main class="flex-1 overflow-x-auto overflow-y-hidden p-4">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 h-full min-w-[1250px] md:min-w-0">
+
+            <!-- 1. Stĺpec: Pripravované -->
+            <div class="flex flex-col bg-surface-container rounded-3xl shadow-sm border border-outline/10 h-full transition-colors"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'prepared')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div
+                    class="p-4 bg-blue-100/50 dark:bg-blue-900/20 border-b border-blue-200/50 dark:border-blue-800/50 rounded-t-3xl flex justify-between items-center backdrop-blur-sm">
+                    <h2 class="font-bold text-blue-900 dark:text-blue-100 uppercase text-xs tracking-widest">
+                        <i class="fa-regular fa-clock mr-2"></i>Pripravované
+                    </h2>
+                    <span id="count-prepared"
+                        class="bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-100 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-prepared" class="flex-1 p-3 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 2. Stĺpec: Vyhlasované -->
+            <div class="flex flex-col bg-surface-container rounded-3xl shadow-sm border border-outline/10 h-full transition-colors"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'announced')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div
+                    class="p-4 bg-emerald-100/50 dark:bg-emerald-900/20 border-b border-emerald-200/50 dark:border-emerald-800/50 rounded-t-3xl flex justify-between items-center backdrop-blur-sm">
+                    <h2 class="font-bold text-emerald-900 dark:text-emerald-100 uppercase text-xs tracking-widest">
+                        <i class="fa-solid fa-bullhorn mr-2"></i>Vyhlasované
+                    </h2>
+                    <span id="count-announced"
+                        class="bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-100 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-announced" class="flex-1 p-3 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 3. Stĺpec: Vyhodnocované -->
+            <div class="flex flex-col bg-surface-container rounded-3xl shadow-sm border border-outline/10 h-full transition-colors"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'evaluating')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div
+                    class="p-4 bg-amber-100/50 dark:bg-amber-900/20 border-b border-amber-200/50 dark:border-amber-800/50 rounded-t-3xl flex justify-between items-center backdrop-blur-sm">
+                    <h2 class="font-bold text-amber-900 dark:text-amber-100 uppercase text-xs tracking-widest">
+                        <i class="fa-solid fa-chart-pie mr-2"></i>Vyhodnocované
+                    </h2>
+                    <span id="count-evaluating"
+                        class="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-100 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-evaluating" class="flex-1 p-3 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 4. Stĺpec: Kontrolované -->
+            <div class="flex flex-col bg-surface-container rounded-3xl shadow-sm border border-outline/10 h-full transition-colors"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'checked')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div
+                    class="p-4 bg-cyan-100/50 dark:bg-cyan-900/20 border-b border-cyan-200/50 dark:border-cyan-800/50 rounded-t-3xl flex justify-between items-center backdrop-blur-sm">
+                    <h2 class="font-bold text-cyan-900 dark:text-cyan-100 uppercase text-xs tracking-widest">
+                        <i class="fa-solid fa-clipboard-check mr-2"></i>Kontrolované
+                    </h2>
+                    <span id="count-checked"
+                        class="bg-cyan-200 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-100 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-checked" class="flex-1 p-3 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+            <!-- 5. Stĺpec: Špeciálne oznamy -->
+            <div class="flex flex-col bg-surface-container rounded-3xl shadow-sm border border-outline/10 h-full transition-colors"
+                ondragover="allowDrop(event)" ondrop="drop(event, 'special')" ondragenter="highlightColumn(this)"
+                ondragleave="unhighlightColumn(this)">
+                <div
+                    class="p-4 bg-purple-100/50 dark:bg-purple-900/20 border-b border-purple-200/50 dark:border-purple-800/50 rounded-t-3xl flex justify-between items-center backdrop-blur-sm">
+                    <h2 class="font-bold text-purple-900 dark:text-purple-100 uppercase text-xs tracking-widest">
+                        <i class="fa-solid fa-star mr-2"></i>Špeciálne
+                    </h2>
+                    <span id="count-special"
+                        class="bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-100 text-xs font-bold px-2 py-1 rounded-full">0</span>
+                </div>
+                <div id="col-special" class="flex-1 p-3 overflow-y-auto column-scroll space-y-3 min-h-[100px]">
+                    <!-- Karty budú tu -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Overlay pre načítavanie -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/50 hidden items-center justify-center z-50">
+        <div class="bg-white p-4 rounded-lg shadow-lg flex items-center gap-3">
+            <i class="fa-solid fa-spinner fa-spin text-blue-600 text-xl"></i>
+            <span class="text-gray-700 font-medium">Ukladám dáta na server...</span>
+        </div>
+    </div>
+
+    <!-- Modálne okno (Formulár Oznam) -->
+    <div id="modal"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 backdrop-blur-sm transition-opacity opacity-0"
+        onclick="if(event.target === this) closeModal()">
+        <div class="glass-panel rounded-3xl shadow-2xl w-full max-w-lg mx-4 transform transition-all scale-95 select-text cursor-auto border border-white/20 dark:border-white/5 p-1"
+            onmousedown="event.stopPropagation()">
+            <div class="bg-surface/50 dark:bg-surface/80 rounded-[1.4rem] p-6 backdrop-blur-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-xl font-bold text-on-surface">Pridať nový oznam</h3>
+                    <button onclick="closeModal()"
+                        class="text-on-surface-variant hover:text-error transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="noticeForm" onsubmit="saveNotice(event)">
+                    <input type="hidden" id="noticeId">
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <!-- Typ oznamu -->
+                        <div>
+                            <label class="block text-on-surface-variant text-xs font-bold mb-2 ml-1">Stĺpec</label>
+                            <div class="relative">
+                                <select id="noticeType" onchange="toggleDateFields()"
+                                    class="w-full bg-surface-container-high dark:bg-surface-container text-on-surface border-none rounded-xl p-3 pr-8 focus:ring-2 focus:ring-primary outline-none text-sm appearance-none cursor-pointer">
+                                    <option value="prepared">Pripravované</option>
+                                    <option value="announced">Vyhlasované</option>
+                                    <option value="evaluating">Vyhodnocované</option>
+                                    <option value="checked">Kontrolované</option>
+                                    <option value="special">Špeciálne</option>
+                                </select>
+                                <div
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-on-surface-variant">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Zamestnanec (Nový) -->
+                        <div>
+                            <label class="block text-on-surface-variant text-xs font-bold mb-2 ml-1">Zodpovedný</label>
+                            <div class="relative">
+                                <select id="assignedProfile"
+                                    class="w-full bg-surface-container-high dark:bg-surface-container text-on-surface border-none rounded-xl p-3 pr-8 focus:ring-2 focus:ring-primary outline-none text-sm appearance-none cursor-pointer">
+                                    <option value="">-- Nikto --</option>
+                                    <!-- Profiles will be loaded here -->
+                                </select>
+                                <div
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-on-surface-variant">
+                                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Názov -->
+                    <div class="mb-4">
+                        <label class="block text-on-surface-variant text-xs font-bold mb-2 ml-1">Nadpis oznamu *</label>
+                        <input type="text" id="title" required
+                            class="w-full bg-surface-container-high dark:bg-surface-container text-on-surface border-none rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder-on-surface-variant/50"
+                            placeholder="Napr. Rekonštrukcia chodníka">
+                    </div>
+
+                    <!-- Popis -->
+                    <div class="mb-4">
+                        <label class="block text-on-surface-variant text-xs font-bold mb-2 ml-1">Text oznamu</label>
+                        <textarea id="description" rows="3"
+                            class="w-full bg-surface-container-high dark:bg-surface-container text-on-surface border-none rounded-xl p-3 focus:ring-2 focus:ring-primary outline-none placeholder-on-surface-variant/50 resize-none"
+                            placeholder="Detailný popis..."></textarea>
+                    </div>
+
+                    <!-- Dátumové polia (Podmienené) -->
+                    <div id="date-fields"
+                        class="bg-blue-50/50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 mb-4 transition-all duration-300">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-blue-900 dark:text-blue-200 text-xs font-bold mb-1 ml-1">Dátum
+                                    vyhlásenia *</label>
+                                <input type="date" id="dateAnnounce"
+                                    class="w-full bg-white dark:bg-surface-container text-on-surface border-none rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-blue-900 dark:text-blue-200 text-xs font-bold mb-1 ml-1">Dátum
+                                    a čas vyhodnotenia *</label>
+                                <input type="datetime-local" id="dateEval"
+                                    class="w-full bg-white dark:bg-surface-container text-on-surface border-none rounded-lg p-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600 dark:text-blue-300 mt-2 italic flex items-center gap-1">
+                            <i class="fa-solid fa-circle-info"></i> Pre túto kategóriu sú dátumy povinné.
+                        </p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8">
+                        <button type="button" onclick="closeModal()"
+                            class="px-5 py-2.5 text-primary hover:bg-primary/10 rounded-full font-medium transition">Zrušiť</button>
+                        <button type="submit"
+                            class="px-6 py-2.5 text-on-primary bg-primary hover:bg-primary/90 rounded-full font-medium shadow-elevation-1 hover:shadow-elevation-2 transition">Uložiť</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modálne okno (Správa profilov) -->
+    <div id="profilesModal"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 backdrop-blur-sm transition-opacity opacity-0"
+        onclick="if(event.target === this) closeProfilesModal()">
+        <div class="glass-panel rounded-3xl shadow-2xl w-full max-w-md mx-4 select-text cursor-auto border border-white/20 dark:border-white/5 p-1"
+            onmousedown="event.stopPropagation()">
+            <div class="bg-surface/50 dark:bg-surface/80 rounded-[1.4rem] p-6 backdrop-blur-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-on-surface">Správa zamestnancov</h3>
+                    <button onclick="closeProfilesModal()"
+                        class="text-on-surface-variant hover:text-error transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Pridanie nového -->
+                <form onsubmit="addProfile(event)" class="flex gap-2 mb-6">
+                    <input type="text" id="newProfileNick" placeholder="Nick / Meno" required
+                        class="flex-1 bg-surface-container-high dark:bg-surface-container text-on-surface border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary outline-none">
+                    <button type="submit"
+                        class="bg-primary hover:bg-primary/90 text-on-primary px-4 py-2 rounded-xl text-sm font-semibold shadow-sm">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </form>
+
+                <!-- Zoznam -->
+                <div class="mb-4">
+                    <label
+                        class="block text-on-surface-variant text-xs font-bold mb-2 uppercase tracking-wide ml-1">Aktívni
+                        zamestnanci</label>
+                    <ul id="profilesList" class="space-y-2 max-h-64 overflow-y-auto pr-2 column-scroll">
+                        <!-- Profiles rendered here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modálne okno (Nastavenia) -->
+    <div id="settingsModal"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 backdrop-blur-sm transition-opacity opacity-0"
+        onclick="if(event.target === this) closeSettingsModal()">
+        <div class="glass-panel rounded-3xl shadow-2xl w-full max-w-sm mx-4 select-none cursor-auto border border-white/20 dark:border-white/5 p-1"
+            onmousedown="event.stopPropagation()">
+            <div class="bg-surface/50 dark:bg-surface/80 rounded-[1.4rem] p-6 backdrop-blur-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-on-surface">Nastavenia</h3>
+                    <button onclick="closeSettingsModal()"
+                        class="text-on-surface-variant hover:text-error transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-variant">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Sekcia: Vzhľad -->
+                    <div>
+                        <h4 class="text-sm font-bold text-on-surface-variant mb-3 uppercase tracking-wider ml-1">Vzhľad
+                            aplikácie</h4>
+                        <div class="bg-surface-container-high dark:bg-surface-container rounded-2xl p-1 flex">
+                            <button onclick="setTheme('light')" id="theme-btn-light"
+                                class="flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 text-on-surface-variant hover:text-on-surface">
+                                <i class="fa-regular fa-sun"></i> Svetlý
+                            </button>
+                            <button onclick="setTheme('dark')" id="theme-btn-dark"
+                                class="flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 text-on-surface-variant hover:text-on-surface">
+                                <i class="fa-regular fa-moon"></i> Tmavý
+                            </button>
+                            <button onclick="setTheme('system')" id="theme-btn-system"
+                                class="flex-1 py-2 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 text-on-surface-variant hover:text-on-surface">
+                                <i class="fa-solid fa-desktop"></i> Auto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="text-center pt-4 border-t border-outline/10">
+                        <p class="text-xs text-on-surface-variant/50">Verzia: Material You Redesign 2.0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- KONFIGURÁCIA SERVERA ---
+        const USE_SERVER = false;
+
+        // URL konfigurácia
+        const API_URL_GET = 'data.json';
+        const API_URL_SAVE = 'save.php';
+        const POLL_INTERVAL_MS = 5000;
+
+        // Stav aplikácie
+        let notices = [];
+        let profiles = [];
+        let lastServerUpdated = 0;
+        let isEditing = false;
+        let currentTheme = 'system';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            // Listener pre systémovú zmenu témy
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (currentTheme === 'system') applyTheme();
+            });
+
+            initApp();
+            setInterval(pollData, POLL_INTERVAL_MS);
+        });
+
+        // --- THEME LOGIC ---
+
+        function initTheme() {
+            const saved = localStorage.getItem('nastenka_theme_preference');
+            if (saved) currentTheme = saved;
+            applyTheme();
+        }
+
+        function setTheme(mode) {
+            currentTheme = mode;
+            localStorage.setItem('nastenka_theme_preference', mode);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            // Update UI tlačidiel v nastaveniach
+            const btns = ['light', 'dark', 'system'];
+            btns.forEach(m => {
+                const btn = document.getElementById(`theme-btn-${m}`);
+                if (btn) {
+                    if (m === currentTheme) {
+                        btn.classList.add('bg-surface-variant', 'text-on-surface-variant', 'shadow-sm');
+                        btn.classList.remove('text-on-surface-variant/70'); // odstranit dim
+                    } else {
+                        btn.classList.remove('bg-surface-variant', 'text-on-surface-variant', 'shadow-sm');
+                        btn.classList.add('text-on-surface-variant/70');
+                    }
+                }
+            });
+
+            // Aplikácia triedy na HTML elemente
+            const isDark = (currentTheme === 'dark') ||
+                (currentTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        async function initApp() {
+            await loadData();
+            renderNotices();
+            toggleDateFields();
+            updateStatusIndicator();
+        }
+
+        // --- NETWORK / STORAGE LAYER ---
+
+        async function loadData(manualRefresh = false) {
+            if (USE_SERVER) {
+                try {
+                    const response = await fetch(`${API_URL_GET}?t=${Date.now()}`);
+                    if (!response.ok) throw new Error('Chyba siete');
+
+                    const data = await response.json();
+
+                    if (data.updatedAt && data.updatedAt > lastServerUpdated) {
+                        notices = data.notices || [];
+                        profiles = data.profiles || [];
+                        lastServerUpdated = data.updatedAt;
+
+                        if (!isEditing || manualRefresh) {
+                            renderNotices();
+                            if (isEditing && !manualRefresh) alert("Pozor: Dáta na pozadí boli aktualizované.");
+                        }
+                    }
+                    updateStatusIndicator(true);
+                } catch (error) {
+                    console.error("Chyba načítania:", error);
+                    updateStatusIndicator(false);
+                    if (manualRefresh) alert("Nepodarilo sa spojiť so serverom.");
+                }
+            } else {
+                const savedData = localStorage.getItem('nastenka_full_data');
+                if (savedData) {
+                    const parsed = JSON.parse(savedData);
+                    notices = parsed.notices || [];
+                    profiles = parsed.profiles || [];
+                    lastServerUpdated = parsed.updatedAt || 0;
+                } else {
+                    notices = [{ id: '1', type: 'prepared', title: 'Vitajte v novom dizajne', description: 'Skúste prepnúť tmavý režim v nastaveniach!', dateAnnounce: new Date().toISOString().split('T')[0], dateEval: '' }];
+                    profiles = [];
+                }
+                updateStatusIndicator(true);
+            }
+        }
+
+        async function pollData() {
+            if (!USE_SERVER) return;
+            await loadData();
+        }
+
+        async function saveDataWithLock() {
+            showLoading(true);
+            const timestamp = Date.now();
+
+            const payload = {
+                updatedAt: timestamp,
+                notices: notices,
+                profiles: profiles
+            };
+
+            if (USE_SERVER) {
+                try {
+                    const checkResponse = await fetch(`${API_URL_GET}?t=${Date.now()}`);
+                    if (checkResponse.ok) {
+                        const serverData = await checkResponse.json();
+                        if (serverData.updatedAt > lastServerUpdated) {
+                            showLoading(false);
+                            alert("KONFLIKT: Niekto iný medzitým upravil nástenku!\n\nStránka sa teraz obnoví.");
+                            await loadData(true);
+                            return false;
+                        }
+                    }
+
+                    const response = await fetch(API_URL_SAVE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error('Chyba ukladania');
+
+                    lastServerUpdated = timestamp;
+                    updateStatusIndicator(true);
+                    showLoading(false);
+                    return true;
+
+                } catch (error) {
+                    console.error("Save error:", error);
+                    alert("Chyba pri komunikácii so serverom.");
+                    showLoading(false);
+                    updateStatusIndicator(false);
+                    return false;
+                }
+            } else {
+                localStorage.setItem('nastenka_full_data', JSON.stringify(payload));
+                lastServerUpdated = timestamp;
+                await new Promise(r => setTimeout(r, 400));
+                showLoading(false);
+                return true;
+            }
+        }
+
+        function refreshDataManual() {
+            loadData(true);
+            renderNotices();
+            alert("Dáta obnovené.");
+        }
+
+        function updateStatusIndicator(isOnline = true) {
+            const ind = document.getElementById('status-indicator');
+            const text = document.getElementById('status-text');
+            const dot = ind.querySelector('span');
+
+            if (USE_SERVER) {
+                if (isOnline) {
+                    text.textContent = "Online (NAS)";
+                    dot.className = "w-2 h-2 rounded-full bg-emerald-500 inline-block shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+                } else {
+                    text.textContent = "Pripojenie zlyhalo";
+                    dot.className = "w-2 h-2 rounded-full bg-red-500 inline-block";
+                }
+            } else {
+                text.textContent = "Lokálny režim";
+                dot.className = "w-2 h-2 rounded-full bg-blue-500 inline-block";
+            }
+        }
+
+        function showLoading(show) {
+            const overlay = document.getElementById('loading-overlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+                overlay.classList.add('flex');
+            } else {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            }
+        }
+
+        // --- Drag and Drop Logic ---
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev, id) {
+            ev.dataTransfer.setData("text", id);
+            ev.target.classList.add('opacity-50', 'scale-95');
+        }
+
+        async function drop(ev, targetType) {
+            ev.preventDefault();
+            const id = ev.dataTransfer.getData("text");
+            const draggedElement = document.querySelector(`[ondragstart*="${id}"]`);
+            if (draggedElement) draggedElement.classList.remove('opacity-50', 'scale-95');
+
+            const column = ev.target.closest('[ondrop]');
+            if (column) unhighlightColumn(column);
+
+            const noticeIndex = notices.findIndex(n => n.id === id);
+            if (noticeIndex > -1) {
+                const originalType = notices[noticeIndex].type;
+                const needsDates = (targetType === 'prepared' || targetType === 'announced');
+                const hasDates = (notices[noticeIndex].dateAnnounce && notices[noticeIndex].dateEval);
+
+                notices[noticeIndex].type = targetType;
+                renderNotices();
+
+                const success = await saveDataWithLock();
+
+                if (!success) {
+                    notices[noticeIndex].type = originalType;
+                    renderNotices();
+                } else {
+                    if (needsDates && !hasDates) {
+                        setTimeout(() => {
+                            alert("Pozor: Tento stĺpec vyžaduje dátumy. Prosím doplňte ich.");
+                            openModal(id);
+                        }, 100);
+                    }
+                }
+            }
+        }
+
+        function highlightColumn(col) {
+            col.classList.add('drag-over');
+        }
+
+        function unhighlightColumn(col) {
+            col.classList.remove('drag-over');
+        }
+
+
+        // --- Logika Profilov ---
+
+        function openProfilesModal() {
+            isEditing = true;
+            renderProfilesList();
+            const m = document.getElementById('profilesModal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.remove('opacity-0'), 10);
+        }
+
+        function closeProfilesModal() {
+            const m = document.getElementById('profilesModal');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 200);
+            isEditing = false;
+        }
+
+        async function addProfile(e) {
+            e.preventDefault();
+            const nickInput = document.getElementById('newProfileNick');
+            const nick = nickInput.value.trim();
+
+            if (nick) {
+                profiles.push({ id: Date.now().toString(), nick: nick });
+                nickInput.value = '';
+
+                const success = await saveDataWithLock();
+                if (success) {
+                    renderProfilesList();
+                    renderProfileSelect();
+                }
+            }
+        }
+
+        async function deleteProfile(id) {
+            if (confirm('Odstrániť tohto zamestnanca?')) {
+                const backup = [...profiles];
+                profiles = profiles.filter(p => p.id !== id);
+                const success = await saveDataWithLock();
+                if (success) {
+                    renderProfilesList();
+                    renderProfileSelect();
+                } else {
+                    profiles = backup;
+                    renderProfilesList();
+                }
+            }
+        }
+
+        function renderProfilesList() {
+            const list = document.getElementById('profilesList');
+            list.innerHTML = profiles.length ? '' : '<li class="text-on-surface-variant text-sm italic p-2">Zatiaľ žiadni zamestnanci.</li>';
+
+            profiles.forEach(p => {
+                list.innerHTML += `
+                    <li class="flex justify-between items-center bg-surface-container-high dark:bg-surface-container p-3 rounded-xl border border-outline/5 transition-all hover:bg-surface-container">
+                        <span class="font-medium text-on-surface">${escapeHtml(p.nick)}</span>
+                        <button onclick="deleteProfile('${p.id}')" class="text-on-surface-variant hover:text-error transition p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </li>
+                `;
+            });
+        }
+
+        function renderProfileSelect() {
+            const select = document.getElementById('assignedProfile');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">-- Nikto --</option>';
+            profiles.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${escapeHtml(p.nick)}</option>`;
+            });
+            select.value = currentVal;
+        }
+
+
+        // --- Logika Formulára Oznamov ---
+
+        function openModal(editId = null) {
+            isEditing = true;
+            const modal = document.getElementById('modal');
+            const form = document.getElementById('noticeForm');
+            const modalTitle = document.getElementById('modal-title');
+
+            renderProfileSelect();
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+
+            if (editId) {
+                const notice = notices.find(n => n.id === editId);
+                if (!notice) return;
+
+                document.getElementById('noticeId').value = notice.id;
+                document.getElementById('noticeType').value = notice.type;
+                document.getElementById('assignedProfile').value = notice.profileId || '';
+                document.getElementById('title').value = notice.title;
+                document.getElementById('description').value = notice.description;
+                document.getElementById('dateAnnounce').value = notice.dateAnnounce || '';
+                document.getElementById('dateEval').value = notice.dateEval || '';
+                modalTitle.textContent = "Upraviť oznam";
+            } else {
+                form.reset();
+                document.getElementById('noticeId').value = '';
+                document.getElementById('noticeType').value = 'prepared';
+                document.getElementById('dateAnnounce').valueAsDate = new Date();
+                modalTitle.textContent = "Pridať nový oznam";
+            }
+            toggleDateFields();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+            isEditing = false;
+        }
+
+        function toggleDateFields() {
+            const type = document.getElementById('noticeType').value;
+            const dateContainer = document.getElementById('date-fields');
+            const dateAnnounce = document.getElementById('dateAnnounce');
+            const dateEval = document.getElementById('dateEval');
+
+            const areDatesMandatory = (type === 'prepared' || type === 'announced');
+
+            if (areDatesMandatory) {
+                dateContainer.classList.remove('hidden');
+                dateContainer.classList.remove('opacity-50', 'pointer-events-none');
+                dateAnnounce.required = true;
+                dateEval.required = true;
+            } else {
+                if (type === 'special') {
+                    dateContainer.classList.add('hidden');
+                } else {
+                    dateContainer.classList.remove('hidden');
+                    dateContainer.classList.add('opacity-50', 'pointer-events-none');
+                }
+                dateAnnounce.required = false;
+                dateEval.required = false;
+            }
+        }
+
+        // --- Settings Modal Logic ---
+        function openSettingsModal() {
+            const m = document.getElementById('settingsModal');
+            m.classList.remove('hidden');
+            setTimeout(() => m.classList.remove('opacity-0'), 10);
+        }
+
+        function closeSettingsModal() {
+            const m = document.getElementById('settingsModal');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 200);
+        }
+
+        // --- CRUD Operácie Oznamov ---
+
+        async function saveNotice(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('noticeId').value;
+            const type = document.getElementById('noticeType').value;
+            const profileId = document.getElementById('assignedProfile').value;
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const dateAnnounce = document.getElementById('dateAnnounce').value;
+            const dateEval = document.getElementById('dateEval').value;
+
+            const noticeData = {
+                id: id ? id : Date.now().toString(),
+                type,
+                profileId,
+                title,
+                description,
+                dateAnnounce,
+                dateEval,
+                createdAt: new Date().toISOString()
+            };
+
+            const noticesBackup = [...notices];
+
+            if (id) {
+                const index = notices.findIndex(n => n.id === id);
+                notices[index] = noticeData;
+            } else {
+                notices.push(noticeData);
+            }
+
+            const success = await saveDataWithLock();
+
+            if (success) {
+                renderNotices();
+                closeModal();
+            } else {
+                notices = noticesBackup;
+            }
+        }
+
+        async function deleteNotice(id) {
+            if (confirm('Naozaj chcete odstrániť tento oznam?')) {
+                const backup = [...notices];
+                notices = notices.filter(n => n.id !== id);
+
+                const success = await saveDataWithLock();
+                if (success) {
+                    renderNotices();
+                } else {
+                    notices = backup;
+                }
+            }
+        }
+
+        // --- Renderovanie ---
+
+        function renderNotices() {
+            const columns = {
+                prepared: document.getElementById('col-prepared'),
+                announced: document.getElementById('col-announced'),
+                evaluating: document.getElementById('col-evaluating'),
+                checked: document.getElementById('col-checked'),
+                special: document.getElementById('col-special')
+            };
+
+            const counts = { prepared: 0, announced: 0, evaluating: 0, checked: 0, special: 0 };
+
+            Object.values(columns).forEach(col => col.innerHTML = '');
+
+            notices.forEach(notice => {
+                if (columns[notice.type]) {
+                    counts[notice.type]++;
+                    const card = createCardHTML(notice);
+                    columns[notice.type].innerHTML += card;
+                }
+            });
+
+            document.getElementById('count-prepared').textContent = counts.prepared;
+            document.getElementById('count-announced').textContent = counts.announced;
+            document.getElementById('count-evaluating').textContent = counts.evaluating;
+            document.getElementById('count-checked').textContent = counts.checked;
+            document.getElementById('count-special').textContent = counts.special;
+        }
+
+        function createCardHTML(notice) {
+            // Dátumy (zobrazujeme len pre 'announced' a 'evaluating')
+            let datesHTML = '';
+            const shouldShowDates = (notice.type === 'announced' || notice.type === 'evaluating');
+
+            if (shouldShowDates && (notice.dateAnnounce || notice.dateEval)) {
+                const dAnnounce = notice.dateAnnounce ? new Date(notice.dateAnnounce).toLocaleDateString('sk-SK') : '-';
+                const dEvalObj = notice.dateEval ? new Date(notice.dateEval) : null;
+                const dEval = dEvalObj ? `${dEvalObj.toLocaleDateString('sk-SK')} ${dEvalObj.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' })}` : '-';
+
+                // Colors for date badges
+                const badgeClass = notice.type === 'checked' ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200';
+
+                datesHTML = `
+                    <div class="mt-3 pt-3 border-t border-outline/10 grid grid-cols-1 gap-1 text-[11px]">
+                        ${notice.dateAnnounce ? `
+                        <div class="flex justify-between items-center text-on-surface-variant">
+                            <span><i class="fa-regular fa-calendar mr-1"></i>Vyhlásenie:</span>
+                            <span class="font-semibold text-on-surface">${dAnnounce}</span>
+                        </div>` : ''}
+                        
+                        ${notice.dateEval ? `
+                        <div class="flex justify-between items-center text-on-surface-variant mt-1.5">
+                            <span><i class="fa-regular fa-clock mr-1"></i>Vyhodnotenie:</span>
+                            <span class="font-bold ${badgeClass} px-1.5 py-0.5 rounded text-[10px]">${dEval}</span>
+                        </div>` : ''}
+                    </div>
+                `;
+            }
+
+            // Nickname badge (iba ak existuje a je priradený)
+            let nickBadge = '';
+            if (notice.profileId) {
+                const profile = profiles.find(p => p.id === notice.profileId);
+                if (profile) {
+                    nickBadge = `
+                        <span class="inline-flex items-center gap-1 bg-surface-container text-on-surface-variant text-[10px] uppercase font-bold px-2 py-0.5 rounded border border-outline/10 mb-2">
+                            <i class="fa-solid fa-user text-primary text-[9px]"></i> ${escapeHtml(profile.nick)}
+                        </span>
+                    `;
+                }
+            }
+
+            // Farba prúžku
+            let borderClass = 'border-l-4';
+            if (notice.type === 'prepared') borderClass += ' border-blue-500';
+            else if (notice.type === 'announced') borderClass += ' border-emerald-500';
+            else if (notice.type === 'evaluating') borderClass += ' border-amber-500';
+            else if (notice.type === 'checked') borderClass += ' border-cyan-500';
+            else borderClass += ' border-purple-500';
+
+            return `
+                <div class="notice-card bg-surface-container-low dark:bg-surface-container-high/60 p-4 rounded-2xl shadow-elevation-1 border border-outline/5 mb-3 ${borderClass} relative group"
+                     draggable="true" ondragstart="drag(event, '${notice.id}')">
+                    
+                    <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 p-1 bg-surface/80 backdrop-blur rounded-full shadow-sm">
+                        <button onclick="openModal('${notice.id}')" class="text-on-surface-variant hover:text-primary p-1.5 w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-variant transition" title="Upraviť">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="deleteNotice('${notice.id}')" class="text-on-surface-variant hover:text-error p-1.5 w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface-variant transition" title="Zmazať">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    ${nickBadge}
+
+                    <h3 class="font-bold text-on-surface pr-8 text-sm leading-snug mb-1">${escapeHtml(notice.title)}</h3>
+                    
+                    ${notice.description ? `<p class="text-on-surface-variant text-xs mt-1.5 line-clamp-3 leading-relaxed">${escapeHtml(notice.description)}</p>` : ''}
+                    
+                    ${datesHTML}
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        window.onclick = function (event) {
+            // Handled by onclick attributes on modals
+        }
+    </script>
+</body>
+
+</html>
