@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocsTime Manager</title>
+    <!-- Favicon: Calendar Arrow Up (Emerald-600 Background, White Icon) -->
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23059669'/%3E%3Cg transform='translate(4,4)' stroke='%23ffffff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m14 18 4-4 4 4'/%3E%3Cpath d='M16 2v4'/%3E%3Cpath d='M18 22v-8'/%3E%3Cpath d='M21 11.343V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9'/%3E%3Cpath d='M3 10h18'/%3E%3Cpath d='M8 2v4'/%3E%3C/g%3E%3C/svg%3E">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,27 +33,29 @@
 
     <style>
         :root {
-            --md-sys-color-primary: #6750A4;
+            --md-sys-color-primary: #059669;
             --md-sys-color-on-primary: #FFFFFF;
-            --md-sys-color-primary-container: #EADDFF;
-            --md-sys-color-on-primary-container: #21005D;
-            --md-sys-color-secondary: #625B71;
-            --md-sys-color-surface: #FEF7FF;
-            --md-sys-color-surface-variant: #E7E0EC;
-            --md-sys-color-on-surface: #1D1B20;
-            --md-sys-color-outline: #79747E;
+            --md-sys-color-primary-container: #A7F3D0;
+            --md-sys-color-on-primary-container: #065F46;
+            --md-sys-color-secondary: #4B5563;
+            --md-sys-color-surface: #F9FAFB;
+            --md-sys-color-surface-variant: #E5E7EB;
+            --md-sys-color-on-surface: #111827;
+            --md-sys-color-outline: #9CA3AF;
+            --md-sys-color-tertiary: #047857;
         }
 
         .dark-mode {
-            --md-sys-color-primary: #D0BCFF;
-            --md-sys-color-on-primary: #381E72;
-            --md-sys-color-primary-container: #4F378B;
-            --md-sys-color-on-primary-container: #EADDFF;
-            --md-sys-color-secondary: #CCC2DC;
-            --md-sys-color-surface: #141218;
-            --md-sys-color-surface-variant: #49454F;
-            --md-sys-color-on-surface: #E6E1E5;
-            --md-sys-color-outline: #938F99;
+            --md-sys-color-primary: #34D399;
+            --md-sys-color-on-primary: #064E3B;
+            --md-sys-color-primary-container: #065F46;
+            --md-sys-color-on-primary-container: #D1FAE5;
+            --md-sys-color-secondary: #9CA3AF;
+            --md-sys-color-surface: #111827;
+            --md-sys-color-surface-variant: #374151;
+            --md-sys-color-on-surface: #F9FAFB;
+            --md-sys-color-outline: #6B7280;
+            --md-sys-color-tertiary: #6EE7B7;
         }
 
         body {
@@ -95,6 +100,17 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* Tree view lines */
+        .tree-line {
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: 0;
+            width: 1px;
+            background-color: var(--md-sys-color-outline);
+            opacity: 0.3;
         }
     </style>
 </head>
@@ -201,10 +217,10 @@
                             entries.push({
                                 id: Math.random().toString(36).substr(2, 9),
                                 name: zipEntry.name.split('/').pop(),
-                                path: relativePath,
+                                path: relativePath, // Full path inside zip
                                 size: zipEntry._data.uncompressedSize || 0,
                                 type: zipEntry.name.split('.').pop(),
-                                lastModifiedDate: zipEntry.date, // ZIP entry date
+                                lastModifiedDate: zipEntry.date,
                                 note: '',
                                 project: 'Import ZIP',
                                 source: 'ZIP: ' + file.name
@@ -213,14 +229,15 @@
                     }
                     return entries;
                 } else {
-                    // Bežný súbor
+                    // Bežný súbor (pokus o získanie relative path ak bolo drag&drop priečinka)
+                    const fullPath = file.webkitRelativePath || file.name;
                     return [{
                         id: Math.random().toString(36).substr(2, 9),
                         name: file.name,
-                        path: file.name,
+                        path: fullPath,
                         size: file.size,
                         type: ext,
-                        lastModifiedDate: new Date(file.lastModified), // File system date
+                        lastModifiedDate: new Date(file.lastModified),
                         note: '',
                         project: 'Všeobecné',
                         source: 'Drag & Drop'
@@ -240,7 +257,6 @@
                 setFiles(prev => [...prev, ...newFiles]);
                 setLoading(false);
 
-                // Prepnúť na dátum posledného pridaného súboru ak existuje
                 if (newFiles.length > 0) {
                     const lastDate = newFiles[0].lastModifiedDate;
                     setCurrentDate(new Date(lastDate));
@@ -294,6 +310,7 @@
             // --- Exporty ---
             const exportExcel = () => {
                 const data = files.map(f => ({
+                    "Cesta": f.path,
                     "Názov": f.name,
                     "Typ": f.type,
                     "Projekt": f.project,
@@ -318,7 +335,6 @@
                 doc.setFont("helvetica", "normal");
                 doc.text(`Generované: ${new Date().toLocaleDateString('sk-SK')}`, 14, 30);
 
-                // Triedenie podľa dátumu
                 const sorted = [...files].sort((a, b) => b.lastModifiedDate - a.lastModifiedDate);
 
                 const tableData = sorted.map(f => [
@@ -333,7 +349,7 @@
                     head: [['Dátum', 'Súbor', 'Projekt', 'Poznámka']],
                     body: tableData,
                     theme: 'grid',
-                    styles: { fontSize: 8, font: "helvetica" }, // Noto Sans by required for full UTF8 chars in custom font scenario, simplifying here
+                    styles: { fontSize: 8, font: "helvetica" },
                 });
 
                 doc.save("Vykaz_Prace.pdf");
@@ -355,35 +371,110 @@
                 );
             }, [filteredFiles, selectedDate]);
 
-            // --- Komponenty UI ---
+            // --- UI Komponenty ---
+
+            // Folder Tree Helper Component
+            const FolderTree = ({ data }) => {
+                const [expanded, setExpanded] = useState({});
+
+                const toggle = (path) => {
+                    setExpanded(prev => ({ ...prev, [path]: !prev[path] }));
+                };
+
+                // Build tree structure
+                const tree = useMemo(() => {
+                    const root = { name: "Root", children: {}, files: [] };
+                    data.forEach(file => {
+                        const parts = file.path.split('/');
+                        let current = root;
+
+                        // Handle directories
+                        for (let i = 0; i < parts.length - 1; i++) {
+                            const part = parts[i];
+                            if (!current.children[part]) {
+                                current.children[part] = { name: part, children: {}, files: [], path: parts.slice(0, i + 1).join('/') };
+                            }
+                            current = current.children[part];
+                        }
+                        // Add file
+                        current.files.push(file);
+                    });
+                    return root;
+                }, [data]);
+
+                const renderNode = (node, path = 'root', depth = 0) => {
+                    const hasChildren = Object.keys(node.children).length > 0;
+                    const hasFiles = node.files.length > 0;
+                    const isExpanded = expanded[path] !== false; // Default trueish
+
+                    if (!hasChildren && !hasFiles && depth !== 0) return null;
+
+                    return (
+                        <div key={path} className="relative select-none">
+                            {depth > 0 && (
+                                <div
+                                    className="flex items-center gap-2 py-1 px-2 hover:bg-[var(--md-sys-color-surface-variant)] rounded-lg cursor-pointer transition-colors"
+                                    onClick={() => hasChildren ? toggle(path) : null}
+                                    style={{ marginLeft: `${depth * 16}px` }}
+                                >
+                                    <Icon
+                                        name={hasChildren ? (isExpanded ? "folder-open" : "folder") : "folder"}
+                                        size={18}
+                                        className={`text-[var(--md-sys-color-primary)] ${!hasChildren ? 'opacity-50' : ''}`}
+                                    />
+                                    <span className="text-sm font-medium truncate">{node.name}</span>
+                                    {hasFiles && <span className="text-xs bg-[var(--md-sys-color-secondary)] bg-opacity-20 px-2 rounded-full text-[var(--md-sys-color-on-surface)]">{node.files.length}</span>}
+                                </div>
+                            )}
+
+                            {isExpanded && (
+                                <div className="relative">
+                                    {depth > 0 && <div className="tree-line" style={{ left: `${(depth * 16) + 9}px` }}></div>}
+                                    {Object.values(node.children).map(child => renderNode(child, child.path, depth + 1))}
+                                    {node.files.map(file => (
+                                        <div
+                                            key={file.id}
+                                            className="flex items-center gap-2 py-1 px-2 hover:bg-[var(--md-sys-color-surface-variant)] rounded-lg ml-2 group"
+                                            style={{ marginLeft: `${(depth + 1) * 16}px` }}
+                                        >
+                                            <Icon name={getFileIcon(file.name)} size={14} className="text-[var(--md-sys-color-secondary)]" />
+                                            <span className="text-sm truncate opacity-80 group-hover:opacity-100">{file.name}</span>
+                                            <span className="text-[10px] text-[var(--md-sys-color-outline)] ml-auto">{formatFileSize(file.size)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                };
+
+                return (
+                    <div className="overflow-x-auto">
+                        {renderNode(tree)}
+                    </div>
+                );
+            };
 
             const Calendar = () => {
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth();
-
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sun
-
-                // SK kalendár začína pondelkom, adjust:
+                const firstDayOfMonth = new Date(year, month, 1).getDay();
                 const startingSlot = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
                 const days = [];
-                for (let i = 0; i < startingSlot; i++) {
-                    days.push(<div key={`empty-${i}`} className="h-24 bg-transparent"></div>);
-                }
+                for (let i = 0; i < startingSlot; i++) days.push(<div key={`empty-${i}`}></div>);
 
                 for (let d = 1; d <= daysInMonth; d++) {
                     const dateObj = new Date(year, month, d);
                     const isToday = new Date().toDateString() === dateObj.toDateString();
                     const isSelected = selectedDate.toDateString() === dateObj.toDateString();
 
-                    // Nájsť súbory pre tento deň
                     const dayFiles = filteredFiles.filter(f =>
                         f.lastModifiedDate.getDate() === d &&
                         f.lastModifiedDate.getMonth() === month &&
                         f.lastModifiedDate.getFullYear() === year
                     );
-
                     const hasFiles = dayFiles.length > 0;
 
                     days.push(
@@ -391,9 +482,9 @@
                             key={d}
                             onClick={() => setSelectedDate(dateObj)}
                             className={`
-                                h-24 p-2 border border-[var(--md-sys-color-outline)] border-opacity-20 rounded-xl cursor-pointer relative transition-all duration-200
+                                min-h-[5rem] p-2 border border-[var(--md-sys-color-outline)] border-opacity-20 rounded-xl cursor-pointer relative transition-all duration-200
                                 ${isSelected ? 'bg-[var(--md-sys-color-primary-container)] border-2 border-[var(--md-sys-color-primary)]' : 'hover:bg-[var(--md-sys-color-surface-variant)]'}
-                                ${isToday ? 'font-bold' : ''}
+                                ${isToday ? 'font-bold ring-1 ring-[var(--md-sys-color-primary)]' : ''}
                             `}
                         >
                             <span className={`
@@ -402,19 +493,17 @@
                             `}>
                                 {d}
                             </span>
-
                             {hasFiles && (
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                    {dayFiles.slice(0, 3).map((f, i) => (
-                                        <div key={i} className="w-2 h-2 rounded-full bg-[var(--md-sys-color-primary)]" title={f.name}></div>
-                                    ))}
-                                    {dayFiles.length > 3 && <span className="text-[10px] text-[var(--md-sys-color-secondary)]">+{dayFiles.length - 3}</span>}
-                                </div>
-                            )}
-
-                            {hasFiles && (
-                                <div className="absolute bottom-2 right-2 text-xs font-medium text-[var(--md-sys-color-primary)]">
-                                    {dayFiles.length} súb.
+                                <div className="mt-1 flex flex-col gap-1">
+                                    <div className="flex gap-1">
+                                        {dayFiles.slice(0, 4).map((f, i) => (
+                                            <div key={i} className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-primary)]"></div>
+                                        ))}
+                                        {dayFiles.length > 4 && <span className="text-[8px] leading-3 text-[var(--md-sys-color-secondary)]">+</span>}
+                                    </div>
+                                    <div className="text-[10px] text-[var(--md-sys-color-secondary)] truncate">
+                                        {dayFiles[0].path.split('/').length > 1 ? dayFiles[0].path.split('/').slice(0, -1).join('/') : 'Root'}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -426,7 +515,7 @@
                 const monthNames = ["Január", "Február", "Marec", "Apríl", "Máj", "Jún", "Júl", "August", "September", "Október", "November", "December"];
 
                 return (
-                    <div className="bg-[var(--md-sys-color-surface)] rounded-3xl p-4 shadow-sm fade-in">
+                    <div className="bg-[var(--md-sys-color-surface)] rounded-3xl p-4 shadow-sm fade-in h-full flex flex-col">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-medium text-[var(--md-sys-color-on-surface)]">
                                 {monthNames[month]} {year}
@@ -443,7 +532,7 @@
                         <div className="grid grid-cols-7 gap-2 mb-2 text-center text-sm font-medium text-[var(--md-sys-color-secondary)]">
                             <div>Po</div><div>Ut</div><div>St</div><div>Št</div><div>Pi</div><div>So</div><div>Ne</div>
                         </div>
-                        <div className="grid grid-cols-7 gap-2">
+                        <div className="grid grid-cols-7 gap-2 auto-rows-fr flex-1">
                             {days}
                         </div>
                     </div>
@@ -455,8 +544,8 @@
                     return (
                         <div className="flex flex-col items-center justify-center h-full text-[var(--md-sys-color-secondary)] p-8 text-center bg-[var(--md-sys-color-surface)] rounded-3xl mt-4 lg:mt-0">
                             <Icon name="calendar-off" size={48} className="mb-4 opacity-50" />
-                            <p>Pre tento deň nie sú žiadne záznamy.</p>
-                            <p className="text-sm mt-2">Presuňte sem súbory alebo ZIP archív.</p>
+                            <p>Žiadne záznamy pre {formatDate(selectedDate)}.</p>
+                            <p className="text-sm mt-2 opacity-60">Súbory v priečinkoch sa zobrazia tu.</p>
                         </div>
                     );
                 }
@@ -465,56 +554,61 @@
                     <div className="bg-[var(--md-sys-color-surface)] rounded-3xl p-6 shadow-sm h-full overflow-hidden flex flex-col mt-4 lg:mt-0 fade-in">
                         <h3 className="text-xl font-medium mb-4 flex items-center gap-2 text-[var(--md-sys-color-on-surface)]">
                             <Icon name="file-clock" />
-                            Aktivita: {formatDate(selectedDate)}
+                            {formatDate(selectedDate)}
                             <span className="ml-auto text-sm bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] px-3 py-1 rounded-full">
-                                {filesOnSelectedDate.length} súborov
+                                {filesOnSelectedDate.length} súb.
                             </span>
                         </h3>
 
                         <div className="overflow-y-auto pr-2 flex-1 space-y-3">
-                            {filesOnSelectedDate.map(file => (
-                                <div key={file.id} className="card-hover p-4 rounded-2xl bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)] border-opacity-20">
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-lg bg-[var(--md-sys-color-secondary)] bg-opacity-10 text-[var(--md-sys-color-primary)]">
-                                                <Icon name={getFileIcon(file.name)} size={20} />
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-sm truncate max-w-[180px]" title={file.name}>{file.name}</div>
-                                                <div className="text-xs text-[var(--md-sys-color-secondary)]">
-                                                    {formatTime(file.lastModifiedDate)} • {formatFileSize(file.size)}
+                            {filesOnSelectedDate.map(file => {
+                                const pathParts = file.path.split('/');
+                                const folderPath = pathParts.length > 1 ? pathParts.slice(0, -1).join(' / ') : 'Koreňový priečinok';
+
+                                return (
+                                    <div key={file.id} className="card-hover p-4 rounded-2xl bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)] border-opacity-20 group">
+                                        {/* Breadcrumbs for deep folders */}
+                                        <div className="flex items-center gap-1 text-[10px] text-[var(--md-sys-color-secondary)] mb-2 bg-[var(--md-sys-color-surface-variant)] bg-opacity-50 px-2 py-1 rounded w-fit max-w-full truncate">
+                                            <Icon name="folder-tree" size={10} />
+                                            <span className="truncate">{folderPath}</span>
+                                        </div>
+
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-[var(--md-sys-color-secondary)] bg-opacity-10 text-[var(--md-sys-color-primary)]">
+                                                    <Icon name={getFileIcon(file.name)} size={20} />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="font-medium text-sm truncate max-w-[150px] sm:max-w-[200px]" title={file.name}>{file.name}</div>
+                                                    <div className="text-xs text-[var(--md-sys-color-secondary)]">
+                                                        {formatTime(file.lastModifiedDate)} • {formatFileSize(file.size)}
+                                                    </div>
                                                 </div>
                                             </div>
+                                            <button onClick={() => deleteFile(file.id)} className="text-red-400 hover:text-red-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Icon name="trash-2" size={16} />
+                                            </button>
                                         </div>
-                                        <button onClick={() => deleteFile(file.id)} className="text-red-400 hover:text-red-600 p-1">
-                                            <Icon name="trash-2" size={16} />
-                                        </button>
-                                    </div>
 
-                                    <div className="mt-3 grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label className="text-[10px] uppercase tracking-wider text-[var(--md-sys-color-secondary)]">Projekt</label>
+                                        <div className="mt-3 grid grid-cols-2 gap-2">
                                             <input
                                                 type="text"
                                                 value={file.project}
                                                 onChange={(e) => updateFileMeta(file.id, 'project', e.target.value)}
-                                                className="w-full text-sm bg-transparent border-b border-[var(--md-sys-color-outline)] border-opacity-30 focus:border-[var(--md-sys-color-primary)] outline-none py-1"
-                                                placeholder="Názov projektu"
+                                                className="w-full text-xs bg-transparent border-b border-[var(--md-sys-color-outline)] border-opacity-30 focus:border-[var(--md-sys-color-primary)] outline-none py-1 placeholder:text-[var(--md-sys-color-outline)]"
+                                                placeholder="Projekt..."
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] uppercase tracking-wider text-[var(--md-sys-color-secondary)]">Poznámka</label>
                                             <input
                                                 type="text"
                                                 value={file.note}
                                                 onChange={(e) => updateFileMeta(file.id, 'note', e.target.value)}
-                                                className="w-full text-sm bg-transparent border-b border-[var(--md-sys-color-outline)] border-opacity-30 focus:border-[var(--md-sys-color-primary)] outline-none py-1"
-                                                placeholder="Popis práce..."
+                                                className="w-full text-xs bg-transparent border-b border-[var(--md-sys-color-outline)] border-opacity-30 focus:border-[var(--md-sys-color-primary)] outline-none py-1 placeholder:text-[var(--md-sys-color-outline)]"
+                                                placeholder="Poznámka..."
                                             />
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -524,32 +618,99 @@
                 const totalFiles = files.length;
                 const totalSize = files.reduce((acc, curr) => acc + curr.size, 0);
 
-                // Group by Project
-                const projects = files.reduce((acc, curr) => {
-                    acc[curr.project] = (acc[curr.project] || 0) + 1;
+                // File Types Stats
+                const fileTypes = files.reduce((acc, curr) => {
+                    const type = curr.type.toUpperCase();
+                    acc[type] = (acc[type] || 0) + 1;
                     return acc;
                 }, {});
 
+                const sortedTypes = Object.entries(fileTypes).sort((a, b) => b[1] - a[1]);
+                const maxTypeCount = sortedTypes.length > 0 ? sortedTypes[0][1] : 1;
+
+                // Month Activity Heatmap data
+                const activityByDay = Array(31).fill(0);
+                files.forEach(f => {
+                    if (f.lastModifiedDate.getMonth() === currentDate.getMonth() &&
+                        f.lastModifiedDate.getFullYear() === currentDate.getFullYear()) {
+                        activityByDay[f.lastModifiedDate.getDate() - 1]++;
+                    }
+                });
+                const maxActivity = Math.max(...activityByDay, 1);
+
                 return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
-                        <div className="bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] p-6 rounded-3xl">
-                            <h3 className="text-lg font-bold mb-2">Celkový prehľad</h3>
-                            <div className="text-4xl font-bold">{totalFiles}</div>
-                            <div className="text-sm opacity-80 mb-4">Spracovaných súborov</div>
-                            <div className="text-2xl font-bold">{formatFileSize(totalSize)}</div>
-                            <div className="text-sm opacity-80">Celková veľkosť</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in pb-10">
+                        {/* Summary Card */}
+                        <div className="bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] p-6 rounded-3xl h-fit">
+                            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                                <Icon name="pie-chart" size={20} />
+                                Prehľad
+                            </h3>
+                            <div className="flex justify-between items-end mb-4">
+                                <div>
+                                    <div className="text-4xl font-bold">{totalFiles}</div>
+                                    <div className="text-sm opacity-80">Súborov</div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-xl font-bold">{formatFileSize(totalSize)}</div>
+                                    <div className="text-sm opacity-80">Veľkosť</div>
+                                </div>
+                            </div>
+
+                            {/* File Types Bar Chart */}
+                            <div className="space-y-3 mt-6">
+                                <h4 className="text-sm font-bold opacity-70 uppercase tracking-wider">Typy súborov</h4>
+                                {sortedTypes.slice(0, 5).map(([type, count]) => (
+                                    <div key={type} className="flex items-center gap-2 text-sm">
+                                        <span className="w-12 font-medium">{type}</span>
+                                        <div className="flex-1 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-[var(--md-sys-color-on-primary-container)] opacity-80"
+                                                style={{ width: `${(count / maxTypeCount) * 100}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="w-6 text-right opacity-80">{count}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        <div className="bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)] border-opacity-20 p-6 rounded-3xl">
-                            <h3 className="text-lg font-bold mb-4 text-[var(--md-sys-color-on-surface)]">Top Projekty</h3>
-                            <ul className="space-y-2">
-                                {Object.entries(projects).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, count]) => (
-                                    <li key={name} className="flex justify-between items-center">
-                                        <span className="text-sm font-medium">{name}</span>
-                                        <span className="text-xs bg-[var(--md-sys-color-secondary)] text-white px-2 py-1 rounded-full">{count}</span>
-                                    </li>
+                        {/* Folder Structure Tree */}
+                        <div className="bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)] border-opacity-20 p-6 rounded-3xl md:col-span-1 lg:col-span-1 h-[400px] flex flex-col">
+                            <h3 className="text-lg font-bold mb-4 text-[var(--md-sys-color-on-surface)] flex items-center gap-2">
+                                <Icon name="network" size={20} />
+                                Štruktúra priečinkov
+                            </h3>
+                            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                                <FolderTree data={files} />
+                            </div>
+                        </div>
+
+                        {/* Monthly Heatmap */}
+                        <div className="bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline)] border-opacity-20 p-6 rounded-3xl md:col-span-2 lg:col-span-1">
+                            <h3 className="text-lg font-bold mb-4 text-[var(--md-sys-color-on-surface)] flex items-center gap-2">
+                                <Icon name="activity" size={20} />
+                                Aktivita v mesiaci
+                            </h3>
+                            <div className="flex items-end gap-[2px] h-32 w-full">
+                                {activityByDay.map((count, i) => (
+                                    <div key={i} className="flex-1 flex flex-col items-center group relative">
+                                        <div
+                                            className="w-full bg-[var(--md-sys-color-tertiary)] rounded-t-sm transition-all hover:opacity-80"
+                                            style={{ height: `${(count / maxActivity) * 100}%`, minHeight: count > 0 ? '4px' : '1px', opacity: count > 0 ? 1 : 0.2 }}
+                                        ></div>
+                                        {/* Tooltip */}
+                                        <div className="absolute bottom-full mb-1 hidden group-hover:block bg-black text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+                                            {i + 1}. : {count} súb.
+                                        </div>
+                                    </div>
                                 ))}
-                            </ul>
+                            </div>
+                            <div className="flex justify-between text-[10px] text-[var(--md-sys-color-secondary)] mt-2">
+                                <span>1.</span>
+                                <span>15.</span>
+                                <span>31.</span>
+                            </div>
                         </div>
                     </div>
                 );
@@ -563,11 +724,11 @@
                     {/* Header */}
                     <header className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-[var(--md-sys-color-primary)] rounded-2xl text-white">
-                                <Icon name="folder-clock" size={28} />
+                            <div className="p-3 bg-[var(--md-sys-color-primary)] rounded-2xl text-white shadow-lg shadow-[var(--md-sys-color-primary)]/30">
+                                <Icon name="calendar-arrow-up" size={28} />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-[var(--md-sys-color-on-surface)] tracking-tight">DocsTime</h1>
+                                <h1 className="text-3xl font-bold text-[var(--md-sys-color-on-surface)] tracking-tight">DocsTime Manager</h1>
                                 <p className="text-sm text-[var(--md-sys-color-secondary)]">Manažér výkazu práce</p>
                             </div>
                         </div>
@@ -601,9 +762,9 @@
                             onDragOver={handleDrag}
                             onDrop={handleDrop}
                         >
-                            <Icon name="upload-cloud" size={80} className="animate-bounce mb-4" />
+                            <Icon name="calendar-arrow-up" size={80} className="animate-bounce mb-4" />
                             <h2 className="text-3xl font-bold">Pustite súbory sem</h2>
-                            <p className="mt-2">Podpora ZIP, PDF, DOCX, XLSX...</p>
+                            <p className="mt-2 text-center max-w-md">Rozbalíme ZIP archívy a zachováme štruktúru priečinkov.</p>
                         </div>
                     )}
 
@@ -615,7 +776,8 @@
                             <div className="flex gap-2 w-full md:w-auto">
                                 <label className="flex items-center gap-2 bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] px-4 py-2 rounded-xl cursor-pointer hover:opacity-90 transition shadow-md">
                                     <Icon name="upload" size={18} />
-                                    <span>Nahrať súbory</span>
+                                    <span>Nahrať</span>
+                                    {/* webkitdirectory allow folder selection, regular allows files */}
                                     <input type="file" multiple className="hidden" onChange={handleChange} />
                                 </label>
                                 {files.length > 0 && (
@@ -635,7 +797,7 @@
                                     <Icon name="search" size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--md-sys-color-outline)]" />
                                     <input
                                         type="text"
-                                        placeholder="Filtrovať projekt..."
+                                        placeholder="Filtrovať..."
                                         value={projectFilter}
                                         onChange={(e) => setProjectFilter(e.target.value)}
                                         className="w-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface)] pl-10 pr-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--md-sys-color-primary)]"
@@ -652,7 +814,7 @@
                         {loading && (
                             <div className="text-center py-12">
                                 <div className="animate-spin inline-block w-8 h-8 border-4 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full mb-4"></div>
-                                <p className="text-[var(--md-sys-color-secondary)]">Spracovávam súbory...</p>
+                                <p className="text-[var(--md-sys-color-secondary)]">Analyzujem štruktúru súborov...</p>
                             </div>
                         )}
 
@@ -660,7 +822,7 @@
 
                         {!loading && viewMode === 'calendar' && (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-250px)] min-h-[600px]">
-                                <div className="lg:col-span-2">
+                                <div className="lg:col-span-2 flex flex-col">
                                     <Calendar />
                                 </div>
                                 <div className="lg:col-span-1 h-full">
