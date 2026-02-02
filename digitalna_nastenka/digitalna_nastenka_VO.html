@@ -499,11 +499,16 @@
 
     <script>
         // --- KONFIGURÁCIA SERVERA ---
-        const USE_SERVER = false;
+        const USE_SERVER = true;
 
         // URL konfigurácia
-        const API_URL_GET = 'data.json';
-        const API_URL_SAVE = 'save.php';
+        // ❗❗ DÔLEŽITÉ: Ak otvárate súbor lokálne (z disku), sem napíšte celú adresu k priečinku na NASku
+        // Napríklad: 'http://192.168.1.50/nastenka/'
+        // Ak otvárate stránku priamo cez prehliadač z NASka, nechajte prázdne ''
+        const SERVER_BASE_URL = '\\192.168.10.186\web\digitalna_nastenka';
+
+        const API_URL_GET = SERVER_BASE_URL + 'data.json';
+        const API_URL_SAVE = SERVER_BASE_URL + 'save.php';
         const POLL_INTERVAL_MS = 5000;
 
         // Stav aplikácie

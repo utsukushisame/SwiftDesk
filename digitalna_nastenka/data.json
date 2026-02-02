@@ -1,0 +1,14 @@
+{
+    "updatedAt": 0,
+    "notices": [
+        {
+            "id": "1",
+            "type": "prepared",
+            "title": "Vitajte na NAS nástenke",
+            "description": "Dáta sa teraz ukladajú centrálne na server.",
+            "dateAnnounce": "",
+            "dateEval": ""
+        }
+    ],
+    "profiles": []
+}
