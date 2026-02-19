@@ -1,33 +1,35 @@
 <!DOCTYPE html>
 <html lang="sk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Objednávkový systém</title>
-    
+
     <!-- Favicon: Shopping Cart (Lucide style) - Violet-600 bg, White icon -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%237c3aed'/%3E%3Cg transform='translate(3, 3) scale(0.75)' stroke='%23ffffff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='21' r='1'/%3E%3Ccircle cx='20' cy='21' r='1'/%3E%3Cpath d='M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6'/%3E%3C/g%3E%3C/svg%3E">
-    
+    <link rel="icon"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%237c3aed'/%3E%3Cg transform='translate(3, 3) scale(0.75)' stroke='%23ffffff' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='21' r='1'/%3E%3Ccircle cx='20' cy='21' r='1'/%3E%3Cpath d='M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6'/%3E%3C/g%3E%3C/svg%3E">
+
     <!-- Tailwind CSS pre štýlovanie -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Konfigurácia pre Dark Mode v Tailwinde -->
     <script>
         tailwind.config = {
             darkMode: 'class', // Umožňuje prepínať dark mode pridaním triedy 'dark'
         }
     </script>
-    
+
     <!-- SheetJS pre Excel/ODF export (Stabilná verzia) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <!-- FontAwesome pre ikony -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         /* Vlastné úpravy pre tlač a jemné detaily */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        
+
         body {
             font-family: 'Inter', sans-serif;
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -44,9 +46,12 @@
             background: transparent;
             outline: none;
             transition: background-color 0.2s;
-            resize: none; /* Zakáže manuálne ťahanie, riešime to automaticky */
-            overflow: hidden; /* Skryje scrollbar */
-            min-height: 2.5rem; /* Základná výška ako input */
+            resize: none;
+            /* Zakáže manuálne ťahanie, riešime to automaticky */
+            overflow: hidden;
+            /* Skryje scrollbar */
+            min-height: 2.5rem;
+            /* Základná výška ako input */
             display: block;
             line-height: 1.5;
         }
@@ -55,27 +60,36 @@
             background-color: #eff6ff;
             border-bottom: 2px solid #3b82f6;
         }
+
         .dark .input-cell textarea:focus {
             background-color: #374151;
             border-bottom: 2px solid #60a5fa;
         }
 
         /* Skrytie šípok v input type="number" pre čistejší vzhľad */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
+
         input[type=number] {
             -moz-appearance: textfield;
         }
 
         /* Animácia pre pridanie riadku */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         .row-anim {
             animation: fadeIn 0.3s ease-out;
         }
@@ -84,65 +98,87 @@
         .modal {
             transition: opacity 0.25s ease;
         }
+
         body.modal-active {
             overflow-x: hidden;
             overflow-y: hidden !important;
         }
-        
+
         /* Custom scrollbar pre tmavý režim */
         .dark ::-webkit-scrollbar {
             width: 10px;
         }
+
         .dark ::-webkit-scrollbar-track {
             background: #1f2937;
         }
+
         .dark ::-webkit-scrollbar-thumb {
             background: #4b5563;
             border-radius: 5px;
         }
+
         .dark ::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
         }
     </style>
 </head>
+
 <body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
 
     <div class="container mx-auto px-4 py-8 max-w-6xl">
-        
+
         <!-- Hlavička -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border-l-4 border-blue-600 dark:border-blue-500 transition-colors">
+        <div
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6 border-l-4 border-blue-600 dark:border-blue-500 transition-colors">
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800 dark:text-white"><i class="fas fa-clipboard-list mr-2 text-blue-600 dark:text-blue-400"></i>Objednávkový formulár</h1>
-                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Vytvárajte zoznamy, počítajte náklady a exportujte objednávky.</p>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-white"><i
+                            class="fas fa-clipboard-list mr-2 text-blue-600 dark:text-blue-400"></i>Objednávkový
+                        formulár</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Vytvárajte zoznamy, počítajte náklady a
+                        exportujte objednávky.</p>
                 </div>
                 <div class="flex flex-wrap gap-2 justify-center md:justify-end">
-                    <button onclick="openSettingsModal()" class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg transition" title="Nastavenia">
+                    <button onclick="openSettingsModal()"
+                        class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-3 py-2 rounded-lg transition"
+                        title="Nastavenia">
                         <i class="fas fa-cog"></i>
                     </button>
-                    <button onclick="openAIModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow transition font-medium text-sm flex items-center border border-transparent">
+                    <button onclick="openAIModal()"
+                        class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow transition font-medium text-sm flex items-center border border-transparent">
                         <i class="fas fa-magic mr-2"></i> ✨ AI Generátor
                     </button>
-                    <button onclick="openTemplatesModal('save')" class="bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 px-4 py-2 rounded-lg transition font-medium text-sm flex items-center">
+                    <button onclick="openTemplatesModal('save')"
+                        class="bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 px-4 py-2 rounded-lg transition font-medium text-sm flex items-center">
                         <i class="fas fa-save mr-2"></i> Šablóna
                     </button>
-                    <button onclick="openTemplatesModal('load')" class="bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 px-4 py-2 rounded-lg transition font-medium text-sm flex items-center">
+                    <button onclick="openTemplatesModal('load')"
+                        class="bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-200 dark:hover:bg-indigo-800 text-indigo-700 px-4 py-2 rounded-lg transition font-medium text-sm flex items-center">
                         <i class="fas fa-folder-open mr-2"></i> Načítať
                     </button>
-                    
+
                     <!-- Exportná sekcia -->
                     <div class="flex gap-1 ml-2">
-                        <button onclick="copyToClipboard()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-l-lg shadow transition font-medium text-sm flex items-center" title="Skopírovať tabuľku (Ctrl+V)">
+                        <button onclick="copyToClipboard()"
+                            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded-l-lg shadow transition font-medium text-sm flex items-center"
+                            title="Skopírovať tabuľku (Ctrl+V)">
                             <i class="fas fa-copy"></i>
                         </button>
-                        <button onclick="downloadFile('csv')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 shadow transition font-medium text-sm flex items-center" title="Stiahnuť CSV">
+                        <button onclick="downloadFile('csv')"
+                            class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 shadow transition font-medium text-sm flex items-center"
+                            title="Stiahnuť CSV">
                             <i class="fas fa-file-csv mr-1"></i> CSV
                         </button>
-                        <button onclick="downloadFile('ods')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 shadow transition font-medium text-sm flex items-center" title="Stiahnuť ODF (OpenOffice/LibreOffice)">
+                        <button onclick="downloadFile('ods')"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 shadow transition font-medium text-sm flex items-center"
+                            title="Stiahnuť ODF (OpenOffice/LibreOffice)">
                             <i class="fas fa-file-invoice mr-1"></i> ODF
                         </button>
                         <!-- Excel button deaktivovaný -->
-                        <button class="bg-gray-400 text-white px-3 py-2 rounded-r-lg shadow font-medium text-sm flex items-center cursor-not-allowed" title="Export do Excelu je dočasne nedostupný" disabled>
+                        <button
+                            class="bg-gray-400 text-white px-3 py-2 rounded-r-lg shadow font-medium text-sm flex items-center cursor-not-allowed"
+                            title="Export do Excelu je dočasne nedostupný" disabled>
                             <i class="fas fa-file-excel mr-1"></i> Excel
                         </button>
                     </div>
@@ -155,7 +191,8 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-sm uppercase tracking-wider">
+                        <tr
+                            class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 text-sm uppercase tracking-wider">
                             <th class="p-4 w-12 text-center">#</th>
                             <!-- Min-w 400px pre dlhé názvy -->
                             <th class="p-4 min-w-[400px]">Položka / Názov produktu</th>
@@ -169,22 +206,27 @@
                     <tbody id="orderTableBody" class="text-sm dark:text-gray-200">
                         <!-- Riadky budú generované cez JavaScript -->
                     </tbody>
-                    <tfoot class="bg-gray-50 dark:bg-gray-700 font-semibold text-gray-700 dark:text-gray-200 border-t dark:border-gray-600">
+                    <tfoot
+                        class="bg-gray-50 dark:bg-gray-700 font-semibold text-gray-700 dark:text-gray-200 border-t dark:border-gray-600">
                         <tr>
                             <td colspan="4" class="p-4 text-right text-lg">Celková suma objednávky:</td>
-                            <td class="p-4 text-right text-xl text-blue-600 dark:text-blue-400" id="grandTotal">0.00 €</td>
+                            <td class="p-4 text-right text-xl text-blue-600 dark:text-blue-400" id="grandTotal">0.00 €
+                            </td>
                             <td></td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
-            
+
             <!-- Ovládacie tlačidlá pod tabuľkou -->
-            <div class="p-4 border-t border-gray-100 dark:border-gray-700 flex justify-between bg-gray-50 dark:bg-gray-800">
-                <button onclick="clearAll()" class="text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium text-sm flex items-center px-3 py-2 rounded hover:bg-red-50 dark:hover:bg-gray-700 transition">
+            <div
+                class="p-4 border-t border-gray-100 dark:border-gray-700 flex justify-between bg-gray-50 dark:bg-gray-800">
+                <button onclick="clearAll()"
+                    class="text-red-500 hover:text-red-700 dark:hover:text-red-400 font-medium text-sm flex items-center px-3 py-2 rounded hover:bg-red-50 dark:hover:bg-gray-700 transition">
                     <i class="fas fa-trash-alt mr-2"></i> Vymazať všetko
                 </button>
-                <button onclick="addNewRow()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow hover:shadow-md transition flex items-center">
+                <button onclick="addNewRow()"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow hover:shadow-md transition flex items-center">
                     <i class="fas fa-plus mr-2"></i> Pridať položku
                 </button>
             </div>
@@ -192,11 +234,14 @@
     </div>
 
     <!-- AI Modal -->
-    <div id="aiModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50 backdrop-blur-sm" onclick="closeAIModal()"></div>
-        
-        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform transition-transform scale-95 duration-300 border dark:border-gray-700">
-            
+    <div id="aiModal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50 backdrop-blur-sm"
+            onclick="closeAIModal()"></div>
+
+        <div
+            class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform transition-transform scale-95 duration-300 border dark:border-gray-700">
+
             <div class="modal-content py-4 text-left px-6">
                 <!-- Title -->
                 <div class="flex justify-between items-center pb-3 border-b dark:border-gray-700">
@@ -204,27 +249,35 @@
                         <i class="fas fa-robot text-purple-600 dark:text-purple-400 mr-2"></i> Generátor zoznamu
                     </p>
                     <div class="modal-close cursor-pointer z-50" onclick="closeAIModal()">
-                        <i class="fas fa-times text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"></i>
+                        <i
+                            class="fas fa-times text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"></i>
                     </div>
                 </div>
 
                 <!-- Body -->
                 <div class="my-5">
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-2">Napíšte, čo plánujete robiť a AI vám vygeneruje zoznam.</p>
-                    <textarea id="aiPrompt" class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg focus:outline-none focus:border-purple-500 h-32 resize-none" placeholder="Napr.:&#10;- Materiál na výmenu strechy&#10;- Nákup na grilovačku"></textarea>
-                    
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-2">Napíšte, čo plánujete robiť a AI vám
+                        vygeneruje zoznam.</p>
+                    <textarea id="aiPrompt"
+                        class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-lg focus:outline-none focus:border-purple-500 h-32 resize-none"
+                        placeholder="Napr.:&#10;- Materiál na výmenu strechy&#10;- Nákup na grilovačku"></textarea>
+
                     <div id="aiLoading" class="hidden mt-4 text-center">
                         <i class="fas fa-circle-notch fa-spin text-purple-600 dark:text-purple-400 text-2xl"></i>
-                        <p class="text-purple-600 dark:text-purple-400 text-sm mt-2">Generujem zoznam, chvíľku strpenia...</p>
+                        <p class="text-purple-600 dark:text-purple-400 text-sm mt-2">Generujem zoznam, chvíľku
+                            strpenia...</p>
                     </div>
-                    
-                    <div id="aiError" class="hidden mt-2 text-red-500 text-sm bg-red-50 dark:bg-red-900/30 p-2 rounded"></div>
+
+                    <div id="aiError" class="hidden mt-2 text-red-500 text-sm bg-red-50 dark:bg-red-900/30 p-2 rounded">
+                    </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="flex justify-end pt-2">
-                    <button onclick="closeAIModal()" class="px-4 py-2 bg-transparent p-3 rounded-lg text-indigo-500 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 mr-2 font-medium">Zrušiť</button>
-                    <button onclick="generateAIList()" class="px-4 py-2 bg-purple-600 rounded-lg text-white hover:bg-purple-700 font-medium shadow-md flex items-center">
+                    <button onclick="closeAIModal()"
+                        class="px-4 py-2 bg-transparent p-3 rounded-lg text-indigo-500 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700 mr-2 font-medium">Zrušiť</button>
+                    <button onclick="generateAIList()"
+                        class="px-4 py-2 bg-purple-600 rounded-lg text-white hover:bg-purple-700 font-medium shadow-md flex items-center">
                         <i class="fas fa-magic mr-2"></i> Generovať
                     </button>
                 </div>
@@ -233,11 +286,14 @@
     </div>
 
     <!-- Templates Modal (Správa šablón) -->
-    <div id="templatesModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50 backdrop-blur-sm" onclick="closeTemplatesModal()"></div>
-        
-        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-xl mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform transition-transform scale-95 duration-300 border dark:border-gray-700" style="max-height: 90vh;">
-            
+    <div id="templatesModal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50 backdrop-blur-sm"
+            onclick="closeTemplatesModal()"></div>
+
+        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-xl mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform transition-transform scale-95 duration-300 border dark:border-gray-700"
+            style="max-height: 90vh;">
+
             <div class="modal-content py-4 text-left px-6">
                 <!-- Title -->
                 <div class="flex justify-between items-center pb-3 border-b dark:border-gray-700">
@@ -245,16 +301,21 @@
                         <i class="fas fa-folder-open text-indigo-600 dark:text-indigo-400 mr-2"></i> Správa šablón
                     </p>
                     <div class="modal-close cursor-pointer z-50" onclick="closeTemplatesModal()">
-                        <i class="fas fa-times text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"></i>
+                        <i
+                            class="fas fa-times text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"></i>
                     </div>
                 </div>
 
                 <!-- Save New Template Section -->
                 <div class="my-5 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600">
-                    <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Uložiť aktuálny zoznam ako novú šablónu</h3>
+                    <h3 class="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">Uložiť aktuálny zoznam ako novú
+                        šablónu</h3>
                     <div class="flex gap-2">
-                        <input type="text" id="newTemplateName" class="flex-1 shadow appearance-none border dark:border-gray-600 rounded py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-800 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500" placeholder="Názov šablóny (napr. Stavba domu)">
-                        <button onclick="saveCurrentAsTemplate()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition">
+                        <input type="text" id="newTemplateName"
+                            class="flex-1 shadow appearance-none border dark:border-gray-600 rounded py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-800 leading-tight focus:outline-none focus:shadow-outline focus:border-indigo-500"
+                            placeholder="Názov šablóny (napr. Stavba domu)">
+                        <button onclick="saveCurrentAsTemplate()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition">
                             Uložiť
                         </button>
                     </div>
@@ -266,7 +327,8 @@
                     <div class="overflow-y-auto max-h-60 border dark:border-gray-600 rounded-lg">
                         <ul id="templatesList" class="divide-y divide-gray-200 dark:divide-gray-700">
                             <!-- Items will be injected here -->
-                            <li class="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">Žiadne uložené šablóny</li>
+                            <li class="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">Žiadne uložené šablóny
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -276,11 +338,14 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal" class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
-        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50 backdrop-blur-sm" onclick="closeSettingsModal()"></div>
-        
-        <div class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform transition-transform scale-95 duration-300 border dark:border-gray-700">
-            
+    <div id="settingsModal"
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-gray-900 opacity-50 backdrop-blur-sm"
+            onclick="closeSettingsModal()"></div>
+
+        <div
+            class="modal-container bg-white dark:bg-gray-800 w-11/12 md:max-w-md mx-auto rounded-xl shadow-2xl z-50 overflow-y-auto transform transition-transform scale-95 duration-300 border dark:border-gray-700">
+
             <div class="modal-content py-4 text-left px-6">
                 <!-- Title -->
                 <div class="flex justify-between items-center pb-3 border-b dark:border-gray-700">
@@ -288,20 +353,24 @@
                         <i class="fas fa-cog text-gray-600 dark:text-gray-400 mr-2"></i> Nastavenia
                     </p>
                     <div class="modal-close cursor-pointer z-50" onclick="closeSettingsModal()">
-                        <i class="fas fa-times text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"></i>
+                        <i
+                            class="fas fa-times text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"></i>
                     </div>
                 </div>
 
                 <!-- Body -->
                 <div class="my-5 space-y-4">
-                    
+
                     <!-- API Key Section -->
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" for="apiKeyInput">
                             Google Gemini API Key
                         </label>
-                        <input type="password" id="apiKeyInput" class="shadow appearance-none border dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" placeholder="Vložte váš API kľúč sem">
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kľúč je uložený iba vo vašom prehliadači.</p>
+                        <input type="password" id="apiKeyInput"
+                            class="shadow appearance-none border dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
+                            placeholder="Vložte váš API kľúč sem">
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kľúč je uložený iba vo vašom
+                            prehliadači.</p>
                     </div>
 
                     <!-- Theme Section -->
@@ -311,15 +380,18 @@
                         </label>
                         <div class="flex items-center space-x-4">
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="theme" value="light" class="form-radio text-blue-600" onchange="changeTheme('light')">
+                                <input type="radio" name="theme" value="light" class="form-radio text-blue-600"
+                                    onchange="changeTheme('light')">
                                 <span class="ml-2 text-gray-700 dark:text-gray-300">Svetlý</span>
                             </label>
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="theme" value="dark" class="form-radio text-blue-600" onchange="changeTheme('dark')">
+                                <input type="radio" name="theme" value="dark" class="form-radio text-blue-600"
+                                    onchange="changeTheme('dark')">
                                 <span class="ml-2 text-gray-700 dark:text-gray-300">Tmavý</span>
                             </label>
                             <label class="inline-flex items-center cursor-pointer">
-                                <input type="radio" name="theme" value="auto" class="form-radio text-blue-600" onchange="changeTheme('auto')">
+                                <input type="radio" name="theme" value="auto" class="form-radio text-blue-600"
+                                    onchange="changeTheme('auto')">
                                 <span class="ml-2 text-gray-700 dark:text-gray-300">Automatický (Systém)</span>
                             </label>
                         </div>
@@ -329,7 +401,8 @@
 
                 <!-- Footer -->
                 <div class="flex justify-end pt-2 border-t dark:border-gray-700">
-                    <button onclick="saveSettings()" class="px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 font-medium shadow-md">
+                    <button onclick="saveSettings()"
+                        class="px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700 font-medium shadow-md">
                         Uložiť nastavenia
                     </button>
                 </div>
@@ -338,7 +411,8 @@
     </div>
 
     <!-- Notifikácia (Toast) -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 dark:bg-gray-700 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center border border-gray-700">
+    <div id="toast"
+        class="fixed bottom-5 right-5 bg-gray-800 dark:bg-gray-700 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center border border-gray-700">
         <i class="fas fa-check-circle text-green-400 mr-3"></i>
         <span id="toastMessage">Akcia vykonaná</span>
     </div>
@@ -350,7 +424,7 @@
         let currentTheme = "light";
         let templates = [];
 
-        window.onload = function() {
+        window.onload = function () {
             loadSettings();
             loadDraft();
             loadTemplatesFromStorage();
@@ -394,7 +468,7 @@
             renderTable();
             setTimeout(() => {
                 const inputs = document.querySelectorAll('.item-name-input');
-                if(inputs.length > 0) inputs[inputs.length - 1].focus();
+                if (inputs.length > 0) inputs[inputs.length - 1].focus();
             }, 50);
             saveDraft();
         }
@@ -412,7 +486,7 @@
         }
 
         function clearAll() {
-            if(confirm("Naozaj chcete vymazať celý zoznam?")) {
+            if (confirm("Naozaj chcete vymazať celý zoznam?")) {
                 orderItems = [createEmptyItem()];
                 renderTable();
                 saveDraft();
@@ -450,7 +524,7 @@
         function renderTable() {
             const tbody = document.getElementById('orderTableBody');
             tbody.innerHTML = '';
-            
+
             let grandTotal = 0;
 
             orderItems.forEach((item, index) => {
@@ -460,7 +534,7 @@
                 const tr = document.createElement('tr');
                 tr.id = `row-${item.id}`;
                 tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 row-anim group transition-colors align-top';
-                
+
                 tr.innerHTML = `
                     <td class="p-4 text-center text-gray-400 text-xs pt-5">${index + 1}</td>
                     <td class="p-2 input-cell">
@@ -510,7 +584,7 @@
                 `;
                 tbody.appendChild(tr);
             });
-            
+
             document.querySelectorAll('textarea.item-name-input').forEach(el => autoResize(el));
             updateGrandTotal();
         }
@@ -581,7 +655,7 @@
         function loadTemplatesFromStorage() {
             const stored = localStorage.getItem('orderTemplates');
             if (stored) {
-                try { templates = JSON.parse(stored); } catch(e) { templates = []; }
+                try { templates = JSON.parse(stored); } catch (e) { templates = []; }
             } else {
                 templates = [];
             }
@@ -589,12 +663,12 @@
             if (oldSingleTemplate) {
                 try {
                     const oldItems = JSON.parse(oldSingleTemplate);
-                    if(oldItems.length > 0) {
-                         templates.push({ name: "Pôvodná šablóna", timestamp: Date.now(), items: oldItems });
+                    if (oldItems.length > 0) {
+                        templates.push({ name: "Pôvodná šablóna", timestamp: Date.now(), items: oldItems });
                         localStorage.setItem('orderTemplates', JSON.stringify(templates));
                         localStorage.removeItem('savedTemplate');
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
         }
 
@@ -656,7 +730,7 @@
         function loadSpecificTemplate(index) {
             const tpl = templates[index];
             if (!tpl) return;
-            if(confirm(`Načítať šablónu "${tpl.name}"?`)) {
+            if (confirm(`Načítať šablónu "${tpl.name}"?`)) {
                 orderItems = tpl.items.map(item => ({ ...item, id: Date.now() + Math.random(), unit: item.unit || 'ks' }));
                 renderTable();
                 saveDraft();
@@ -666,7 +740,7 @@
         }
 
         function deleteTemplate(index) {
-            if(confirm(`Vymazať šablónu?`)) {
+            if (confirm(`Vymazať šablónu?`)) {
                 templates.splice(index, 1);
                 localStorage.setItem('orderTemplates', JSON.stringify(templates));
                 renderTemplatesList();
@@ -697,7 +771,7 @@
         function generateWorksheetWithFormulas() {
             const headers = ["Por. číslo", "Názov položky", "Jednotka", "Počet jednotiek", "Cena za j. s DPH", "Cena spolu s DPH"];
             const data = [headers];
-            
+
             // Príprava dát (vzorce sa pridávajú až do sheet objektu)
             orderItems.forEach((item, index) => {
                 if (!item.name.trim()) return;
@@ -720,8 +794,8 @@
                 const excelRow = R + 1;
                 const quantityCell = 'D' + excelRow;
                 const priceCell = 'E' + excelRow;
-                const totalCellRef = XLSX.utils.encode_cell({r: R, c: 5}); // Stĺpec F
-                
+                const totalCellRef = XLSX.utils.encode_cell({ r: R, c: 5 }); // Stĺpec F
+
                 ws[totalCellRef] = {
                     t: 'n',
                     f: `${quantityCell}*${priceCell}`,
@@ -731,18 +805,18 @@
 
             // Výpočet celkového súčtu pre hodnotu 'v' v riadku CELKOM
             let totalSum = 0;
-            for(let i = 1; i < data.length; i++) {
+            for (let i = 1; i < data.length; i++) {
                 totalSum += data[i][3] * data[i][4];
             }
 
             // Pridanie riadku CELKOM
-            const totalRowIndex = data.length; 
-            XLSX.utils.sheet_add_aoa(ws, [["", "CELKOM", "", "", "", 0]], {origin: -1});
-            
+            const totalRowIndex = data.length;
+            XLSX.utils.sheet_add_aoa(ws, [["", "CELKOM", "", "", "", 0]], { origin: -1 });
+
             // Pridanie SUM vzorca a hodnoty
             if (totalRowIndex > 1) {
                 const sumRange = `F2:F${totalRowIndex}`; // Od F2 po posledný dátový riadok
-                const sumCellRef = XLSX.utils.encode_cell({r: totalRowIndex, c: 5});
+                const sumCellRef = XLSX.utils.encode_cell({ r: totalRowIndex, c: 5 });
                 ws[sumCellRef] = {
                     t: 'n',
                     f: `SUM(${sumRange})`,
@@ -751,7 +825,7 @@
             }
 
             // Nastavenie šírky stĺpcov
-            ws['!cols'] = [{wch: 10}, {wch: 40}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 20}];
+            ws['!cols'] = [{ wch: 10 }, { wch: 40 }, { wch: 10 }, { wch: 15 }, { wch: 15 }, { wch: 20 }];
             return ws;
         }
 
@@ -766,24 +840,24 @@
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Objednávka");
 
-                const date = new Date().toISOString().slice(0,10);
+                const date = new Date().toISOString().slice(0, 10);
                 const filename = `Objednavka_${date}.${type}`;
 
                 // Nastavenia pre konkrétne typy
                 const writeOpts = { bookType: type, type: 'array' };
-                
+
                 // Generovanie súboru
                 const wbout = XLSX.write(wb, writeOpts);
-                
+
                 // MIME typy
                 let mime = 'application/octet-stream';
                 if (type === 'xlsx') mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
                 if (type === 'ods') mime = 'application/vnd.oasis.opendocument.spreadsheet';
                 if (type === 'csv') mime = 'text/csv;charset=utf-8';
 
-                const blob = new Blob([wbout], {type: mime});
+                const blob = new Blob([wbout], { type: mime });
                 const url = URL.createObjectURL(blob);
-                
+
                 const a = document.createElement("a");
                 a.href = url;
                 a.download = filename;
@@ -791,7 +865,7 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                
+
                 showToast(`Súbor ${filename} stiahnutý`);
             } catch (e) {
                 console.error(e);
@@ -816,7 +890,7 @@
             if (!userApiKey) { alert("Zadajte API Key v nastaveniach."); closeAIModal(); openSettingsModal(); return; }
             const promptInput = document.getElementById('aiPrompt').value;
             if (!promptInput.trim()) return;
-            
+
             document.getElementById('aiLoading').classList.remove('hidden');
             document.getElementById('aiError').classList.add('hidden');
 
@@ -835,7 +909,7 @@
                     }
                 };
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${userApiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userApiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -851,9 +925,9 @@
                 if (generatedItems && generatedItems.length > 0) {
                     const newItems = generatedItems.map(item => ({ id: Date.now() + Math.random(), name: item.name, unit: item.unit, quantity: item.quantity, price: item.price }));
                     if (orderItems.length === 1 && orderItems[0].name === "") orderItems = newItems;
-                    else if(confirm("Pridať k existujúcim? (Cancel = Nahradiť)")) orderItems = [...orderItems, ...newItems];
+                    else if (confirm("Pridať k existujúcim? (Cancel = Nahradiť)")) orderItems = [...orderItems, ...newItems];
                     else orderItems = newItems;
-                    
+
                     renderTable();
                     saveDraft();
                     closeAIModal();
@@ -878,4 +952,5 @@
         }
     </script>
 </body>
+
 </html>

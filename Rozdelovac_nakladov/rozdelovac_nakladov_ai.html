@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="sk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AI rozdeľovač nákladov</title>
-    
+
     <!-- PWA Settings -->
     <meta name="theme-color" content="#7c3aed">
     <meta name="mobile-web-app-capable" content="yes">
@@ -16,30 +17,52 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Markdown parser for AI responses -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .input-field { transition: all 0.2s; }
-        .input-field:focus { ring: 2px; outline: none; }
-        .overflow-x-auto { -webkit-overflow-scrolling: touch; }
-        
+
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .input-field {
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            ring: 2px;
+            outline: none;
+        }
+
+        .overflow-x-auto {
+            -webkit-overflow-scrolling: touch;
+        }
+
         /* Loading Spinner */
         .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top: 3px solid #ffffff;
             width: 20px;
             height: 20px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
+            -webkit-animation: spin 1s linear infinite;
+            /* Safari */
             animation: spin 1s linear infinite;
         }
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body class="bg-slate-100 min-h-screen pb-20">
 
     <!-- PWA Installation Script & Manifest Injection -->
@@ -57,7 +80,7 @@
                 <circle cx="19.5" cy="22" r="1" fill="#ffffff" stroke="none"/>
             </g>
         </svg>`;
-        
+
         // Encode for URL
         const iconUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(iconSvg)));
 
@@ -98,14 +121,15 @@
                 <i class="fas fa-robot"></i> AI Rozdeľovač
             </h1>
             <p class="text-indigo-200 text-sm mt-1">Skenuj bločky & generuj správy</p>
-            
-            <button id="install-btn" onclick="installApp()" class="hidden absolute top-4 right-4 bg-white text-indigo-600 text-xs font-bold px-3 py-2 rounded-full shadow-lg hover:bg-indigo-50 transition animate-pulse">
+
+            <button id="install-btn" onclick="installApp()"
+                class="hidden absolute top-4 right-4 bg-white text-indigo-600 text-xs font-bold px-3 py-2 rounded-full shadow-lg hover:bg-indigo-50 transition animate-pulse">
                 <i class="fas fa-download mr-1"></i> Inštalovať
             </button>
         </div>
 
         <div class="p-4 md:p-6 grid gap-6 md:gap-8">
-            
+
             <!-- AI Settings & API Key -->
             <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
                 <button onclick="toggleApiKey()" class="flex items-center justify-between w-full text-left">
@@ -115,13 +139,18 @@
                     <i id="chevron-icon" class="fas fa-chevron-down text-indigo-400 text-xs transition-transform"></i>
                 </button>
                 <div id="api-key-container" class="hidden mt-3">
-                    <p class="text-xs text-slate-500 mb-2">Pre funkcie AI (skenovanie, zhrnutie) zadajte svoj Google Gemini API kľúč. Kľúč sa uloží len vo vašom zariadení.</p>
+                    <p class="text-xs text-slate-500 mb-2">Pre funkcie AI (skenovanie, zhrnutie) zadajte svoj Google
+                        Gemini API kľúč. Kľúč sa uloží len vo vašom zariadení.</p>
                     <div class="flex gap-2">
-                        <input type="password" id="api-key-input" placeholder="Vložte API kľúč (AIza...)" class="input-field flex-1 p-2 border border-indigo-200 rounded text-sm bg-white">
-                        <button onclick="saveApiKey()" class="bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-indigo-700">Uložiť</button>
+                        <input type="password" id="api-key-input" placeholder="Vložte API kľúč (AIza...)"
+                            class="input-field flex-1 p-2 border border-indigo-200 rounded text-sm bg-white">
+                        <button onclick="saveApiKey()"
+                            class="bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-indigo-700">Uložiť</button>
                     </div>
                     <div class="mt-1">
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-indigo-500 underline hover:text-indigo-700">Získať API kľúč zadarmo</a>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                            class="text-[10px] text-indigo-500 underline hover:text-indigo-700">Získať API kľúč
+                            zadarmo</a>
                     </div>
                 </div>
                 <div id="api-key-status" class="hidden mt-2 text-xs font-bold text-green-600 flex items-center gap-1">
@@ -131,17 +160,21 @@
 
             <!-- Settings -->
             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide"><i class="fas fa-sliders-h mr-2"></i>Konfigurácia</h2>
+                <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide"><i
+                        class="fas fa-sliders-h mr-2"></i>Konfigurácia</h2>
                 <div class="flex flex-wrap items-end gap-4">
                     <div class="flex-1 min-w-[100px]">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Počet osôb</label>
-                        <input type="number" id="config-people" value="7" min="2" max="20" class="input-field w-full p-2 border border-slate-300 rounded text-center font-bold text-lg text-slate-700">
+                        <input type="number" id="config-people" value="7" min="2" max="20"
+                            class="input-field w-full p-2 border border-slate-300 rounded text-center font-bold text-lg text-slate-700">
                     </div>
                     <div class="flex-1 min-w-[100px]">
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Počet platieb</label>
-                        <input type="number" id="config-payments" value="3" min="1" max="20" class="input-field w-full p-2 border border-slate-300 rounded text-center font-bold text-lg text-slate-700">
+                        <input type="number" id="config-payments" value="3" min="1" max="20"
+                            class="input-field w-full p-2 border border-slate-300 rounded text-center font-bold text-lg text-slate-700">
                     </div>
-                    <button onclick="applyConfig()" class="w-full md:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-6 rounded shadow-sm transition">
+                    <button onclick="applyConfig()"
+                        class="w-full md:w-auto bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 px-6 rounded shadow-sm transition">
                         <i class="fas fa-sync-alt mr-2"></i> Reset
                     </button>
                 </div>
@@ -149,19 +182,23 @@
 
             <!-- Names -->
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2"><i class="fas fa-users mr-2 text-indigo-500"></i>1. Kto sa skladá?</h2>
+                <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b pb-2"><i
+                        class="fas fa-users mr-2 text-indigo-500"></i>1. Kto sa skladá?</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3" id="names-container"></div>
             </div>
 
             <!-- Payments with AI Scan -->
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h2 class="text-lg font-semibold text-slate-800"><i class="fas fa-receipt mr-2 text-green-500"></i>2. Platby</h2>
-                    
+                    <h2 class="text-lg font-semibold text-slate-800"><i
+                            class="fas fa-receipt mr-2 text-green-500"></i>2. Platby</h2>
+
                     <!-- AI Scan Button -->
                     <div>
-                        <input type="file" id="receipt-upload" accept="image/*" class="hidden" onchange="handleReceiptUpload(this)">
-                        <button onclick="document.getElementById('receipt-upload').click()" class="text-xs bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-2 rounded-lg shadow hover:opacity-90 transition flex items-center gap-2">
+                        <input type="file" id="receipt-upload" accept="image/*" class="hidden"
+                            onchange="handleReceiptUpload(this)">
+                        <button onclick="document.getElementById('receipt-upload').click()"
+                            class="text-xs bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-2 rounded-lg shadow hover:opacity-90 transition flex items-center gap-2">
                             <i class="fas fa-camera"></i> <span class="hidden sm:inline">Skenovať Bloček (AI)</span>
                             <span id="scan-spinner" class="spinner hidden"></span>
                         </button>
@@ -175,7 +212,8 @@
             <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 <div class="bg-slate-800 text-white p-4 flex justify-between items-center">
                     <h2 class="text-lg font-semibold"><i class="fas fa-list-ol mr-2"></i>Výsledok</h2>
-                    <button onclick="window.print()" class="text-xs bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded transition">
+                    <button onclick="window.print()"
+                        class="text-xs bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded transition">
                         <i class="fas fa-print mr-1"></i> PDF
                     </button>
                 </div>
@@ -190,18 +228,21 @@
                         </tfoot>
                     </table>
                 </div>
-                
+
                 <!-- AI Summary Generation -->
                 <div class="p-4 bg-indigo-50 border-t border-indigo-100">
-                    <button id="btn-generate-summary" onclick="generateAiSummary()" class="w-full bg-white border border-indigo-200 text-indigo-600 font-bold py-3 rounded-lg hover:bg-indigo-50 transition flex items-center justify-center gap-2 shadow-sm">
+                    <button id="btn-generate-summary" onclick="generateAiSummary()"
+                        class="w-full bg-white border border-indigo-200 text-indigo-600 font-bold py-3 rounded-lg hover:bg-indigo-50 transition flex items-center justify-center gap-2 shadow-sm">
                         <i class="fas fa-magic text-purple-500"></i> <span>Vygenerovať správu pre skupinu (AI)</span>
                         <span id="summary-spinner" class="spinner hidden !border-slate-300 !border-t-indigo-600"></span>
                     </button>
-                    
-                    <div id="ai-summary-result" class="hidden mt-4 bg-white p-4 rounded border border-indigo-200 text-sm text-slate-700 relative group">
+
+                    <div id="ai-summary-result"
+                        class="hidden mt-4 bg-white p-4 rounded border border-indigo-200 text-sm text-slate-700 relative group">
                         <h4 class="text-xs font-bold text-purple-600 uppercase mb-2">✨ Návrh správy:</h4>
                         <div id="ai-summary-text" class="prose prose-sm max-w-none"></div>
-                        <button onclick="copySummary()" class="absolute top-2 right-2 text-slate-400 hover:text-indigo-600 p-2" title="Kopírovať">
+                        <button onclick="copySummary()"
+                            class="absolute top-2 right-2 text-slate-400 hover:text-indigo-600 p-2" title="Kopírovať">
                             <i class="fas fa-copy"></i>
                         </button>
                     </div>
@@ -216,13 +257,14 @@
     </div>
 
     <!-- AI Toast Notification -->
-    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm hidden z-50 transition-opacity duration-300">
+    <div id="toast"
+        class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg shadow-lg text-sm hidden z-50 transition-opacity duration-300">
         Správa
     </div>
 
     <script>
         // --- GEMINI AI LOGIC ---
-        
+
         // Helper to get API key
         function getApiKey() {
             return localStorage.getItem('gemini_api_key') || '';
@@ -265,14 +307,14 @@
             const apiKey = getApiKey();
             if (!apiKey) {
                 alert("Prosím, najprv zadajte váš Gemini API kľúč v nastaveniach hore.");
-                input.value = ''; 
+                input.value = '';
                 toggleApiKey(); // Open settings
                 return;
             }
 
             const btn = input.nextElementSibling; // The button
             const spinner = document.getElementById('scan-spinner');
-            
+
             // UI Loading state
             btn.disabled = true;
             btn.classList.add('opacity-75');
@@ -284,7 +326,7 @@
                 const base64Content = base64Data.split(',')[1];
                 const mimeType = file.type;
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -298,7 +340,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.error) throw new Error(data.error.message);
 
                 const text = data.candidates[0].content.parts[0].text;
@@ -347,7 +389,7 @@
                     // We need calculation results too, but we can let AI infer or we calculate briefly
                     note: "Generate a friendly, fun Slovak message for a group chat (WhatsApp). Summarize who pays what total based on the logic: Expenses are split among everyone except those marked as exempt. Use emojis."
                 };
-                
+
                 // Get totals for better context
                 const totals = calculateTotalsForAI();
                 context.calculated_totals = totals;
@@ -359,7 +401,7 @@
                 - Use emojis.
                 - Do not explain the math, just the results.`;
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -387,7 +429,7 @@
         function calculateTotalsForAI() {
             const personCount = state.names.length;
             let personTotals = new Array(personCount).fill(0);
-            
+
             state.payments.forEach((p) => {
                 const amount = parseFloat(p.amount) || 0;
                 if (amount > 0) {
@@ -401,7 +443,7 @@
                     }
                 }
             });
-            
+
             // Map names to totals
             let result = {};
             state.names.forEach((name, idx) => {
@@ -413,12 +455,12 @@
         function addPaymentFromAI(desc, amount) {
             // Find first empty payment slot or create new
             let emptyIdx = state.payments.findIndex(p => p.amount === 0 && p.desc.startsWith('Platba'));
-            
+
             if (emptyIdx !== -1) {
                 // Update existing empty slot
                 state.payments[emptyIdx].desc = desc;
                 state.payments[emptyIdx].amount = amount;
-                
+
                 // Update input values directly to reflect change
                 const inputs = document.getElementById('payments-container').children[emptyIdx].querySelectorAll('input');
                 inputs[0].value = desc; // desc input
@@ -432,7 +474,7 @@
                     exemptIndices: [0] // Default exempt
                 };
                 state.payments.push(newPayment);
-                
+
                 // Update config input
                 document.getElementById('config-payments').value = state.payments.length;
                 renderPaymentInputs();
@@ -487,7 +529,7 @@
 
         let state = {
             names: [],
-            payments: [] 
+            payments: []
         };
 
         function init() {
@@ -498,7 +540,7 @@
         function applyConfig() {
             const personCount = parseInt(document.getElementById('config-people').value) || 2;
             const paymentCount = parseInt(document.getElementById('config-payments').value) || 1;
-            
+
             // 1. Resize Names array
             const oldNames = [...state.names];
             state.names = [];
@@ -509,17 +551,17 @@
             // 2. Resize Payments array
             const oldPayments = [...state.payments];
             state.payments = [];
-            
+
             // If user explicitly asks for more payments via input, ensure we respect that count
             // even if oldPayments had fewer. If less, we slice.
-            const targetCount = Math.max(paymentCount, oldPayments.length > 0 ? oldPayments.length : paymentCount); 
+            const targetCount = Math.max(paymentCount, oldPayments.length > 0 ? oldPayments.length : paymentCount);
             // Actually, reset logic dictates we respect the INPUT count mostly, but let's try to keep data if increasing
-            
+
             for (let i = 0; i < paymentCount; i++) {
                 let newPayment = {
                     desc: `Platba ${i + 1}`,
                     amount: 0,
-                    exemptIndices: [0] 
+                    exemptIndices: [0]
                 };
 
                 if (oldPayments[i]) {
@@ -527,15 +569,15 @@
                     newPayment.amount = oldPayments[i].amount;
                     let restoredIndices = [...oldPayments[i].exemptIndices];
                     restoredIndices = restoredIndices.filter(idx => idx < personCount);
-                    
+
                     const maxExempt = Math.max(0, personCount - 1);
                     if (restoredIndices.length > maxExempt) {
                         restoredIndices = restoredIndices.slice(0, maxExempt);
                     }
                     newPayment.exemptIndices = restoredIndices;
                 } else {
-                     newPayment.exemptIndices = [(i % personCount)];
-                     if (newPayment.exemptIndices[0] >= personCount) newPayment.exemptIndices = [0];
+                    newPayment.exemptIndices = [(i % personCount)];
+                    if (newPayment.exemptIndices[0] >= personCount) newPayment.exemptIndices = [0];
                 }
                 state.payments.push(newPayment);
             }
@@ -552,7 +594,7 @@
         function renderNamesInputs() {
             const container = document.getElementById('names-container');
             container.innerHTML = '';
-            
+
             state.names.forEach((name, index) => {
                 const div = document.createElement('div');
                 div.innerHTML = `
@@ -575,19 +617,19 @@
             state.payments.forEach((payment, index) => {
                 const div = document.createElement('div');
                 div.className = "grid grid-cols-1 md:grid-cols-12 gap-4 items-start bg-slate-50 p-4 rounded-lg border border-slate-200";
-                
+
                 const currentExemptCount = payment.exemptIndices.length;
 
                 // Build dropdowns
                 let selectsHtml = '';
                 if (currentExemptCount > 0) {
-                    for(let k=0; k < currentExemptCount; k++) {
+                    for (let k = 0; k < currentExemptCount; k++) {
                         let options = '';
                         state.names.forEach((name, pIdx) => {
                             const selected = (pIdx === payment.exemptIndices[k]) ? 'selected' : '';
                             options += `<option value="${pIdx}" ${selected}>${name}</option>`;
                         });
-                        
+
                         selectsHtml += `
                             <select class="input-field w-full p-2 mb-1 border border-red-200 bg-white rounded text-red-700 text-sm focus:border-red-500"
                                 onchange="updatePaymentExemptIndex(${index}, ${k}, this.value)">
@@ -633,7 +675,7 @@
 
         function calculateAndRenderTable() {
             const personCount = state.names.length;
-            
+
             // Header
             const thead = document.getElementById('table-header-row');
             let headerHtml = '<th class="px-4 py-3 bg-slate-50 sticky left-0 z-10 border-b">Osoba</th>';
@@ -657,7 +699,7 @@
                 if (amount > 0) {
                     const uniqueExempts = new Set(p.exemptIndices);
                     const payingCount = personCount - uniqueExempts.size;
-                    
+
                     if (payingCount > 0) {
                         const share = amount / payingCount;
                         state.names.forEach((_, personIdx) => {
@@ -665,7 +707,7 @@
                                 paymentShares[personIdx][pIdx] = share;
                                 personTotals[personIdx] += share;
                             } else {
-                                paymentShares[personIdx][pIdx] = -1; 
+                                paymentShares[personIdx][pIdx] = -1;
                             }
                         });
                     }
@@ -679,21 +721,21 @@
             state.names.forEach((name, personIdx) => {
                 const tr = document.createElement('tr');
                 tr.className = "bg-white border-b hover:bg-slate-50 transition";
-                
+
                 let cells = `<td class="px-4 py-4 font-medium text-slate-900 sticky left-0 bg-white border-r md:border-r-0 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] md:shadow-none">${name}</td>`;
-                
+
                 state.payments.forEach((p, pIdx) => {
                     const shareVal = paymentShares[personIdx][pIdx];
                     const isExempt = (shareVal === -1);
-                    
+
                     const cellClass = isExempt ? "text-slate-300 italic text-xs" : "font-mono text-slate-700";
                     const cellContent = isExempt ? "neplatí" : formatMoney(shareVal);
-                    
+
                     cells += `<td class="px-4 py-4 ${cellClass}">${cellContent}</td>`;
                 });
 
                 cells += `<td class="px-4 py-4 text-right font-bold font-mono text-indigo-600 bg-indigo-50 border-l border-indigo-100 sticky right-0 shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] md:shadow-none">${formatMoney(personTotals[personIdx])}</td>`;
-                
+
                 tr.innerHTML = cells;
                 tbody.appendChild(tr);
             });
@@ -711,7 +753,7 @@
         // --- UPDATERS ---
         function updateName(index, value) {
             state.names[index] = value;
-            renderPaymentInputs(); 
+            renderPaymentInputs();
             calculateAndRenderTable();
         }
 
@@ -732,7 +774,7 @@
             if (newCount > indices.length) {
                 while (indices.length < newCount) {
                     let candidate = 0;
-                    while(indices.includes(candidate) && candidate < personCount) candidate++;
+                    while (indices.includes(candidate) && candidate < personCount) candidate++;
                     if (candidate >= personCount) candidate = 0;
                     indices.push(candidate);
                 }
@@ -740,7 +782,7 @@
                 indices = indices.slice(0, newCount);
             }
             state.payments[paymentIndex].exemptIndices = indices;
-            renderPaymentInputs(); 
+            renderPaymentInputs();
             calculateAndRenderTable();
         }
 
@@ -757,4 +799,5 @@
         init();
     </script>
 </body>
+
 </html>
