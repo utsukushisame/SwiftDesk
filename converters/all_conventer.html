@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konvertor súborov</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Csvg x='4' y='4' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 9.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z'/%3E%3Ccircle cx='12' cy='13' r='2'/%3E%3Cpath d='M12 15v5'/%3E%3C/svg%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Checkerboard pattern for transparent backgrounds */
+        .bg-checkerboard {
+            background-color: #f0f0f0;
+            background-image:
+                linear-gradient(45deg, #ccc 25%, transparent 25%),
+                linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #ccc 75%),
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        /* Custom scrollbar for textarea */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 text-center md:text-left flex items-center justify-center md:justify-start gap-4">
+            <div class="bg-blue-600 p-4 rounded-2xl text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)]">
+                <i data-lucide="folder-root" class="w-8 h-8" stroke-width="2"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Konvertor súborov</h1>
+                <p class="text-slate-500">Konvertujte vektorové grafiky na rastrové obrázky priamo vo vašom prehliadači.</p>
+            </div>
+        </header>
+
+        <!-- Error Notification -->
+        <div id="error-toast"
+            class="hidden mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md shadow-sm transition-all duration-300">
+            <div class="flex items-center">
+                <i data-lucide="alert-circle" class="text-red-500 mr-3 w-5 h-5"></i>
+                <p id="error-message" class="text-sm text-red-700 font-medium"></p>
+                <button onclick="hideError()" class="ml-auto text-red-400 hover:text-red-600">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Input Section -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-4">
+                        <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-indigo-500"></i>
+                            Input SVG
+                        </h2>
+                    </div>
+
+                    <div class="p-6 space-y-6">
+                        <!-- Drag & Drop Zone -->
+                        <div id="drop-zone"
+                            class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:bg-slate-50 hover:border-indigo-400 transition-colors cursor-pointer relative group">
+                            <input type="file" id="file-input" accept=".svg, image/svg+xml"
+                                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <div
+                                    class="bg-indigo-50 text-indigo-600 p-3 rounded-full group-hover:scale-110 transition-transform">
+                                    <i data-lucide="file-up" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-700">Click to upload or drag and drop</p>
+                                    <p class="text-xs text-slate-500 mt-1">SVG files only</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative flex items-center py-2">
+                            <div class="flex-grow border-t border-slate-200"></div>
+                            <span class="flex-shrink-0 mx-4 text-slate-400 text-sm font-medium">OR PASTE CODE</span>
+                            <div class="flex-grow border-t border-slate-200"></div>
+                        </div>
+
+                        <!-- Textarea for SVG code -->
+                        <div>
+                            <textarea id="svg-code" rows="5"
+                                class="w-full text-sm font-mono bg-slate-50 border border-slate-200 rounded-lg p-4 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow"
+                                placeholder="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'> ... </svg>"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Section -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-4">
+                        <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="settings-2" class="w-4 h-4 text-indigo-500"></i>
+                            Output Settings
+                        </h2>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <!-- Dimensions -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Width (px)</label>
+                                    <input type="number" id="out-width"
+                                        class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                        placeholder="e.g. 800">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Height (px)</label>
+                                    <input type="number" id="out-height"
+                                        class="w-full border border-slate-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                                        placeholder="e.g. 800">
+                                </div>
+                            </div>
+
+                            <!-- Background -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Background</label>
+
+                                    <div class="flex items-center mb-3">
+                                        <input type="checkbox" id="bg-transparent" checked
+                                            class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500">
+                                        <label for="bg-transparent" class="ml-2 text-sm text-slate-600">Transparent
+                                            Background</label>
+                                    </div>
+
+                                    <div id="color-picker-container"
+                                        class="opacity-50 pointer-events-none transition-opacity flex items-center gap-3">
+                                        <input type="color" id="bg-color" value="#ffffff"
+                                            class="h-10 w-full cursor-pointer rounded-lg border border-slate-200 p-1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Preview & Action -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden sticky top-6">
+                    <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-4 flex justify-between items-center">
+                        <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="eye" class="w-4 h-4 text-indigo-500"></i>
+                            Preview
+                        </h2>
+                        <span id="dimension-badge"
+                            class="hidden text-xs font-medium bg-slate-200 text-slate-600 px-2 py-1 rounded-md"></span>
+                    </div>
+
+                    <div class="p-6 flex flex-col items-center">
+                        <!-- Preview Box -->
+                        <div id="preview-wrapper"
+                            class="w-full h-64 md:h-80 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden bg-checkerboard relative mb-6">
+                            <div id="empty-state" class="text-center text-slate-400 flex flex-col items-center">
+                                <i data-lucide="image" class="w-10 h-10 mb-2 opacity-50"></i>
+                                <span class="text-sm">No SVG loaded</span>
+                            </div>
+                            <img id="preview-image" class="hidden max-w-full max-h-full object-contain"
+                                alt="SVG Preview">
+                        </div>
+
+                        <!-- Action Button -->
+                        <button id="download-btn" disabled
+                            class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-xl transition-colors shadow-sm">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                            Convert & Download PNG
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // DOM Elements
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const svgCodeInput = document.getElementById('svg-code');
+        const outWidth = document.getElementById('out-width');
+        const outHeight = document.getElementById('out-height');
+        const bgTransparent = document.getElementById('bg-transparent');
+        const bgColor = document.getElementById('bg-color');
+        const colorPickerContainer = document.getElementById('color-picker-container');
+        const previewWrapper = document.getElementById('preview-wrapper');
+        const previewImage = document.getElementById('preview-image');
+        const emptyState = document.getElementById('empty-state');
+        const downloadBtn = document.getElementById('download-btn');
+        const errorToast = document.getElementById('error-toast');
+        const errorMessage = document.getElementById('error-message');
+        const dimensionBadge = document.getElementById('dimension-badge');
+
+        // State
+        let currentSvgString = '';
+        let originalAspectRatio = 1;
+
+        // --- Event Listeners ---
+
+        // 1. File Upload (Drag & Drop + Click)
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // 2. Textarea Input
+        svgCodeInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.toLowerCase().startsWith('<svg')) {
+                processSvgString(val);
+            } else if (val === '') {
+                resetPreview();
+            }
+        });
+
+        // 3. Settings Changes
+        bgTransparent.addEventListener('change', () => {
+            if (bgTransparent.checked) {
+                colorPickerContainer.classList.add('opacity-50', 'pointer-events-none');
+                previewWrapper.classList.add('bg-checkerboard');
+                previewWrapper.style.backgroundColor = 'transparent';
+            } else {
+                colorPickerContainer.classList.remove('opacity-50', 'pointer-events-none');
+                previewWrapper.classList.remove('bg-checkerboard');
+                previewWrapper.style.backgroundColor = bgColor.value;
+            }
+        });
+
+        bgColor.addEventListener('input', () => {
+            if (!bgTransparent.checked) {
+                previewWrapper.style.backgroundColor = bgColor.value;
+            }
+        });
+
+        // Maintain aspect ratio when changing width/height (optional enhancement, kept simple here but updates badge)
+        outWidth.addEventListener('input', updateBadgeDimensions);
+        outHeight.addEventListener('input', updateBadgeDimensions);
+
+        // 4. Download Action
+        downloadBtn.addEventListener('click', convertToPng);
+
+        // --- Core Functions ---
+
+        function handleFile(file) {
+            hideError();
+            if (file.type !== 'image/svg+xml' && !file.name.toLowerCase().endsWith('.svg')) {
+                showError('Please upload a valid SVG file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const result = e.target.result;
+                svgCodeInput.value = result; // populate textarea
+                processSvgString(result);
+            };
+            reader.onerror = () => showError('Failed to read the file.');
+            reader.readAsText(file);
+
+            // Reset input so the same file can be selected again
+            fileInput.value = '';
+        }
+
+        function processSvgString(svgString) {
+            hideError();
+            try {
+                // Parse SVG to extract or inject dimensions
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgString, 'image/svg+xml');
+                const svgEl = doc.querySelector('svg');
+
+                if (!svgEl) {
+                    showError('Invalid SVG structure. Missing <svg> tag.');
+                    resetPreview();
+                    return;
+                }
+
+                // Check for parsing errors
+                const parseError = doc.querySelector('parsererror');
+                if (parseError) {
+                    showError('SVG parsing error. Check your code syntax.');
+                    resetPreview();
+                    return;
+                }
+
+                // Extract width and height
+                let w = parseFloat(svgEl.getAttribute('width'));
+                let h = parseFloat(svgEl.getAttribute('height'));
+
+                // Fallback to viewBox if width/height are missing or use relative units (%, em)
+                if ((isNaN(w) || isNaN(h)) && svgEl.getAttribute('viewBox')) {
+                    const vb = svgEl.getAttribute('viewBox').split(/[\s,]+/);
+                    w = parseFloat(vb[2]);
+                    h = parseFloat(vb[3]);
+                }
+
+                // Default fallback if completely undefined
+                w = isNaN(w) ? 800 : w;
+                h = isNaN(h) ? 800 : h;
+
+                originalAspectRatio = w / h;
+
+                // Update input fields
+                outWidth.value = Math.round(w);
+                outHeight.value = Math.round(h);
+
+                // Ensure the SVG has explicit dimensions for Canvas rendering
+                svgEl.setAttribute('width', outWidth.value);
+                svgEl.setAttribute('height', outHeight.value);
+
+                // Re-serialize with guaranteed dimensions
+                currentSvgString = new XMLSerializer().serializeToString(svgEl);
+
+                renderPreview();
+                downloadBtn.disabled = false;
+
+            } catch (err) {
+                showError('An error occurred while processing the SVG.');
+                console.error(err);
+                resetPreview();
+            }
+        }
+
+        function renderPreview() {
+            // Create a Blob URL for the image
+            const blob = new Blob([currentSvgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            previewImage.onload = () => {
+                emptyState.classList.add('hidden');
+                previewImage.classList.remove('hidden');
+                URL.revokeObjectURL(url); // Clean up
+                updateBadgeDimensions();
+            };
+
+            previewImage.onerror = () => {
+                showError('Failed to render SVG preview. The file might be corrupted.');
+                resetPreview();
+            };
+
+            previewImage.src = url;
+        }
+
+        function updateBadgeDimensions() {
+            const w = outWidth.value || '0';
+            const h = outHeight.value || '0';
+            dimensionBadge.textContent = `${w} × ${h} px`;
+            dimensionBadge.classList.remove('hidden');
+        }
+
+        function resetPreview() {
+            currentSvgString = '';
+            previewImage.src = '';
+            previewImage.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            downloadBtn.disabled = true;
+            dimensionBadge.classList.add('hidden');
+        }
+
+        function convertToPng() {
+            if (!currentSvgString) return;
+
+            // Update SVG dimensions in case user changed the input fields
+            const targetW = parseInt(outWidth.value) || 800;
+            const targetH = parseInt(outHeight.value) || 800;
+
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(currentSvgString, 'image/svg+xml');
+            const svgEl = doc.querySelector('svg');
+
+            svgEl.setAttribute('width', targetW);
+            svgEl.setAttribute('height', targetH);
+
+            const updatedSvgString = new XMLSerializer().serializeToString(svgEl);
+
+            // Setup Canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = targetW;
+            canvas.height = targetH;
+
+            // Fill background if not transparent
+            if (!bgTransparent.checked) {
+                ctx.fillStyle = bgColor.value;
+                ctx.fillRect(0, 0, targetW, targetH);
+            }
+
+            // Draw SVG to Canvas
+            const img = new Image();
+            const blob = new Blob([updatedSvgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            // Change button state
+            const originalBtnHtml = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Converting...`;
+            downloadBtn.disabled = true;
+            lucide.createIcons();
+
+            img.onload = () => {
+                ctx.drawImage(img, 0, 0, targetW, targetH);
+                URL.revokeObjectURL(url);
+
+                try {
+                    // Extract PNG and Download
+                    const pngUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = 'converted-image.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } catch (e) {
+                    showError("Failed to generate PNG. Complex SVGs with external resources may taint the canvas.");
+                } finally {
+                    // Restore button
+                    downloadBtn.innerHTML = originalBtnHtml;
+                    downloadBtn.disabled = false;
+                    lucide.createIcons();
+                }
+            };
+
+            img.onerror = () => {
+                showError("Failed to render image on canvas.");
+                downloadBtn.innerHTML = originalBtnHtml;
+                downloadBtn.disabled = false;
+                lucide.createIcons();
+            };
+
+            img.src = url;
+        }
+
+        // --- Helpers ---
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorToast.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorToast.classList.add('hidden');
+        }
+    </script>
+</body>
+
+</html>
