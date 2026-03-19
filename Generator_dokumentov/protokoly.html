@@ -12,6 +12,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- Knižnice pre skutočný export do .docx -->
+    <script src="https://unpkg.com/html-docx-js@0.3.1/dist/html-docx.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -774,6 +777,9 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
             <button onclick="toggleApiKeyModal()"
                 class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded shadow transition-colors"
                 title="Nastaviť API Kľúč"><i class="fas fa-key"></i></button>
+            <button onclick="exportDocx()"
+                class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded shadow flex items-center justify-center gap-2"><i
+                    class="fas fa-file-word"></i> Uložiť DOCX</button>
             <button onclick="window.print()"
                 class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow flex items-center justify-center gap-2"><i
                     class="fas fa-print"></i> Tlačiť / Uložiť PDF</button>
@@ -1453,7 +1459,7 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
 
         function generateSignaturesHTML(data) {
             if (currentTemplate === 'protocol') {
-                return `<div class="signature-section"><p>V <span id="out-mesto">${data.mesto}</span>, dňa <span id="out-datum">${data.datum}</span></p><div style="display: flex; justify-content: space-between; margin-top: 5mm;"><div style="width: 40%;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: left;"><span class="label" style="display:block; margin-bottom: 1mm;">Odovzdávajúci:</span><span>${data.podpisL}</span></div></div><div style="width: 40%;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: left;"><span class="label" style="display:block; margin-bottom: 1mm;">Preberajúci:</span><span>${data.podpisR}</span></div></div></div></div>`;
+                return `<div class="signature-section"><p>V <span id="out-mesto">${data.mesto}</span>, dňa <span id="out-datum">${data.datum}</span></p><table style="width: 100%; border: none; margin-top: 5mm; border-collapse: collapse;"><tr><td style="width: 45%; border: none; vertical-align: bottom; padding: 0;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: left; border-top: 1px solid black; padding-top: 2mm;"><span class="label" style="display:block; margin-bottom: 1mm;">Odovzdávajúci:</span><span>${data.podpisL}</span></div></td><td style="width: 10%; border: none;"></td><td style="width: 45%; border: none; vertical-align: bottom; padding: 0;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: left; border-top: 1px solid black; padding-top: 2mm;"><span class="label" style="display:block; margin-bottom: 1mm;">Preberajúci:</span><span>${data.podpisR}</span></div></td></tr></table></div>`;
             } else {
                 let membersHTML = '';
                 membersData.forEach(m => membersHTML += `<div><div style="height: 15mm;"></div><div class="signature-box"><span style="font-size: 9pt; display:block;">Člen komisie:</span><span style="font-weight:bold;">${m}</span></div></div>`);
@@ -1951,6 +1957,41 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
 
             renderEditorContract();
         });
+
+        function exportDocx() {
+            // Pripravíme kópiu obsahu s vloženými štýlmi a prispôsobeniami pre html-docx-js
+            const inlineStyles = Array.from(document.querySelectorAll('style')).map(s => s.outerHTML).join('\\n');
+            const preHtml = "<!DOCTYPE html><html><head><meta charset='utf-8'><title>Export dokumentu</title>" + inlineStyles + "</head><body>";
+            const postHtml = "</body></html>";
+
+            // Klonovanie kontajnera prevencie rozbitia zobrazenia
+            const previewContainer = document.getElementById('pages-preview-container').cloneNode(true);
+
+            // Pridanie page-breaks medzi stránky špecificky pre html-docx-js
+            const pages = previewContainer.querySelectorAll('.a4-page');
+            pages.forEach((page, index) => {
+                // html-docx-js chápe br element s class=\"page\" (br style=\"page-break-before: always;\")
+                if (index < pages.length - 1) {
+                    const pb = document.createElement('br');
+                    pb.style.pageBreakAfter = 'always';
+                    page.appendChild(pb);
+                }
+            });
+
+            const html = preHtml + previewContainer.innerHTML + postHtml;
+
+            // Vygenerovanie reálneho .docx do Blobu
+            const converted = htmlDocx.asBlob(html, {
+                orientation: 'portrait',
+                margins: { top: 720, right: 720, bottom: 720, left: 720 } // cca 1.25 cm
+            });
+
+            const titles = { 'protocol': 'Protokol', 'evaluation': 'Hodnotenie', 'contract': 'Zmluva' };
+            const filename = (titles[currentTemplate] || 'dokument') + '.docx';
+
+            // Uloženie súboru pomocou FileSaver.js
+            saveAs(converted, filename);
+        }
     </script>
 </body>
 
