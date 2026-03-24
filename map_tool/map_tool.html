@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapový nástroj</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23ea580c'/%3E%3Cg transform='translate(4, 4)' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolygon points='3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21'/%3E%3Cline x1='9' y1='3' x2='9' y2='18'/%3E%3Cline x1='15' y1='6' x2='15' y2='21'/%3E%3C/g%3E%3C/svg%3E" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable class-based dark mode
+        }
+    </script>
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- shpjs (Shapefile to GeoJSON) -->
+    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
+
+    <!-- PapaParse (CSV parser) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        /* Custom styles for Leaflet Legend */
+        .info.legend {
+            background: white;
+            padding: 10px 14px;
+            font-size: 14px;
+            line-height: 24px;
+            color: #333;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .info.legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+            border-radius: 3px;
+        }
+
+        /* Dark Mode Overrides for Leaflet */
+        .dark .info.legend {
+            background: #1f2937;
+            /* Tailwind gray-800 */
+            color: #f3f4f6;
+            /* Tailwind gray-100 */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid #374151;
+            /* Tailwind gray-700 */
+        }
+
+        .dark .leaflet-popup-content-wrapper,
+        .dark .leaflet-popup-tip {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+    </style>
+</head>
+
+<body
+    class="h-screen w-full flex overflow-hidden bg-gray-50 dark:bg-gray-900 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-200">
+
+    <!-- Bočný panel (Ovládanie) -->
+    <aside
+        class="w-80 bg-white dark:bg-gray-800 shadow-xl flex flex-col z-[1000] relative border-r border-gray-200 dark:border-gray-700 transition-colors duration-200">
+        <div
+            class="p-6 border-b border-orange-100 dark:border-gray-700 bg-orange-50/40 dark:bg-gray-800 rounded-br-3xl flex justify-between items-start transition-colors duration-200">
+            <div>
+                <h1
+                    class="text-2xl font-extrabold text-orange-900 dark:text-orange-500 tracking-tight flex items-center gap-3">
+                    <div
+                        class="bg-orange-600 text-white p-2.5 rounded-2xl shadow-md shadow-orange-600/30 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-map">
+                            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                            <line x1="9" x2="9" y1="3" y2="18" />
+                            <line x1="15" x2="15" y1="6" y2="21" />
+                        </svg>
+                    </div>
+                    Mapový nástroj
+                </h1>
+                <p class="text-xs text-orange-700 dark:text-gray-400 mt-3 font-medium">Nahrajte Shapefile a obohaťte ho
+                    o CSV dáta.</p>
+            </div>
+            <!-- Tlačidlo Nastavenia -->
+            <button onclick="toggleSettings()"
+                class="text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors p-1"
+                title="Nastavenia">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+
+            <!-- Krok 1: Shapefile -->
+            <div class="space-y-3">
+                <h2 class="font-semibold text-sm uppercase tracking-wider text-gray-400 dark:text-gray-500">1. Základná
+                    mapa</h2>
+                <div>
+                    <label class="block text-sm font-medium mb-1 dark:text-gray-300">Nahrať Shapefile (.zip)</label>
+                    <input type="file" id="shpInput" accept=".zip"
+                        class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 dark:file:bg-gray-700 file:text-orange-700 dark:file:text-orange-400 hover:file:bg-orange-100 dark:hover:file:bg-gray-600 cursor-pointer border dark:border-gray-600 rounded-md bg-white dark:bg-gray-800" />
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Súbor musí obsahovať .shp, .dbf atď.
+                        zabalené v ZIP archíve.</p>
+                </div>
+            </div>
+
+            <!-- Krok 2: CSV -->
+            <div class="space-y-3">
+                <h2 class="font-semibold text-sm uppercase tracking-wider text-gray-400 dark:text-gray-500">2. Dodatočné
+                    dáta</h2>
+                <div>
+                    <label class="block text-sm font-medium mb-1 dark:text-gray-300">Nahrať CSV súbor</label>
+                    <input type="file" id="csvInput" accept=".csv"
+                        class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 dark:file:bg-gray-700 file:text-amber-700 dark:file:text-amber-400 hover:file:bg-amber-100 dark:hover:file:bg-gray-600 cursor-pointer border dark:border-gray-600 rounded-md bg-white dark:bg-gray-800" />
+                </div>
+            </div>
+
+            <!-- Krok 3: Prepojenie dát -->
+            <div class="space-y-4 pt-2 border-t border-gray-100 dark:border-gray-700" id="joinSection"
+                style="opacity: 0.5; pointer-events: none;">
+                <h2 class="font-semibold text-sm uppercase tracking-wider text-gray-400 dark:text-gray-500">3.
+                    Prepojenie a Vizualizácia</h2>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Identifikátor v Mape
+                        (Shapefile)</label>
+                    <select id="shpKey"
+                        class="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-sm border focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 dark:text-gray-200">
+                        <option value="">Najprv nahrajte Shapefile</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Zodpovedajúci stĺpec
+                        v CSV</label>
+                    <select id="csvKey"
+                        class="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-sm border focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 dark:text-gray-200">
+                        <option value="">Najprv nahrajte CSV</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Hodnota pre
+                        vyfarbenie (Číslo)</label>
+                    <select id="csvValue"
+                        class="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-sm border focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 dark:text-gray-200">
+                        <option value="">Najprv nahrajte CSV</option>
+                    </select>
+                </div>
+
+                <button id="applyBtn"
+                    class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 px-4 rounded-md transition duration-200 flex justify-center items-center gap-2">
+                    Aktualizovať mapu
+                </button>
+            </div>
+
+            <!-- AI Insights Panel -->
+            <div id="aiInsightsPanel"
+                class="hidden mt-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-gray-700 dark:to-gray-800 p-4 rounded-xl border border-orange-200 dark:border-gray-600 shadow-sm relative overflow-hidden transition-colors duration-200">
+                <div class="absolute -right-4 -top-4 text-orange-200 dark:text-gray-600 opacity-50">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" />
+                    </svg>
+                </div>
+                <h3
+                    class="font-bold text-orange-900 dark:text-orange-400 text-sm mb-2 flex items-center gap-1 relative z-10">
+                    ✨ AI Analýza dát</h3>
+                <div id="aiInsightsContent" class="relative z-10 min-h-[40px]"></div>
+            </div>
+
+            <!-- ✨ AI Chat s Mapou Panel -->
+            <div id="aiChatPanel"
+                class="hidden mt-4 bg-white dark:bg-gray-800 border border-orange-200 dark:border-gray-600 rounded-xl shadow-sm flex flex-col h-72 overflow-hidden flex-shrink-0 transition-colors duration-200">
+                <div class="bg-orange-600 dark:bg-orange-700 text-white p-3 text-sm font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    ✨ Chat s Mapou
+                </div>
+                <div id="chatHistory"
+                    class="flex-1 overflow-y-auto p-3 text-sm space-y-3 bg-gray-50/50 dark:bg-gray-800/50">
+                    <div class="text-gray-500 dark:text-gray-400 italic text-xs text-center mt-2">Spýtajte sa AI na
+                        dáta, ktoré vidíte na mape. Napr. "Aký je priemer?", "Sú tam nejaké anomálie?"</div>
+                </div>
+                <div
+                    class="p-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2 transition-colors duration-200">
+                    <input type="text" id="chatInput"
+                        class="flex-1 border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
+                        placeholder="Vaša otázka k dátam...">
+                    <button id="sendChatBtn"
+                        class="bg-orange-600 hover:bg-orange-700 dark:bg-orange-700 dark:hover:bg-orange-600 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" x2="11" y1="2" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- Hlavná oblasť mapy -->
+    <main class="flex-1 relative bg-gray-200 dark:bg-gray-900 transition-colors duration-200">
+        <div id="map" class="w-full h-full z-0"></div>
+
+        <!-- Custom Message Box (Toasts) -->
+        <div id="messageBox"
+            class="absolute top-4 left-1/2 transform -translate-x-1/2 z-[2000] hidden px-6 py-3 rounded-full shadow-lg text-sm font-medium transition-all duration-300">
+            Správa
+        </div>
+    </main>
+
+    <!-- Nastavenia Modal -->
+    <div id="settingsModal"
+        class="fixed inset-0 bg-black/50 z-[3000] hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 border border-gray-100 dark:border-gray-700 transform transition-transform scale-95 opacity-0"
+            id="settingsModalContent">
+
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="text-orange-600">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Nastavenia aplikácie
+                </h2>
+                <button onclick="toggleSettings()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Téma -->
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Vzhľad
+                        (Téma)</label>
+                    <div class="flex gap-4">
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="theme" value="light" class="peer sr-only"
+                                onchange="applyTheme('light')">
+                            <div
+                                class="text-center p-3 border rounded-lg border-gray-200 dark:border-gray-600 peer-checked:border-orange-500 peer-checked:bg-orange-50 dark:peer-checked:bg-gray-700 transition-all">
+                                ☀️ Svetlý
+                            </div>
+                        </label>
+                        <label class="flex-1 cursor-pointer">
+                            <input type="radio" name="theme" value="dark" class="peer sr-only"
+                                onchange="applyTheme('dark')">
+                            <div
+                                class="text-center p-3 border rounded-lg border-gray-200 dark:border-gray-600 peer-checked:border-orange-500 peer-checked:bg-orange-50 dark:peer-checked:bg-gray-700 transition-all">
+                                🌙 Tmavý
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- API Key -->
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Google Gemini API
+                        Kľúč</label>
+                    <p class="text-[10px] text-gray-500 mb-2">Pokiaľ máte vlastný API kľúč pre modely Gemini, môžete ho
+                        zadať sem. Ak je prázdne, použije sa predvolený systémový kľúč.</p>
+                    <input type="password" id="userApiKeyInput" placeholder="AIzaSy..."
+                        class="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-sm border focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 dark:text-white" />
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <button onclick="saveSettings()"
+                    class="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200">
+                    Uložiť a zavrieť
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Stavové premenné ---
+        let map;
+        let geojsonLayer;
+        let geojsonData = null;
+        let csvData = null;
+        let legend = null;
+
+        // --- API a Nastavenia ---
+        const apiKey = ""; // Globálny kľúč od prostredia
+        let userApiKey = localStorage.getItem('userGeminiApiKey') || "";
+        let currentTheme = localStorage.getItem('mapToolTheme') || 'light';
+
+        // --- Mapové Vrstvy (Light/Dark) ---
+        let lightTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO', subdomains: 'abcd', maxZoom: 20
+        });
+        let darkTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO', subdomains: 'abcd', maxZoom: 20
+        });
+
+        // --- Inicializácia Nastavení ---
+        function initSettings() {
+            document.getElementById('userApiKeyInput').value = userApiKey;
+            document.querySelector(`input[name="theme"][value="${currentTheme}"]`).checked = true;
+            applyTheme(currentTheme, false); // false means do it silently (no map transition yet if map isn't ready)
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settingsModal');
+            const content = document.getElementById('settingsModalContent');
+            if (modal.classList.contains('hidden')) {
+                // Open
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                // Close
+                content.classList.remove('scale-100', 'opacity-100');
+                content.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            }
+        }
+
+        function saveSettings() {
+            userApiKey = document.getElementById('userApiKeyInput').value.trim();
+            localStorage.setItem('userGeminiApiKey', userApiKey);
+
+            const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+            applyTheme(selectedTheme);
+
+            showMessage('Nastavenia boli uložené.', 'success');
+            toggleSettings();
+        }
+
+        function applyTheme(theme, updateMapLayer = true) {
+            currentTheme = theme;
+            localStorage.setItem('mapToolTheme', theme);
+
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if (updateMapLayer && map) {
+                    map.removeLayer(lightTileLayer);
+                    darkTileLayer.addTo(map);
+                }
+            } else {
+                document.documentElement.classList.remove('dark');
+                if (updateMapLayer && map) {
+                    map.removeLayer(darkTileLayer);
+                    lightTileLayer.addTo(map);
+                }
+            }
+        }
+
+        // --- Gemini API Integrácia ---
+        async function fetchGemini(prompt) {
+            // Použije vlastný kľúč ak existuje, inak sa spolieha na systémový predvolený
+            const activeKey = userApiKey || apiKey;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: "Si užitočný slovenský geografický a dátový asistent. Odpovedaj stručne a k veci." }] }
+            };
+
+            let retries = 5;
+            let delay = 1000;
+            while (retries > 0) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP chyba! status: ${response.status}`);
+                    const data = await response.json();
+                    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Žiadna odpoveď.";
+                } catch (e) {
+                    retries--;
+                    if (retries === 0) return "Nepodarilo sa načítať AI dáta (chyba spojenia, skontrolujte svoj API kľúč).";
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        window.getAiRegionInfo = async function (regionName, buttonElement) {
+            const container = buttonElement.nextElementSibling;
+            buttonElement.style.display = 'none';
+            container.innerHTML = '<div class="flex items-center gap-2 text-xs text-orange-600 dark:text-orange-400 mt-2"><div class="w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div> AI hľadá fakty...</div>';
+            container.style.display = 'block';
+
+            const prompt = `Napíš presne 2 krátke, veľmi zaujímavé fakty o regióne/meste/oblasti s názvom "${regionName}". Odpovedz priamo v slovenčine bez zbytočných úvodných fráz.`;
+            const result = await fetchGemini(prompt);
+
+            const formattedResult = result.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            container.innerHTML = `<div class="bg-orange-50 dark:bg-gray-700 text-orange-900 dark:text-gray-200 p-2.5 rounded-md text-xs mt-2 border border-orange-200 dark:border-gray-600 shadow-sm">${formattedResult}</div>`;
+        };
+
+        async function generateDataInsights(valueName, sortedData) {
+            const panel = document.getElementById('aiInsightsPanel');
+            const content = document.getElementById('aiInsightsContent');
+            panel.classList.remove('hidden');
+            content.innerHTML = '<div class="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 font-medium"><div class="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div> Generujem AI zhrnutie...</div>';
+
+            // Vyfiltrujeme chybné dáta pre AI
+            const validData = sortedData.filter(d => !isNaN(d.value));
+
+            if (validData.length < 3) {
+                content.innerHTML = '<p class="text-sm text-gray-600 dark:text-gray-400">Nedostatok dát pre AI analýzu.</p>';
+                return;
+            }
+
+            const top = validData.slice(0, 3).map(d => `${d.name} (${d.value.toLocaleString()})`).join(', ');
+            const bottom = validData.slice(-3).reverse().map(d => `${d.name} (${d.value.toLocaleString()})`).join(', ');
+
+            const prompt = `Pôsobíš ako analytik. Používateľ vizualizuje na mape metriku "${valueName}". 
+            Regióny s najvyššími hodnotami: ${top}. 
+            Regióny s najnižšími hodnotami: ${bottom}. 
+            Napíš veľmi stručné zhodnotenie (max 3 vety) týchto extrémov. Skús odborne navrhnúť jednu všeobecnú hypotézu, prečo by mohol byť medzi týmito regiónmi taký rozdiel. Odpovedaj profesionálne po slovensky. Neopakuj presné čísla z promptu, iba ich zhodnoť.`;
+
+            const result = await fetchGemini(prompt);
+            const formattedResult = result.replace(/\*\*(.*?)\*\*/g, '<strong class="text-orange-950 dark:text-orange-400">$1</strong>').replace(/\n/g, '<br>');
+            content.innerHTML = `<p class="text-xs text-orange-900 dark:text-gray-300 leading-relaxed">${formattedResult}</p>`;
+        }
+
+        // --- AI Chat s Mapou (Logika) ---
+        window.currentMapContext = null;
+
+        function appendChatMessage(role, text, id = null) {
+            const history = document.getElementById('chatHistory');
+            const msgDiv = document.createElement('div');
+            if (id) msgDiv.id = id;
+            msgDiv.className = `p-2.5 rounded-lg text-xs leading-relaxed max-w-[90%] shadow-sm ${role === 'user' ? 'bg-orange-100 dark:bg-orange-900/40 text-orange-900 dark:text-orange-100 ml-auto rounded-tr-none' : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 mr-auto rounded-tl-none'}`;
+            msgDiv.innerHTML = text;
+            history.appendChild(msgDiv);
+            history.scrollTop = history.scrollHeight;
+            return msgDiv.id;
+        }
+
+        document.getElementById('sendChatBtn').addEventListener('click', async () => {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !window.currentMapContext) return;
+
+            input.value = '';
+            appendChatMessage('user', text);
+
+            const loaderId = 'msg-' + Date.now();
+            appendChatMessage('ai', '<div class="flex items-center gap-1 text-orange-400 h-4"><div class="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div><div class="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div></div>', loaderId);
+
+            // Zostavenie kontextu dát pre AI (mená a hodnoty v jednoduchom formáte)
+            const dataContext = window.currentMapContext.data.map(d => `${d.name}:${d.value}`).join(', ');
+
+            const prompt = `Si analytický AI asistent pre interaktívnu mapu. Používateľ vidí mapu s metrikou nazvanou "${window.currentMapContext.metric}". 
+Tu sú kompletné dáta: [${dataContext}].
+Otázka používateľa znie: "${text}"
+
+Inštrukcie pre odpoveď:
+1. Odpovedz stručne, priamo a odborne v slovenčine.
+2. Ak sa používateľ pýta na štatistiku (priemer, medián, počet nad x), vypočítaj ju presne z poskytnutých dát.
+3. Neopakuj celú otázku, rovno odpovedaj. Formátuj kľúčové čísla tučným písmom pomocou **číslo**.`;
+
+            const response = await fetchGemini(prompt);
+            const formattedResponse = response.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+
+            document.getElementById(loaderId).innerHTML = formattedResponse;
+            const history = document.getElementById('chatHistory');
+            history.scrollTop = history.scrollHeight;
+        });
+
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('sendChatBtn').click();
+            }
+        });
+
+        // --- Inicializácia Mapy ---
+        function initMap() {
+            // Predvolený pohľad - stred Európy / Slovensko
+            map = L.map('map').setView([48.6690, 19.6990], 7);
+
+            // Nastavíme správnu vrstvu mapy podľa aktuálnej témy
+            if (currentTheme === 'dark') {
+                darkTileLayer.addTo(map);
+            } else {
+                lightTileLayer.addTo(map);
+            }
+        }
+
+        // --- Pomocné funkcie pre UI ---
+        function showMessage(text, type = 'info') {
+            const msgBox = document.getElementById('messageBox');
+            msgBox.textContent = text;
+            msgBox.classList.remove('hidden', 'bg-orange-600', 'bg-green-600', 'bg-red-600', 'text-white');
+
+            if (type === 'success') msgBox.classList.add('bg-green-600', 'text-white');
+            else if (type === 'error') msgBox.classList.add('bg-red-600', 'text-white');
+            else msgBox.classList.add('bg-orange-600', 'text-white');
+
+            msgBox.style.display = 'block';
+            setTimeout(() => {
+                msgBox.style.display = 'none';
+            }, 4000);
+        }
+
+        // --- Inteligentný výber prepojenia (AI + Normalizácia) ---
+        let autoSuggestDone = false;
+
+        function normalizeText(text) {
+            if (!text) return "";
+            return String(text).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        }
+
+        async function aiSuggestJoin() {
+            if (!geojsonData || !csvData || autoSuggestDone) return;
+
+            const applyBtn = document.getElementById('applyBtn');
+            const originalBtnText = applyBtn.innerHTML;
+            applyBtn.innerHTML = '<div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> ✨ AI spája tabuľky...';
+            applyBtn.disabled = true;
+
+            try {
+                const shpFeatures = geojsonData.features || (geojsonData.length > 0 && geojsonData[0].features ? geojsonData[0].features : []);
+                const shpSamples = shpFeatures.slice(0, 3).map(f => f.properties);
+                const csvSamples = csvData.slice(0, 3);
+
+                const prompt = `Si dátový inžinier. Tvojou úlohou je nájsť najlepšie stĺpce na prepojenie dvoch tabuliek.
+Tabuľka 1 (Shapefile) ukážka: ${JSON.stringify(shpSamples)}
+Tabuľka 2 (CSV) ukážka: ${JSON.stringify(csvSamples)}
+
+Urči 3 kľúčové stĺpce:
+1. "shpKey": stĺpec z Tabuľky 1, ktorý slúži ako geografický identifikátor (názov regiónu, mesta, okresu, alebo ID).
+2. "csvKey": stĺpec z Tabuľky 2, ktorý obsahuje rovnaké geografické identifikátory a použije sa na prepojenie (JOIN).
+3. "csvValue": stĺpec z Tabuľky 2, ktorý obsahuje najdôležitejšie číselné hodnoty na vizualizáciu.
+
+Odpovedz VÝLUČNE v čistom JSON formáte. Príklad:
+{"shpKey": "NM3", "csvKey": "Okres", "csvValue": "Pocet_Obyvatelov"}`;
+
+                const response = await fetchGemini(prompt);
+
+                const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
+                const aiResult = JSON.parse(jsonStr);
+
+                if (aiResult.shpKey && aiResult.csvKey && aiResult.csvValue) {
+                    document.getElementById('shpKey').value = aiResult.shpKey;
+                    document.getElementById('csvKey').value = aiResult.csvKey;
+                    document.getElementById('csvValue').value = aiResult.csvValue;
+                    showMessage('✨ AI preskúmala atribúty a prepojila stĺpce!', 'success');
+                    autoSuggestDone = true;
+                } else {
+                    throw new Error("Nesprávna JSON štruktúra");
+                }
+            } catch (e) {
+                console.warn("AI prepojenie sa nepodarilo, prepínam na základné porovnávanie textu...", e);
+                autoSuggestJoinFallback();
+            } finally {
+                applyBtn.innerHTML = originalBtnText;
+                applyBtn.disabled = false;
+            }
+        }
+
+        function autoSuggestJoinFallback() {
+            const shpSamples = {};
+            const features = geojsonData.features || (geojsonData.length > 0 && geojsonData[0].features ? geojsonData[0].features : []);
+
+            features.forEach(f => {
+                for (let key in f.properties) {
+                    if (!shpSamples[key]) shpSamples[key] = new Set();
+                    if (f.properties[key]) shpSamples[key].add(String(f.properties[key]).trim().toLowerCase());
+                }
+            });
+
+            const csvSamples = {};
+            let isNumeric = {};
+
+            if (csvData.length > 0) {
+                Object.keys(csvData[0]).forEach(key => {
+                    csvSamples[key] = new Set();
+                    isNumeric[key] = true;
+                });
+            }
+
+            csvData.forEach(row => {
+                for (let key in row) {
+                    const val = String(row[key] || '').trim();
+                    if (val) {
+                        csvSamples[key].add(val.toLowerCase());
+                        const numVal = parseFloat(val.replace(',', '.').replace(/\s/g, ''));
+                        if (isNaN(numVal)) {
+                            isNumeric[key] = false;
+                        }
+                    }
+                }
+            });
+
+            let bestMatch = { shpKey: null, csvKey: null, score: 0 };
+
+            for (let sKey in shpSamples) {
+                for (let cKey in csvSamples) {
+                    let overlap = 0;
+                    shpSamples[sKey].forEach(val => {
+                        if (csvSamples[cKey].has(val)) overlap++;
+                    });
+
+                    if (overlap > bestMatch.score) {
+                        bestMatch = { shpKey: sKey, csvKey: cKey, score: overlap };
+                    }
+                }
+            }
+
+            if (bestMatch.score > 0) {
+                document.getElementById('shpKey').value = bestMatch.shpKey;
+                document.getElementById('csvKey').value = bestMatch.csvKey;
+
+                for (let key in isNumeric) {
+                    if (isNumeric[key] && key !== bestMatch.csvKey) {
+                        document.getElementById('csvValue').value = key;
+                        break;
+                    }
+                }
+
+                showMessage(`Základné prepojenie nastavené (zhoda: ${bestMatch.score})`, 'success');
+                autoSuggestDone = true;
+            }
+        }
+
+        function checkReadiness() {
+            const joinSection = document.getElementById('joinSection');
+            if (geojsonData && csvData) {
+                joinSection.style.opacity = '1';
+                joinSection.style.pointerEvents = 'auto';
+                aiSuggestJoin();
+            }
+        }
+
+        function populateSelect(selectId, options, defaultText, dataArray, isShapefile) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '';
+
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = "";
+            defaultOpt.textContent = defaultText;
+            select.appendChild(defaultOpt);
+
+            if (!options || options.length === 0) return;
+
+            options.forEach(optionText => {
+                let sampleValues = [];
+                let count = 0;
+
+                if (dataArray) {
+                    if (isShapefile) {
+                        const features = dataArray.features || (dataArray.length > 0 && dataArray[0].features ? dataArray[0].features : []);
+                        for (let i = 0; i < features.length && count < 2; i++) {
+                            const val = features[i].properties[optionText];
+                            if (val && !sampleValues.includes(val) && String(val).trim() !== "") {
+                                sampleValues.push(String(val).substring(0, 15));
+                                count++;
+                            }
+                        }
+                    } else {
+                        for (let i = 0; i < dataArray.length && count < 2; i++) {
+                            const val = dataArray[i][optionText];
+                            if (val && !sampleValues.includes(val) && String(val).trim() !== "") {
+                                sampleValues.push(String(val).substring(0, 15));
+                                count++;
+                            }
+                        }
+                    }
+                }
+
+                const opt = document.createElement('option');
+                opt.value = optionText;
+                let sampleStr = sampleValues.length > 0 ? ` (napr. ${sampleValues.join(', ')})` : '';
+                opt.textContent = optionText + sampleStr;
+                select.appendChild(opt);
+            });
+        }
+
+        // --- Farebná škála a Legend ---
+        function getColor(d, min, max) {
+            if (d === undefined || d === null || isNaN(d)) return currentTheme === 'dark' ? '#374151' : '#e5e7eb'; // Šedá pre chýbajúce dáta
+            if (max === min) return '#ea580c';
+
+            let normalized = (d - min) / (max - min);
+            if (normalized < 0) normalized = 0;
+            if (normalized > 1) normalized = 1;
+
+            const lightness = 95 - (normalized * 50);
+            return `hsl(25, 90%, ${lightness}%)`;
+        }
+
+        function updateLegend(min, max, valueName) {
+            if (legend) {
+                map.removeControl(legend);
+            }
+
+            legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'info legend');
+                div.innerHTML = `<h4 class="font-bold mb-2 text-sm border-b pb-1 text-orange-900 dark:text-orange-500 border-gray-200 dark:border-gray-600">${valueName || 'Hodnota'}</h4>`;
+
+                if (min === Infinity || isNaN(min)) {
+                    div.innerHTML += '<span>Žiadne platné dáta</span>';
+                    return div;
+                }
+
+                const grades = [];
+                for (let i = 0; i <= 4; i++) {
+                    grades.push(min + (max - min) * (i / 4));
+                }
+
+                for (let i = 0; i < grades.length; i++) {
+                    const val1 = grades[i];
+                    const val2 = grades[i + 1];
+                    const color = getColor(val1 + ((val2 - val1) / 2 || 0), min, max);
+
+                    div.innerHTML +=
+                        `<i style="background:${getColor(val1, min, max)}"></i> ` +
+                        val1.toLocaleString(undefined, { maximumFractionDigits: 2 }) + (val2 ? '&ndash;' + val2.toLocaleString(undefined, { maximumFractionDigits: 2 }) + '<br>' : '+');
+                }
+
+                const noDataColor = currentTheme === 'dark' ? '#374151' : '#e5e7eb';
+                div.innerHTML += `<br><i style="background:${noDataColor}"></i> Bez dát`;
+                return div;
+            };
+            legend.addTo(map);
+        }
+
+        // --- Spracovanie nahrania Shapefile (.zip) ---
+        document.getElementById('shpInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showMessage('Spracovávam Shapefile...', 'info');
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const buffer = event.target.result;
+
+                shp(buffer).then(function (geojson) {
+                    geojsonData = geojson;
+
+                    if (geojsonLayer) {
+                        map.removeLayer(geojsonLayer);
+                    }
+
+                    geojsonLayer = L.geoJSON(geojsonData, {
+                        style: {
+                            fillColor: '#fb923c',
+                            weight: 1,
+                            opacity: 1,
+                            color: currentTheme === 'dark' ? '#1f2937' : 'white',
+                            fillOpacity: 0.6
+                        },
+                        onEachFeature: function (feature, layer) {
+                            let firstKey = Object.keys(feature.properties)[0];
+                            let regionName = feature.properties[firstKey];
+
+                            let popupContent = `<div class="text-sm"><strong>Vlastnosti regiónu:</strong><ul class="mt-1 max-h-40 overflow-y-auto">`;
+                            for (let key in feature.properties) {
+                                popupContent += `<li><span class="text-gray-500 dark:text-gray-400">${key}:</span> ${feature.properties[key]}</li>`;
+                            }
+                            popupContent += `</ul>
+                                <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600 text-center">
+                                    <button onclick="getAiRegionInfo('${String(regionName).replace(/'/g, "\\'")}', this)" class="w-full bg-orange-50 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-gray-600 text-orange-700 dark:text-orange-400 font-semibold py-1.5 px-3 rounded text-xs transition-colors border border-orange-200 dark:border-gray-600">✨ Zisti viac o regióne</button>
+                                    <div style="display:none" class="text-left"></div>
+                                </div>
+                            </div>`;
+                            layer.bindPopup(popupContent);
+                        }
+                    }).addTo(map);
+
+                    map.fitBounds(geojsonLayer.getBounds());
+                    showMessage('Shapefile bol úspešne načítaný!', 'success');
+
+                    let properties = [];
+                    if (geojsonData.features && geojsonData.features.length > 0) {
+                        properties = Object.keys(geojsonData.features[0].properties);
+                    } else if (geojsonData.length > 0 && geojsonData[0].features) {
+                        properties = Object.keys(geojsonData[0].features[0].properties);
+                    }
+
+                    populateSelect('shpKey', properties, 'Vyberte identifikátor', geojsonData, true);
+                    checkReadiness();
+
+                }).catch(function (err) {
+                    console.error("Shapefile Error: ", err);
+                    showMessage('Chyba pri čítaní Shapefile. Uistite sa, že je to platný .zip archív.', 'error');
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // --- Spracovanie nahrania CSV ---
+        document.getElementById('csvInput').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showMessage('Čítam CSV súbor...', 'info');
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function (results) {
+                    csvData = results.data;
+                    const headers = results.meta.fields;
+
+                    if (!headers || headers.length === 0) {
+                        showMessage('Nepodarilo sa nájsť hlavičky v CSV súbore.', 'error');
+                        return;
+                    }
+
+                    populateSelect('csvKey', headers, 'Vyberte spojovací stĺpec', csvData, false);
+                    populateSelect('csvValue', headers, 'Vyberte hodnotu', csvData, false);
+
+                    showMessage('CSV bolo úspešne načítané!', 'success');
+                    checkReadiness();
+                },
+                error: function (err) {
+                    showMessage('Chyba pri čítaní CSV súboru.', 'error');
+                }
+            });
+        });
+
+        // --- Aplikovanie vizualizácie (Join Data) ---
+        document.getElementById('applyBtn').addEventListener('click', function () {
+            if (!geojsonData || !csvData) return;
+
+            const shpKey = document.getElementById('shpKey').value;
+            const csvKey = document.getElementById('csvKey').value;
+            const csvValueKey = document.getElementById('csvValue').value;
+
+            if (!shpKey || !csvKey || !csvValueKey) {
+                showMessage('Prosím, vyplňte všetky tri možnosti prepojenia.', 'error');
+                return;
+            }
+
+            const lookupTable = {};
+            let minVal = Infinity;
+            let maxVal = -Infinity;
+
+            csvData.forEach(row => {
+                const key = normalizeText(row[csvKey]);
+                const rawValue = row[csvValueKey];
+
+                const stringVal = String(rawValue).replace(',', '.').replace(/\s/g, '');
+                const value = parseFloat(stringVal);
+
+                if (key && !isNaN(value)) {
+                    lookupTable[key] = value;
+                    if (value < minVal) minVal = value;
+                    if (value > maxVal) maxVal = value;
+                }
+            });
+
+            if (minVal === Infinity || maxVal === -Infinity) {
+                showMessage('V zvolenom stĺpci hodnôt sa nenašli žiadne platné čísla.', 'error');
+                return;
+            }
+
+            let sortableData = [];
+
+            geojsonLayer.eachLayer(function (layer) {
+                const feature = layer.feature;
+                const originalKey = String(feature.properties[shpKey]).trim();
+                const featureKey = normalizeText(originalKey);
+                const joinedValue = lookupTable[featureKey];
+
+                if (joinedValue !== undefined) {
+                    sortableData.push({ name: originalKey, value: joinedValue });
+                }
+
+                layer.setStyle({
+                    fillColor: getColor(joinedValue, minVal, maxVal),
+                    weight: 1.5,
+                    opacity: 1,
+                    color: currentTheme === 'dark' ? '#1f2937' : 'white',
+                    fillOpacity: 0.8
+                });
+
+                let popupContent = `<div class="p-1 min-w-[160px]">
+                    <h3 class="font-bold border-b border-orange-100 dark:border-gray-600 pb-1 mb-2 text-gray-800 dark:text-gray-100">${originalKey}</h3>
+                    <div class="text-sm">
+                        <span class="text-gray-500 dark:text-gray-400">${csvValueKey}:</span> 
+                        <strong class="text-orange-600 dark:text-orange-400 text-lg ml-1">
+                            ${joinedValue !== undefined ? joinedValue.toLocaleString() : '<span class="text-gray-400 text-sm">Žiadne dáta</span>'}
+                        </strong>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-100 dark:border-gray-600">
+                        <button onclick="getAiRegionInfo('${originalKey.replace(/'/g, "\\'")}', this)" class="w-full bg-orange-50 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-gray-600 text-orange-700 dark:text-orange-400 font-medium py-1.5 px-2 rounded text-xs transition-colors border border-orange-200 dark:border-gray-600">✨ AI Fakty o lokalite</button>
+                        <div style="display:none" class="text-left mt-1"></div>
+                    </div>
+                </div>`;
+
+                layer.bindPopup(popupContent);
+
+                layer.off('mouseover').on('mouseover', function (e) {
+                    var layer = e.target;
+                    layer.setStyle({
+                        weight: 3,
+                        color: currentTheme === 'dark' ? '#f97316' : '#ea580c',
+                        fillOpacity: 0.9
+                    });
+                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                        layer.bringToFront();
+                    }
+                });
+                layer.off('mouseout').on('mouseout', function (e) {
+                    geojsonLayer.resetStyle(e.target);
+                    e.target.setStyle({
+                        fillColor: getColor(joinedValue, minVal, maxVal),
+                        weight: 1.5,
+                        opacity: 1,
+                        color: currentTheme === 'dark' ? '#1f2937' : 'white',
+                        fillOpacity: 0.8
+                    });
+                });
+            });
+
+            updateLegend(minVal, maxVal, csvValueKey);
+            showMessage('Mapa bola úspešne prefarbená!', 'success');
+
+            if (sortableData.length > 0) {
+                sortableData.sort((a, b) => b.value - a.value);
+                generateDataInsights(csvValueKey, sortableData);
+
+                window.currentMapContext = { metric: csvValueKey, data: sortableData };
+                document.getElementById('aiChatPanel').classList.remove('hidden');
+
+                const history = document.getElementById('chatHistory');
+                if (history.children.length === 1) {
+                    setTimeout(() => {
+                        appendChatMessage('ai', `Ahoj! Dáta pre <strong>${csvValueKey}</strong> sú úspešne načítané (${sortableData.length} regiónov). Čo by si chcel analyzovať?`);
+                    }, 1000);
+                }
+            }
+        });
+
+        // Inicializácia pri načítaní stránky
+        document.addEventListener('DOMContentLoaded', () => {
+            initSettings();
+            initMap();
+        });
+    </script>
+</body>
+
+</html>
