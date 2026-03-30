@@ -23,6 +23,9 @@
     <!-- shpjs (Shapefile to GeoJSON) -->
     <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 
+    <!-- JSZip (Pre rozbaľovanie ZIP súborov obsahujúcich CSV) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <!-- PapaParse (CSV parser) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
@@ -126,9 +129,12 @@
                 <h2 class="font-semibold text-sm uppercase tracking-wider text-gray-400 dark:text-gray-500">2. Dodatočné
                     dáta</h2>
                 <div>
-                    <label class="block text-sm font-medium mb-1 dark:text-gray-300">Nahrať CSV súbor</label>
-                    <input type="file" id="csvInput" accept=".csv"
+                    <label class="block text-sm font-medium mb-1 dark:text-gray-300">Nahrať dáta (.csv alebo
+                        .zip)</label>
+                    <input type="file" id="csvInput" accept=".csv,.zip"
                         class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 dark:file:bg-gray-700 file:text-amber-700 dark:file:text-amber-400 hover:file:bg-amber-100 dark:hover:file:bg-gray-600 cursor-pointer border dark:border-gray-600 rounded-md bg-white dark:bg-gray-800" />
+                    <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Podporované formáty: priamo .csv alebo
+                        .zip (z ktorého sa automaticky extrahuje CSV).</p>
                 </div>
             </div>
 
@@ -281,6 +287,21 @@
                     </div>
                 </div>
 
+                <!-- Kódovanie CSV -->
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Kódovanie
+                        dodatočných dát (CSV)</label>
+                    <p class="text-[10px] text-gray-500 mb-2">Ak sa texty z nahraných dát nezobrazujú správne (napr. zlá
+                        diakritika), zmeňte predvolené kódovanie.</p>
+                    <select id="csvEncodingInput"
+                        class="w-full border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 text-sm border focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-gray-700 dark:text-white">
+                        <option value="UTF-8">UTF-8 (Štandardné)</option>
+                        <option value="windows-1250">Windows-1250 (Stredná Európa)</option>
+                        <option value="ISO-8859-2">ISO-8859-2 (Latin-2)</option>
+                        <option value="windows-1251">Windows-1251 (Cyrilika)</option>
+                    </select>
+                </div>
+
                 <!-- API Key -->
                 <div>
                     <label class="block text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Google Gemini API
@@ -313,6 +334,7 @@
         const apiKey = ""; // Globálny kľúč od prostredia
         let userApiKey = localStorage.getItem('userGeminiApiKey') || "";
         let currentTheme = localStorage.getItem('mapToolTheme') || 'light';
+        let currentCsvEncoding = localStorage.getItem('mapToolCsvEncoding') || 'UTF-8';
 
         // --- Mapové Vrstvy (Light/Dark) ---
         let lightTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
@@ -325,6 +347,7 @@
         // --- Inicializácia Nastavení ---
         function initSettings() {
             document.getElementById('userApiKeyInput').value = userApiKey;
+            document.getElementById('csvEncodingInput').value = currentCsvEncoding;
             document.querySelector(`input[name="theme"][value="${currentTheme}"]`).checked = true;
             applyTheme(currentTheme, false); // false means do it silently (no map transition yet if map isn't ready)
         }
@@ -350,6 +373,9 @@
         function saveSettings() {
             userApiKey = document.getElementById('userApiKeyInput').value.trim();
             localStorage.setItem('userGeminiApiKey', userApiKey);
+
+            currentCsvEncoding = document.getElementById('csvEncodingInput').value;
+            localStorage.setItem('mapToolCsvEncoding', currentCsvEncoding);
 
             const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
             applyTheme(selectedTheme);
@@ -378,7 +404,7 @@
         }
 
         // --- Gemini API Integrácia ---
-        async function fetchGemini(prompt) {
+        async function fetchGemini(prompt, isJson = false) {
             // Použije vlastný kľúč ak existuje, inak sa spolieha na systémový predvolený
             const activeKey = userApiKey || apiKey;
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
@@ -386,6 +412,22 @@
                 contents: [{ parts: [{ text: prompt }] }],
                 systemInstruction: { parts: [{ text: "Si užitočný slovenský geografický a dátový asistent. Odpovedaj stručne a k veci." }] }
             };
+
+            // Vynútený štruktúrovaný JSON výstup pre absolútnu spoľahlivosť AI Matchmakera
+            if (isJson) {
+                payload.generationConfig = {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            shpKey: { type: "STRING" },
+                            csvKey: { type: "STRING" },
+                            csvValue: { type: "STRING" }
+                        },
+                        required: ["shpKey", "csvKey", "csvValue"]
+                    }
+                };
+            }
 
             let retries = 5;
             let delay = 1000;
@@ -551,20 +593,15 @@ Inštrukcie pre odpoveď:
 
                 const prompt = `Si dátový inžinier. Tvojou úlohou je nájsť najlepšie stĺpce na prepojenie dvoch tabuliek.
 Tabuľka 1 (Shapefile) ukážka: ${JSON.stringify(shpSamples)}
-Tabuľka 2 (CSV) ukážka: ${JSON.stringify(csvSamples)}
+Tabuľka 2 (Dodatočné Dáta) ukážka: ${JSON.stringify(csvSamples)}
 
 Urči 3 kľúčové stĺpce:
 1. "shpKey": stĺpec z Tabuľky 1, ktorý slúži ako geografický identifikátor (názov regiónu, mesta, okresu, alebo ID).
-2. "csvKey": stĺpec z Tabuľky 2, ktorý obsahuje rovnaké geografické identifikátory a použije sa na prepojenie (JOIN).
-3. "csvValue": stĺpec z Tabuľky 2, ktorý obsahuje najdôležitejšie číselné hodnoty na vizualizáciu.
+2. "csvKey": stĺpec z Tabuľky 2, ktorý obsahuje rovnaké geografické identifikátory a použije sa na prepojenie.
+3. "csvValue": stĺpec z Tabuľky 2 obsahujúci najdôležitejšie číselné hodnoty na vizualizáciu.`;
 
-Odpovedz VÝLUČNE v čistom JSON formáte. Príklad:
-{"shpKey": "NM3", "csvKey": "Okres", "csvValue": "Pocet_Obyvatelov"}`;
-
-                const response = await fetchGemini(prompt);
-
-                const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim();
-                const aiResult = JSON.parse(jsonStr);
+                const response = await fetchGemini(prompt, true); // true = Vynútime čistý JSON štruktúrovaný výstup z API
+                const aiResult = JSON.parse(response);
 
                 if (aiResult.shpKey && aiResult.csvKey && aiResult.csvValue) {
                     document.getElementById('shpKey').value = aiResult.shpKey;
@@ -822,30 +859,63 @@ Odpovedz VÝLUČNE v čistom JSON formáte. Príklad:
             const file = e.target.files[0];
             if (!file) return;
 
-            showMessage('Čítam CSV súbor...', 'info');
+            showMessage('Čítam dodatočné dáta...', 'info');
 
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function (results) {
-                    csvData = results.data;
-                    const headers = results.meta.fields;
+            // Pomocná funkcia pre samotné parsovanie dát cez PapaParse s aktuálnym kódovaním
+            const parseCSVFile = (fileOrBlob) => {
+                Papa.parse(fileOrBlob, {
+                    header: true,
+                    skipEmptyLines: true,
+                    encoding: currentCsvEncoding, // Použitie kódovania z Nastavení
+                    complete: function (results) {
+                        csvData = results.data;
+                        const headers = results.meta.fields;
 
-                    if (!headers || headers.length === 0) {
-                        showMessage('Nepodarilo sa nájsť hlavičky v CSV súbore.', 'error');
-                        return;
+                        if (!headers || headers.length === 0) {
+                            showMessage('Nepodarilo sa nájsť hlavičky v CSV súbore.', 'error');
+                            return;
+                        }
+
+                        populateSelect('csvKey', headers, 'Vyberte spojovací stĺpec', csvData, false);
+                        populateSelect('csvValue', headers, 'Vyberte hodnotu', csvData, false);
+
+                        showMessage('Dáta úspešne načítané!', 'success');
+                        checkReadiness();
+                    },
+                    error: function (err) {
+                        showMessage('Chyba pri čítaní súboru s dátami.', 'error');
                     }
+                });
+            };
 
-                    populateSelect('csvKey', headers, 'Vyberte spojovací stĺpec', csvData, false);
-                    populateSelect('csvValue', headers, 'Vyberte hodnotu', csvData, false);
+            // Detekcia či ide o priame CSV alebo ZIP archív
+            if (file.name.toLowerCase().endsWith('.zip')) {
+                // Extrakcia CSV zo ZIP súboru
+                JSZip.loadAsync(file).then(function (zip) {
+                    let csvFileEntry = null;
 
-                    showMessage('CSV bolo úspešne načítané!', 'success');
-                    checkReadiness();
-                },
-                error: function (err) {
-                    showMessage('Chyba pri čítaní CSV súboru.', 'error');
-                }
-            });
+                    // Nájdeme prvý súbor, ktorý má koncovku .csv
+                    zip.forEach(function (relativePath, zipEntry) {
+                        if (!csvFileEntry && relativePath.toLowerCase().endsWith('.csv')) {
+                            csvFileEntry = zipEntry;
+                        }
+                    });
+
+                    if (csvFileEntry) {
+                        // Vygenerujeme Blob s dátami a pošleme do PapaParse
+                        csvFileEntry.async("blob").then(function (blob) {
+                            parseCSVFile(blob);
+                        });
+                    } else {
+                        showMessage('Zvolený ZIP archív neobsahuje žiadny .csv súbor.', 'error');
+                    }
+                }).catch(function (err) {
+                    showMessage('Nepodarilo sa otvoriť ZIP archív.', 'error');
+                });
+            } else {
+                // Bežné spracovanie .csv súboru
+                parseCSVFile(file);
+            }
         });
 
         // --- Aplikovanie vizualizácie (Join Data) ---
