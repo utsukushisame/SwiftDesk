@@ -407,7 +407,11 @@
         async function fetchGemini(prompt, isJson = false) {
             // Použije vlastný kľúč ak existuje, inak sa spolieha na systémový predvolený
             const activeKey = userApiKey || apiKey;
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${activeKey}`;
+            if (!activeKey) {
+                showMessage('Chýba Gemini API kľúč. Nastavte ho v nastaveniach.', 'error');
+                throw new Error("Chýba AI API kľúč.");
+            }
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
                 systemInstruction: { parts: [{ text: "Si užitočný slovenský geografický a dátový asistent. Odpovedaj stručne a k veci." }] }
@@ -601,7 +605,9 @@ Urči 3 kľúčové stĺpce:
 3. "csvValue": stĺpec z Tabuľky 2 obsahujúci najdôležitejšie číselné hodnoty na vizualizáciu.`;
 
                 const response = await fetchGemini(prompt, true); // true = Vynútime čistý JSON štruktúrovaný výstup z API
-                const aiResult = JSON.parse(response);
+                // Vyčistíme odpoveď z Markdown formátovania, ak ho AI náhodou vráti
+                const cleanResponse = response.replace(/```json/g, '').replace(/```/g, '').trim();
+                const aiResult = JSON.parse(cleanResponse);
 
                 if (aiResult.shpKey && aiResult.csvKey && aiResult.csvValue) {
                     document.getElementById('shpKey').value = aiResult.shpKey;
