@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swiftstagram - Desktop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Jemný vlastný posuvník pre desktop */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .material-button {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .material-button:active {
+            transform: scale(0.95);
+        }
+
+        .story-ring {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            padding: 3px;
+            border-radius: 50%;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Aby sme vedeli skryť text na menších obrazovkách v navigácii */
+        @media (max-width: 1280px) {
+            .nav-text {
+                display: none;
+            }
+
+            .left-sidebar {
+                width: 80px !important;
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        md_bg: '#f8fafc',
+                        md_surface: '#ffffff',
+                        md_primary: '#0f172a',
+                        md_on_primary: '#ffffff',
+                        md_surface_variant: '#f1f5f9',
+                        md_on_surface_variant: '#64748b',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-md_bg text-gray-900 font-sans antialiased h-screen overflow-hidden flex">
+
+    <!-- Upload Screen (Zobrazí sa na začiatku) -->
+    <div id="uploadScreen"
+        class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="text-center max-w-2xl px-6">
+            <div class="bg-blue-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+                <i data-lucide="instagram" class="w-12 h-12 text-blue-600"></i>
+            </div>
+            <h1 class="text-5xl font-bold text-gray-900 mb-6 tracking-tight">Swiftstagram</h1>
+            <p class="text-gray-500 mb-10 text-lg leading-relaxed">
+                Vitajte v desktopovej prehliadačke vašich Instagram záloh. <br>
+                Vyberte hlavný priečinok vášho exportu (ten, ktorý obsahuje zložky ako <code
+                    class="bg-gray-100 px-2 py-1 rounded text-sm">media</code> a <code
+                    class="bg-gray-100 px-2 py-1 rounded text-sm">saved</code>).
+            </p>
+
+            <label for="folderInput"
+                class="material-button inline-flex cursor-pointer bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-semibold shadow-lg items-center gap-3 text-lg transition-colors">
+                <i data-lucide="folder-search" class="w-6 h-6"></i>
+                Vybrať priečinok so zálohou
+            </label>
+            <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden" />
+
+            <!-- Stav nahrávania -->
+            <div id="loadingState" class="hidden mt-12 flex flex-col items-center w-full max-w-md mx-auto">
+                <div class="flex items-center gap-3 mb-4 text-blue-600">
+                    <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
+                    <span id="loadingText" class="font-medium">Prehľadávam súbory...</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
+                    <div id="loadingProgress" class="bg-blue-600 h-full rounded-full w-0 transition-all duration-300">
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-3">Tento proces beží lokálne vo vašom prehliadači.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hlavné UI (Aplikácia) -->
+    <div id="appScreen" class="hidden w-full h-full flex">
+
+        <!-- Ľavý Panel (Navigácia) -->
+        <aside
+            class="left-sidebar w-[280px] bg-md_surface border-r border-gray-200 flex flex-col justify-between py-8 px-4 transition-all duration-300 z-20">
+            <div>
+                <!-- Logo -->
+                <div class="px-4 pb-8 mb-4 border-b border-gray-100">
+                    <h1 class="text-2xl font-bold flex items-center gap-3">
+                        <i data-lucide="instagram" class="w-7 h-7 text-gray-800"></i>
+                        <span class="nav-text tracking-wide">Swiftstagram</span>
+                    </h1>
+                </div>
+
+                <!-- Odkazy -->
+                <nav class="space-y-2">
+                    <a href="#"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl bg-gray-100 font-bold text-gray-900 transition-colors">
+                        <i data-lucide="home" class="w-6 h-6"></i>
+                        <span class="nav-text text-[17px]">Domov</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors material-button group">
+                        <i data-lucide="search" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        <span class="nav-text text-[17px]">Hľadať</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors material-button group">
+                        <i data-lucide="compass" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        <span class="nav-text text-[17px]">Preskúmať</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors material-button group">
+                        <i data-lucide="film" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        <span class="nav-text text-[17px]">Reels</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-700 transition-colors material-button group">
+                        <i data-lucide="message-circle" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
+                        <span class="nav-text text-[17px]">Správy</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Tlačidlo na odhlásenie / načítanie novej zálohy -->
+            <button onclick="location.reload()"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-red-50 text-red-600 transition-colors material-button mt-auto">
+                <i data-lucide="log-out" class="w-6 h-6"></i>
+                <span class="nav-text text-[17px] font-medium">Ukončiť reláciu</span>
+            </button>
+        </aside>
+
+        <!-- Stredný Panel (Obsah - Scrollable) -->
+        <main class="flex-1 h-full overflow-y-auto bg-md_bg relative" id="mainScrollArea">
+            <div class="max-w-[700px] mx-auto w-full pt-8 pb-20">
+
+                <!-- Sekcia Stories (Horizontálny scroll) -->
+                <div class="mb-10 bg-md_surface border border-gray-200 rounded-2xl p-4 shadow-sm">
+                    <h2 class="text-sm font-semibold text-gray-500 mb-3 ml-2 uppercase tracking-wider">Vaše Príbehy</h2>
+                    <div class="flex overflow-x-auto gap-4 pb-2 items-center" id="storiesContainer">
+                        <!-- Vlastná profilovka ako prvý element -->
+                        <div class="flex flex-col items-center gap-1 min-w-max cursor-pointer mr-2">
+                            <div class="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden relative shadow-inner"
+                                id="myStoryPic">
+                                <i data-lucide="user" class="w-full h-full p-4 text-gray-400"></i>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-1">Archív</span>
+                        </div>
+                        <!-- Ďalšie storky sa vložia sem -->
+                    </div>
+                </div>
+
+                <!-- Sekcia Feed -->
+                <div id="feedContainer" class="flex flex-col items-center gap-8 w-full max-w-[500px] mx-auto">
+                    <!-- Príspevky -->
+                </div>
+
+                <!-- Načítavací element pre nekonečný scroll -->
+                <div id="feedSentinel" class="h-32 flex items-center justify-center text-gray-400 mt-8">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin"></i>
+                </div>
+            </div>
+        </main>
+
+        <!-- Pravý Panel (Informácie) - Skrytý na menších monitoroch -->
+        <aside class="w-[350px] bg-md_bg hidden lg:block pt-12 pr-8 pl-4">
+
+            <!-- Mini Profil -->
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-14 h-14 rounded-full bg-gray-200 border border-gray-300 overflow-hidden"
+                    id="sideProfilePic">
+                    <i data-lucide="user" class="w-full h-full p-3 text-gray-500"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-900">Môj Archív</h3>
+                    <p class="text-sm text-gray-500">Lokálna záloha dát</p>
+                </div>
+            </div>
+
+            <!-- Štatistiky z PDF analýzy -->
+            <div class="bg-md_surface border border-gray-200 rounded-2xl p-5 mb-8 shadow-sm">
+                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-5 h-5 text-blue-500"></i>
+                    Štatistiky Zálohy
+                </h4>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Spracované súbory</span>
+                            <span class="font-medium text-gray-900" id="statFiles">0</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5">
+                            <div class="bg-blue-500 h-1.5 rounded-full w-full"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Nájdené Príspevky</span>
+                            <span class="font-medium text-gray-900" id="statPosts">0</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5">
+                            <div class="bg-green-500 h-1.5 rounded-full" id="barPosts" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Nájdené Príbehy</span>
+                            <span class="font-medium text-gray-900" id="statStories">0</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5">
+                            <div class="bg-orange-500 h-1.5 rounded-full" id="barStories" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-4 text-center">Štruktúra analyzovaná z priečinka</p>
+            </div>
+
+            <!-- Upozornenie o lokálnosti -->
+            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-800">
+                <p class="flex items-start gap-2">
+                    <i data-lucide="shield-check" class="w-5 h-5 flex-shrink-0 mt-0.5 text-blue-600"></i>
+                    Tieto dáta nie sú nahrávané na internet. Prezeranie prebieha bezpečne a len vo vašom zariadení.
+                </p>
+            </div>
+
+            <div class="mt-8 text-xs text-gray-400 space-y-2">
+                <p>Nástroj Swiftstagram</p>
+                <p>Optimalizované pre rozloženie na plochej obrazovke.</p>
+                <p>&copy; 2026</p>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Modálne okno pre Stories -->
+    <div id="storyModal"
+        class="hidden fixed inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex items-center justify-center p-4 lg:p-10">
+
+        <!-- Tlačidlo zatvoriť -->
+        <button onclick="closeStory()"
+            class="absolute top-6 right-6 lg:top-10 lg:right-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50">
+            <i data-lucide="x" class="w-8 h-8"></i>
+        </button>
+
+        <!-- Ovládacie prvky - Šípky (Desktop) -->
+        <button onclick="changeStory(-1)"
+            class="absolute left-4 lg:left-20 top-1/2 -translate-y-1/2 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hidden sm:block material-button">
+            <i data-lucide="chevron-left" class="w-8 h-8"></i>
+        </button>
+        <button onclick="changeStory(1)"
+            class="absolute right-4 lg:right-20 top-1/2 -translate-y-1/2 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50 hidden sm:block material-button">
+            <i data-lucide="chevron-right" class="w-8 h-8"></i>
+        </button>
+
+        <!-- Hlavný kontajner Story -->
+        <div
+            class="w-full max-w-[450px] h-[85vh] max-h-[900px] bg-black rounded-3xl relative overflow-hidden shadow-2xl flex flex-col">
+            <!-- Progress bar -->
+            <div class="absolute top-4 w-full px-4 z-20 flex gap-1.5" id="storyProgressContainer"></div>
+
+            <!-- Hlavička Story -->
+            <div class="absolute top-8 w-full px-4 z-20 flex justify-between items-center text-white drop-shadow-md">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-gray-700 overflow-hidden border border-white/30"
+                        id="modalProfilePic">
+                        <i data-lucide="user" class="w-full h-full p-2 text-gray-300"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-[15px] leading-none mb-1 shadow-black text-shadow-sm">Váš Archív
+                        </p>
+                        <p class="text-xs text-white/80 shadow-black text-shadow-sm" id="storyDate">Dátum</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media obsah -->
+            <div id="storyMediaContainer"
+                class="flex-1 w-full h-full flex items-center justify-center bg-black cursor-pointer"></div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Konštanty
+        const VALID_MEDIA = /\.(jpg|jpeg|png|webp|mp4|mov)$/i;
+        const IS_VIDEO = /\.(mp4|mov)$/i;
+        const POSTS_PER_PAGE = 3; // Na desktope načítame menej naraz, lebo sú väčšie (vertikálne)
+        const STORIES_PER_PAGE = 15;
+
+        let allPosts = [];
+        let allStories = [];
+        let profilePicFile = null;
+        let totalFilesProcessed = 0;
+
+        let postsRendered = 0;
+        let storiesRendered = 0;
+        let currentStoryIndex = 0;
+        let storyTimeout;
+
+        // UI Elementy
+        const folderInput = document.getElementById('folderInput');
+        const uploadScreen = document.getElementById('uploadScreen');
+        const appScreen = document.getElementById('appScreen');
+
+        const feedContainer = document.getElementById('feedContainer');
+        const storiesContainer = document.getElementById('storiesContainer');
+        const feedSentinel = document.getElementById('feedSentinel');
+
+        // Spracovanie výberu priečinka
+        folderInput.addEventListener('change', async (event) => {
+            const files = Array.from(event.target.files);
+            if (files.length === 0) return;
+
+            // Skrytie tlačidla, zobrazenie progressbaru
+            document.querySelector('label[for="folderInput"]').classList.add('hidden');
+            document.getElementById('loadingState').classList.remove('hidden');
+
+            // Timeout pre vykreslenie zmeny UI
+            setTimeout(() => analyzeFiles(files), 100);
+        });
+
+        function analyzeFiles(files) {
+            const total = files.length;
+            let processed = 0;
+            totalFilesProcessed = total;
+
+            function processChunk(startIndex) {
+                const chunkSize = 1000; // Na desktope znesieme rýchlejšie spracovanie
+                const end = Math.min(startIndex + chunkSize, total);
+
+                for (let i = startIndex; i < end; i++) {
+                    const file = files[i];
+                    if (!VALID_MEDIA.test(file.name)) continue;
+
+                    const path = file.webkitRelativePath.toLowerCase();
+
+                    if (!profilePicFile && (path.includes('profile_pic') || path.includes('profile'))) {
+                        profilePicFile = file;
+                    } else if (path.includes('/stories/') || path.includes('\\stories\\') || path.includes('story_interactions')) {
+                        allStories.push(file);
+                    } else {
+                        // Všetko ostatné do feedu (saved, posts, reels...)
+                        allPosts.push(file);
+                    }
+                }
+
+                processed = end;
+                document.getElementById('loadingProgress').style.width = `${(processed / total) * 100}%`;
+
+                if (processed < total) {
+                    requestAnimationFrame(() => processChunk(end));
+                } else {
+                    finishAnalysis();
+                }
+            }
+
+            processChunk(0);
+        }
+
+        function finishAnalysis() {
+            // Zoradenie (od najnovšieho)
+            allPosts.sort((a, b) => b.name.localeCompare(a.name));
+            allStories.sort((a, b) => b.name.localeCompare(a.name));
+
+            // Aktualizácia štatistík v pravom paneli
+            document.getElementById('statFiles').innerText = totalFilesProcessed;
+            document.getElementById('statPosts').innerText = allPosts.length;
+            document.getElementById('statStories').innerText = allStories.length;
+
+            const totalMedia = allPosts.length + allStories.length;
+            if (totalMedia > 0) {
+                document.getElementById('barPosts').style.width = `${(allPosts.length / totalMedia) * 100}%`;
+                document.getElementById('barStories').style.width = `${(allStories.length / totalMedia) * 100}%`;
+            }
+
+            // Nastavenie profilovky
+            if (profilePicFile) {
+                const pUrl = URL.createObjectURL(profilePicFile);
+                const pImg = `<img src="${pUrl}" class="w-full h-full object-cover">`;
+                document.getElementById('myStoryPic').innerHTML = pImg;
+                document.getElementById('sideProfilePic').innerHTML = pImg;
+                document.getElementById('modalProfilePic').innerHTML = pImg;
+            }
+
+            // Prechod na hlavné UI
+            uploadScreen.style.opacity = '0';
+            setTimeout(() => {
+                uploadScreen.classList.add('hidden');
+                appScreen.classList.remove('hidden');
+
+                loadMoreStories();
+                loadMorePosts();
+                setupFeedObserver();
+                lucide.createIcons();
+            }, 500);
+        }
+
+        // --- Feed ---
+        function loadMorePosts() {
+            if (postsRendered >= allPosts.length) {
+                feedSentinel.innerHTML = `<p class="text-sm text-gray-500 py-4 text-center">To je zatiaľ všetko.</p>`;
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(postsRendered + POSTS_PER_PAGE, allPosts.length);
+
+            for (let i = postsRendered; i < end; i++) {
+                const file = allPosts[i];
+                const isVideo = IS_VIDEO.test(file.name);
+                const url = URL.createObjectURL(file);
+                const dateInfo = extractDateInfo(file.name, file.webkitRelativePath);
+
+                const article = document.createElement('article');
+                // Desktopové štýlovanie príspevku
+                article.className = 'w-full bg-md_surface border border-gray-200 rounded-lg overflow-hidden fade-in shadow-sm';
+
+                let mediaHtml = isVideo
+                    ? `<video controls preload="metadata" class="w-full max-h-[700px] object-contain bg-black"><source src="${url}" type="video/mp4"></video>`
+                    : `<img src="${url}" loading="lazy" class="w-full max-h-[800px] object-contain bg-neutral-100">`;
+
+                const profileImgHtml = profilePicFile ? `<img src="${URL.createObjectURL(profilePicFile)}" class="w-full h-full object-cover">` : `<i data-lucide="user" class="w-5 h-5 text-gray-400"></i>`;
+
+                article.innerHTML = `
+                    <!-- Hlavička príspevku -->
+                    <div class="p-3 px-4 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+                                ${profileImgHtml}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-sm text-gray-900 leading-tight">Vaše Dáta</span>
+                                <span class="text-xs text-gray-500">${dateInfo.label}</span>
+                            </div>
+                        </div>
+                        <i data-lucide="more-horizontal" class="w-5 h-5 text-gray-600 cursor-pointer hover:text-gray-900"></i>
+                    </div>
+                    
+                    <!-- Fotka/Video -->
+                    <div class="w-full bg-neutral-100 border-y border-gray-100 flex justify-center">
+                        ${mediaHtml}
+                    </div>
+                    
+                    <!-- Akcie (Páči sa mi to atď.) -->
+                    <div class="p-4 pb-2">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex gap-4">
+                                <button onclick="toggleLike(this)" class="material-button hover:text-red-500 transition-colors">
+                                    <i data-lucide="heart" class="w-7 h-7"></i>
+                                </button>
+                                <button class="material-button hover:text-gray-500 transition-colors">
+                                    <i data-lucide="message-circle" class="w-7 h-7 text-gray-900"></i>
+                                </button>
+                                <button class="material-button hover:text-gray-500 transition-colors">
+                                    <i data-lucide="send" class="w-7 h-7 text-gray-900"></i>
+                                </button>
+                            </div>
+                            <button class="material-button hover:text-gray-500 transition-colors">
+                                <i data-lucide="bookmark" class="w-7 h-7 text-gray-900"></i>
+                            </button>
+                        </div>
+                        <p class="text-sm font-semibold mb-1">Archivovaný záznam</p>
+                        <p class="text-sm text-gray-800">
+                            <span class="font-semibold mr-1">Cesta:</span> 
+                            <span class="text-gray-500 text-xs font-mono break-all">${file.webkitRelativePath}</span>
+                        </p>
+                    </div>
+                    <div class="px-4 py-3 text-[11px] text-gray-400 border-t border-gray-50 uppercase tracking-wide">
+                        ${dateInfo.date}
+                    </div>
+                `;
+                fragment.appendChild(article);
+            }
+
+            feedContainer.appendChild(fragment);
+            lucide.createIcons({ root: feedContainer });
+            postsRendered = end;
+        }
+
+        function setupFeedObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    loadMorePosts();
+                }
+            }, { rootMargin: '300px' });
+            observer.observe(feedSentinel);
+        }
+
+        // --- Stories ---
+        function loadMoreStories() {
+            if (storiesRendered >= allStories.length) return;
+
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(storiesRendered + STORIES_PER_PAGE, allStories.length);
+
+            for (let i = storiesRendered; i < end; i++) {
+                const file = allStories[i];
+                const isVideo = IS_VIDEO.test(file.name);
+                const url = URL.createObjectURL(file);
+
+                const el = document.createElement('div');
+                el.className = 'flex flex-col items-center gap-1 cursor-pointer min-w-max material-button fade-in group';
+                el.onclick = () => openStory(i);
+
+                const innerHtml = isVideo
+                    ? `<div class="w-full h-full bg-gray-800 flex items-center justify-center group-hover:scale-105 transition-transform"><i data-lucide="video" class="w-6 h-6 text-white"></i></div>`
+                    : `<img src="${url}" class="w-full h-full object-cover group-hover:scale-105 transition-transform">`;
+
+                el.innerHTML = `
+                    <div class="story-ring w-[70px] h-[70px] shadow-sm">
+                        <div class="w-full h-full bg-white rounded-full p-[2px] overflow-hidden">
+                            <div class="w-full h-full rounded-full overflow-hidden">
+                                ${innerHtml}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="text-xs font-medium text-gray-600 w-16 truncate text-center">${extractDateInfo(file.name, '').short}</span>
+                `;
+                fragment.appendChild(el);
+            }
+
+            storiesContainer.appendChild(fragment);
+            lucide.createIcons({ root: storiesContainer });
+            storiesRendered = end;
+
+            if (storiesRendered < allStories.length) {
+                const loadBtn = document.createElement('div');
+                loadBtn.className = 'w-[70px] h-[70px] rounded-full border border-gray-300 flex items-center justify-center cursor-pointer min-w-max ml-2 hover:bg-gray-50';
+                loadBtn.innerHTML = `<i data-lucide="arrow-right" class="w-6 h-6 text-gray-500"></i>`;
+                loadBtn.onclick = (e) => {
+                    e.currentTarget.remove();
+                    loadMoreStories();
+                };
+                storiesContainer.appendChild(loadBtn);
+                lucide.createIcons({ root: storiesContainer });
+            }
+        }
+
+        // --- Prehrávač Stories (Modál pre Desktop) ---
+        function openStory(index) {
+            if (index < 0 || index >= allStories.length) {
+                closeStory();
+                return;
+            }
+
+            currentStoryIndex = index;
+            const file = allStories[index];
+            const isVideo = IS_VIDEO.test(file.name);
+            const url = URL.createObjectURL(file);
+
+            const modal = document.getElementById('storyModal');
+            const container = document.getElementById('storyMediaContainer');
+            document.getElementById('storyDate').innerText = extractDateInfo(file.name, file.webkitRelativePath).date;
+
+            modal.classList.remove('hidden');
+            clearTimeout(storyTimeout);
+
+            // Progress bary - Desktop znesie viac barov
+            const progressContainer = document.getElementById('storyProgressContainer');
+            progressContainer.innerHTML = '';
+            const maxBars = Math.min(allStories.length, 50);
+            const startIdx = Math.max(0, currentStoryIndex - 25);
+
+            for (let i = 0; i < maxBars; i++) {
+                const realIdx = startIdx + i;
+                if (realIdx >= allStories.length) break;
+
+                progressContainer.innerHTML += `
+                    <div class="h-0.5 rounded-full flex-1 overflow-hidden bg-white/30">
+                        <div id="pb-${realIdx}" class="h-full bg-white w-0 ${realIdx < currentStoryIndex ? 'w-full' : ''}"></div>
+                    </div>`;
+            }
+
+            const currentPb = document.getElementById(`pb-${currentStoryIndex}`);
+
+            if (isVideo) {
+                container.innerHTML = `<video id="activeVideo" autoplay class="w-full h-full object-contain"><source src="${url}" type="video/mp4"></video>`;
+                const vid = document.getElementById('activeVideo');
+
+                vid.ontimeupdate = () => {
+                    if (currentPb && vid.duration) currentPb.style.width = `${(vid.currentTime / vid.duration) * 100}%`;
+                };
+                vid.onended = () => changeStory(1);
+            } else {
+                container.innerHTML = `<img src="${url}" class="w-full h-full object-contain">`;
+
+                if (currentPb) {
+                    setTimeout(() => {
+                        currentPb.style.transition = 'width 5s linear'; // Na desktope necháme fotku o sekundu dlhšie (5s)
+                        currentPb.style.width = '100%';
+                    }, 50);
+                }
+
+                storyTimeout = setTimeout(() => {
+                    changeStory(1);
+                }, 5000);
+            }
+
+            // Kliknutie do modálu na posun
+            container.onclick = (e) => {
+                const rect = container.getBoundingClientRect();
+                if (e.clientX - rect.left > rect.width / 2) changeStory(1);
+                else changeStory(-1);
+            };
+        }
+
+        function changeStory(direction) {
+            openStory(currentStoryIndex + direction);
+        }
+
+        function closeStory() {
+            document.getElementById('storyModal').classList.add('hidden');
+            document.getElementById('storyMediaContainer').innerHTML = '';
+            clearTimeout(storyTimeout);
+        }
+
+        // Ovládanie Stories klávesnicou
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('storyModal').classList.contains('hidden')) {
+                if (e.key === 'ArrowRight') changeStory(1);
+                else if (e.key === 'ArrowLeft') changeStory(-1);
+                else if (e.key === 'Escape') closeStory();
+            }
+        });
+
+        // --- Pomocné funkcie ---
+        function toggleLike(btn) {
+            const icon = btn.querySelector('i');
+            if (icon.classList.contains('fill-red-500')) {
+                icon.classList.remove('fill-red-500', 'text-red-500');
+                icon.classList.add('text-gray-900');
+            } else {
+                icon.classList.add('fill-red-500', 'text-red-500');
+                icon.classList.remove('text-gray-900');
+            }
+        }
+
+        function extractDateInfo(filename, path) {
+            let label = 'Archív';
+            let date = 'Neznámy dátum';
+            let short = 'Story';
+
+            // Z priečinka (napr. media/posts/202310)
+            const folderMatch = path.match(/\/(\d{4})(\d{2})\//);
+            if (folderMatch) {
+                label = 'Príspevok zo zálohy';
+                date = `${folderMatch[2]} / ${folderMatch[1]}`;
+            }
+
+            // Z názvu súboru (napr. 2026-01-17)
+            const fileMatch = filename.match(/(20\d{2})[-_]?(\d{2})[-_]?(\d{2})/);
+            if (fileMatch) {
+                date = `${fileMatch[3]}.${fileMatch[2]}.${fileMatch[1]}`;
+                short = `${fileMatch[3]}.${fileMatch[2]}.`;
+            }
+
+            return { label, date, short };
+        }
+    </script>
+</body>
+
+</html>

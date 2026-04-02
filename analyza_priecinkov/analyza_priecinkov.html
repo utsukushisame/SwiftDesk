@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyzátor a Dokumentátor Priečinkov</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Štýly pre výsledný report, aby vyzeral dobre v PDF */
+        #visual-preview {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            background: #fff;
+        }
+
+        .tree-folder {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2563eb;
+            page-break-inside: avoid;
+        }
+
+        .tree-children {
+            margin-left: 20px;
+            border-left: 2px solid #e5e7eb;
+            padding-left: 10px;
+        }
+
+        .tree-file {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #4b5563;
+            page-break-inside: avoid;
+        }
+
+        .file-meta {
+            color: #6b7280;
+            font-size: 0.85em;
+        }
+
+        .ai-desc {
+            color: #047857;
+            font-style: italic;
+            margin-top: 2px;
+            display: block;
+        }
+
+        /* Pridané štýly pre natívnu tlač (Tlač do PDF) */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #preview-container,
+            #preview-container * {
+                visibility: visible;
+            }
+
+            #preview-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .print-hidden {
+                display: none !important;
+            }
+
+            @page {
+                margin: 1.5cm;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen text-gray-800 font-sans">
+
+    <div class="max-w-4xl mx-auto p-6 pt-10">
+        <!-- Hlavička -->
+        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Dokumentátor Priečinkov</h1>
+            <p class="text-gray-600 mb-6">Nahraj veľký priečinok. Nástroj zmapuje jeho architektúru, veľkosti súborov a
+                pomocou AI opíše, na čo slúžia jednotlivé súbory. Výsledok si môžeš uložiť ako PDF.</p>
+
+            <!-- Nastavenia -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gemini API Kľúč (voliteľné pre AI
+                        opisy)</label>
+                    <input type="password" id="api-key" placeholder="Zadaj svoj API kľúč..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none">
+                    <p class="text-xs text-gray-500 mt-1">Ak kľúč nezadáš, vygeneruje sa iba zoznam súborov a ich
+                        veľkosti bez AI popisov.</p>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="use-ai"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" checked>
+                    <label for="use-ai" class="ml-2 text-sm text-gray-700">Analyzovať obsah podporovaných súborov
+                        (.html, .js, .txt, atď.) pomocou AI</label>
+                </div>
+            </div>
+
+            <!-- Upload a Akcie -->
+            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                <label for="folder-upload"
+                    class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors inline-flex items-center w-full sm:w-auto justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Vybrať Priečinok
+                </label>
+                <input type="file" id="folder-upload" webkitdirectory directory multiple class="hidden">
+
+                <button id="btn-export" disabled
+                    class="bg-gray-300 text-gray-500 font-medium py-2 px-6 rounded-lg cursor-not-allowed inline-flex items-center w-full sm:w-auto justify-center transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                        </path>
+                    </svg>
+                    Uložiť ako PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- Priebeh -->
+        <div id="status-container" class="hidden bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+            <h2 class="text-lg font-semibold mb-2">Priebeh spracovania</h2>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="status-text" class="text-sm text-gray-600">Pripravujem...</p>
+            <div id="log-box"
+                class="mt-4 bg-gray-900 text-green-400 font-mono text-xs p-3 rounded h-32 overflow-y-auto"></div>
+        </div>
+
+        <!-- Náhľad pre používateľa na obrazovke -->
+        <div id="preview-container"
+            class="hidden bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+            <h2 class="text-xl font-bold mb-4 border-b pb-2 print-hidden">Náhľad štruktúry</h2>
+            <div id="visual-preview"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Logika aplikácie
+        const folderInput = document.getElementById('folder-upload');
+        const apiKeyInput = document.getElementById('api-key');
+        const useAiCheckbox = document.getElementById('use-ai');
+        const statusContainer = document.getElementById('status-container');
+        const progressBar = document.getElementById('progress-bar');
+        const statusText = document.getElementById('status-text');
+        const logBox = document.getElementById('log-box');
+        const btnExport = document.getElementById('btn-export');
+        const visualPreview = document.getElementById('visual-preview');
+        const previewContainer = document.getElementById('preview-container');
+
+        // Podporované prípony pre AI analýzu textu
+        const TEXT_EXTENSIONS = ['.html', '.htm', '.css', '.js', '.jsx', '.ts', '.tsx', '.json', '.md', '.txt', '.py', '.php', '.java', '.c', '.cpp', '.cs', '.xml', '.yml', '.yaml', '.sh', '.bat'];
+        const MAX_AI_FILES = 100; // Limit pre zabránenie preťaženiu API
+
+        let currentTreeHTML = "";
+
+        // Formátovanie bajtov
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        // Získanie prípony
+        function getExtension(filename) {
+            const parts = filename.split('.');
+            if (parts.length === 1 || (parts[0] === "" && parts.length === 2)) return "";
+            return "." + parts.pop().toLowerCase();
+        }
+
+        // Logovanie
+        function log(message) {
+            const div = document.createElement('div');
+            div.textContent = `> ${message}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // Volanie Gemini API s opraveným modelom
+        async function analyzeFileWithAI(apiKey, fileName, fileContent) {
+            try {
+                // Používame stabilný model namiesto preview verzie, ktorá vyhadzovala chybu 404
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+                // Orezanie obsahu, aby sme neposielali megabajty textu (stačí začiatok na pochopenie kontextu)
+                const snippet = fileContent.substring(0, 1500);
+
+                const prompt = `Si analyzátor súborov. Tu je názov súboru a začiatok jeho obsahu. Veľmi stručne a jasne (maximálne 1-2 vety, v slovenskom jazyku) popíš, na čo tento súbor slúži, o čom je alebo akú má rolu v architektúre.\n\nNázov súboru: ${fileName}\n\nObsah:\n${snippet}`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: "Si profesionálny softvérový inžinier. Odpovedaj stručne, výstižne a vždy v slovenčine." }] }
+                };
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || 'Chyba API');
+                }
+
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text.trim();
+            } catch (error) {
+                console.error("AI Error:", error);
+                return `[AI Analýza zlyhala: ${error.message}]`;
+            }
+        }
+
+        // Čítanie textového súboru
+        function readFileContent(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                // Čítame len prvé 2KB na urýchlenie
+                const slice = file.slice(0, 2048);
+                reader.readAsText(slice);
+            });
+        }
+
+        // Hlavná funkcia po nahratí
+        folderInput.addEventListener('change', async (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            const apiKey = apiKeyInput.value.trim();
+            const useAi = useAiCheckbox.checked;
+
+            if (useAi && !apiKey) {
+                alert("Vybral si použitie AI, ale nezadal si API kľúč. Analýza prebehne bez AI opisov.");
+            }
+
+            statusContainer.classList.remove('hidden');
+            previewContainer.classList.add('hidden');
+            btnExport.disabled = true;
+            btnExport.classList.replace('bg-blue-600', 'bg-gray-300');
+            btnExport.classList.replace('hover:bg-blue-700', 'cursor-not-allowed');
+            logBox.innerHTML = '';
+
+            log(`Nájdených ${files.length} súborov. Začínam spracovanie...`);
+
+            // 1. Vytvorenie stromovej štruktúry
+            const root = { name: 'Root', type: 'folder', children: {}, size: 0, totalFiles: 0 };
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const pathParts = file.webkitRelativePath.split('/');
+
+                let current = root;
+                current.size += file.size;
+                current.totalFiles++;
+
+                for (let j = 0; j < pathParts.length - 1; j++) {
+                    const part = pathParts[j];
+                    if (!current.children[part]) {
+                        current.children[part] = { name: part, type: 'folder', children: {}, size: 0, totalFiles: 0 };
+                    }
+                    current = current.children[part];
+                    current.size += file.size;
+                    current.totalFiles++;
+                }
+
+                const fileName = pathParts[pathParts.length - 1];
+                current.children[fileName] = {
+                    name: fileName,
+                    type: 'file',
+                    fileObj: file,
+                    size: file.size,
+                    extension: getExtension(fileName)
+                };
+            }
+
+            // 2. AI Analýza súborov
+            let aiAnalyzedCount = 0;
+            const treeFlatList = [];
+
+            // Rekurzívne zozbieranie súborov pre jednoduchšiu iteráciu
+            function flattenTree(node) {
+                if (node.type === 'file') {
+                    treeFlatList.push(node);
+                } else {
+                    for (const key in node.children) {
+                        flattenTree(node.children[key]);
+                    }
+                }
+            }
+            flattenTree(root);
+
+            for (let i = 0; i < treeFlatList.length; i++) {
+                const node = treeFlatList[i];
+
+                // Aktualizácia progress baru
+                const progress = Math.round(((i + 1) / treeFlatList.length) * 100);
+                progressBar.style.width = `${progress}%`;
+                statusText.innerText = `Spracovávam: ${node.name} (${i + 1}/${treeFlatList.length})`;
+
+                if (useAi && apiKey && TEXT_EXTENSIONS.includes(node.extension) && aiAnalyzedCount < MAX_AI_FILES) {
+                    log(`AI číta: ${node.name}`);
+                    try {
+                        const content = await readFileContent(node.fileObj);
+                        if (content.trim()) {
+                            node.aiDescription = await analyzeFileWithAI(apiKey, node.name, content);
+                            aiAnalyzedCount++;
+                            // Pridanie umelého oneskorenia na zníženie šance hitnutia rate limitu
+                            await new Promise(r => setTimeout(r, 1000));
+                        } else {
+                            node.aiDescription = "Súbor je prázdny.";
+                        }
+                    } catch (err) {
+                        log(`Chyba čítania ${node.name}`);
+                    }
+                } else if (useAi && apiKey && aiAnalyzedCount >= MAX_AI_FILES && !node.aiDescription) {
+                    if (i === MAX_AI_FILES) log("Bol dosiahnutý limit pre počet AI analýz, ostatné súbory budú bez opisu.");
+                }
+            }
+
+            log("Spracovanie dokončené. Generujem report...");
+
+            // 3. Generovanie HTML pre report
+            const currentDate = new Date().toLocaleString('sk-SK');
+
+            let htmlReport = `
+            <div style="margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                <h1 style="font-size: 24px; color: #111; margin-bottom: 5px;">Architektúra Priečinka</h1>
+                <p style="color: #666; margin: 0; font-size: 14px;">Generované: ${currentDate}</p>
+                <p style="color: #666; margin: 0; font-size: 14px;">Celková veľkosť: ${formatBytes(root.size)} | Počet súborov: ${root.totalFiles}</p>
+            </div>
+        `;
+
+            function generateHTMLTree(node) {
+                let html = '';
+                // Zoradenie: najprv priečinky, potom súbory, abecedne
+                const keys = Object.keys(node.children).sort((a, b) => {
+                    const nodeA = node.children[a];
+                    const nodeB = node.children[b];
+                    if (nodeA.type === 'folder' && nodeB.type === 'file') return -1;
+                    if (nodeA.type === 'file' && nodeB.type === 'folder') return 1;
+                    return a.localeCompare(b);
+                });
+
+                for (const key of keys) {
+                    const child = node.children[key];
+                    if (child.type === 'folder') {
+                        html += `
+                        <div class="tree-folder">
+                            📁 ${child.name} <span class="file-meta">(${formatBytes(child.size)}, ${child.totalFiles} súborov)</span>
+                        </div>
+                        <div class="tree-children">
+                            ${generateHTMLTree(child)}
+                        </div>
+                    `;
+                    } else {
+                        const typeDesc = child.extension ? `Súbor ${child.extension}` : 'Neznámy súbor';
+                        html += `
+                        <div class="tree-file">
+                            📄 <strong>${child.name}</strong> <span class="file-meta">(${formatBytes(child.size)} | ${typeDesc})</span>
+                            ${child.aiDescription ? `<span class="ai-desc">↳ AI: ${child.aiDescription}</span>` : ''}
+                        </div>
+                    `;
+                    }
+                }
+                return html;
+            }
+
+            // Preskočíme umelý root (zobrazí priamo nahraný priečinok)
+            const topLevelFolders = Object.keys(root.children);
+            if (topLevelFolders.length === 1 && root.children[topLevelFolders[0]].type === 'folder') {
+                htmlReport += `
+                <div class="tree-folder" style="font-size: 18px;">
+                    📁 ${root.children[topLevelFolders[0]].name}
+                </div>
+                <div class="tree-children">
+                    ${generateHTMLTree(root.children[topLevelFolders[0]])}
+                </div>`;
+            } else {
+                htmlReport += `<div class="tree-children">${generateHTMLTree(root)}</div>`;
+            }
+
+            visualPreview.innerHTML = htmlReport;
+
+            statusText.innerText = "Hotovo!";
+            progressBar.style.width = "100%";
+            progressBar.classList.replace('bg-blue-600', 'bg-green-500');
+
+            previewContainer.classList.remove('hidden');
+
+            // Aktivácia tlačidla
+            btnExport.disabled = false;
+            btnExport.classList.replace('bg-gray-300', 'bg-blue-600');
+            btnExport.classList.replace('cursor-not-allowed', 'hover:bg-blue-700');
+            btnExport.classList.add('text-white');
+            btnExport.classList.remove('text-gray-500');
+        });
+
+        // Generovanie PDF pomocou natívnej tlače
+        btnExport.addEventListener('click', () => {
+            log("Otváram systémové okno pre uloženie do PDF...");
+            window.print();
+        });
+    </script>
+</body>
+
+</html>
