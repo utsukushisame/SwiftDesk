@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="sk" class="antialiased">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dokladko</title>
+
+    <!-- Optimalizovaný Favicon pre taby (Violet-600 pozadie, biela ikona) -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%237c3aed'/%3E%3Cg transform='translate(4, 4) scale(0.666)' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z'/%3E%3Cpath d='M14 8H8'/%3E%3Cpath d='M16 12H8'/%3E%3Cpath d='M13 16H8'/%3E%3C/g%3E%3C/svg%3E">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Material Symbols (Icons) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
+        rel="stylesheet" />
+
+    <!-- Konfigurácia pre Tailwind (Material You farby a podpora Dark Mode) -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#6750A4',
+                            dark: '#D0BCFF',
+                        },
+                        primaryContainer: {
+                            light: '#EADDFF',
+                            dark: '#4F378B',
+                        },
+                        surface: {
+                            light: '#FEF7FF',
+                            dark: '#141218',
+                        },
+                        surfaceVariant: {
+                            light: '#E7E0EC',
+                            dark: '#49454F',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass-card {
+            background: rgba(30, 30, 35, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        input[type="password"] {
+            transition: all 0.2s ease;
+        }
+
+        /* Úprava pre natívny color picker */
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 8px;
+        }
+
+        /* Custom scrollbar pre zoznam kategórií v nastaveniach */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(150, 150, 150, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-950 min-h-screen text-gray-900 dark:text-gray-100 flex justify-center">
+
+    <main class="w-full max-w-md p-6 pb-24 relative min-h-screen flex flex-col">
+
+        <!-- Hlavička a Logo -->
+        <header class="flex justify-between items-center mb-8 pt-4">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-11 h-11 rounded-[14px] bg-[#7c3aed] text-white flex items-center justify-center shadow-lg shadow-[#7c3aed]/30 transform transition-transform hover:scale-105">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+                        <path d="M14 8H8" />
+                        <path d="M16 12H8" />
+                        <path d="M13 16H8" />
+                    </svg>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 leading-none">
+                        Dokladko</h1>
+                    <span
+                        class="text-[10px] font-bold text-[#7c3aed] dark:text-[#a78bfa] tracking-wider uppercase mt-1 opacity-90">custom
+                        made</span>
+                </div>
+            </div>
+            <!-- Tlačidlo Nastavení -->
+            <button id="btn-open-settings"
+                class="p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#7c3aed] dark:focus:ring-[#a78bfa]">
+                <span class="material-symbols-rounded text-2xl">settings</span>
+            </button>
+        </header>
+
+        <!-- Karta s celkovou sumou -->
+        <div class="glass-card rounded-[32px] p-8 mb-8 text-center transform transition-transform hover:scale-[1.02]">
+            <p class="text-sm font-medium opacity-70 mb-2 uppercase tracking-wider">Celková útrata</p>
+            <h2 class="text-5xl font-extrabold text-primary-light dark:text-primary-dark" id="total-amount">0.00 €</h2>
+        </div>
+
+        <!-- Zoznam blokov -->
+        <div class="flex-1">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <h3 class="text-lg font-semibold opacity-90">Nedávne nákupy</h3>
+                <span class="text-xs font-medium opacity-60 bg-black/5 dark:bg-white/10 px-3 py-1 rounded-full"
+                    id="items-count">0 položiek</span>
+            </div>
+
+            <div id="receipts-container" class="space-y-4"></div>
+
+            <div id="empty-state" class="hidden flex-col items-center justify-center py-12 text-center opacity-60">
+                <span class="material-symbols-rounded text-6xl mb-4">receipt_long</span>
+                <p class="text-lg font-medium">Zatiaľ žiadne bloky</p>
+                <p class="text-sm mt-1">Pridaj svoj prvý nákup kliknutím na +</p>
+            </div>
+        </div>
+
+        <!-- Floating Action Button (FAB) -->
+        <button id="fab-add"
+            class="fixed bottom-8 right-8 w-16 h-16 bg-primary-light dark:bg-primary-dark text-white dark:text-gray-900 rounded-[20px] shadow-lg shadow-primary-light/30 dark:shadow-primary-dark/20 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-300 z-40 focus:outline-none focus:ring-4 focus:ring-primary-light/50">
+            <span class="material-symbols-rounded text-3xl">add</span>
+        </button>
+
+    </main>
+
+    <!-- Modálne okno na pridanie bloku -->
+    <div id="modal"
+        class="fixed inset-0 z-50 hidden flex-col justify-end sm:justify-center items-center bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div id="modal-content"
+            class="relative glass-card w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 transform translate-y-full sm:translate-y-8 sm:scale-95 transition-transform duration-300 border-b-0 sm:border-b max-h-[90vh] overflow-y-auto">
+
+            <!-- Loading Overlay pre AI skenovanie -->
+            <div id="loading-overlay"
+                class="absolute inset-0 bg-surface-light/80 dark:bg-surface-dark/80 backdrop-blur-sm z-50 hidden flex-col items-center justify-center rounded-t-[32px] sm:rounded-[32px]">
+                <div
+                    class="animate-spin rounded-full h-12 w-12 border-4 border-primary-light border-t-transparent dark:border-primary-dark dark:border-t-transparent">
+                </div>
+                <p class="mt-4 font-semibold text-primary-light dark:text-primary-dark text-center px-4">✨ Gemini
+                    analyzuje dokument...</p>
+            </div>
+
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 sm:hidden"></div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Nový blok</h3>
+                <button id="btn-close"
+                    class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors z-10">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <form id="add-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium mb-1.5 opacity-80 px-1">Názov obchodu / Položka</label>
+                    <input type="text" id="input-name" required placeholder="Napr. Tesco, Káva..."
+                        class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark placeholder-gray-400 dark:placeholder-gray-500 text-base">
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1.5 opacity-80 px-1">Suma (€)</label>
+                        <input type="number" step="0.01" min="0.01" id="input-amount" required placeholder="0.00"
+                            class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark text-base">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1.5 opacity-80 px-1">Dátum</label>
+                        <input type="date" id="input-date" required
+                            class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark text-base">
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1.5 opacity-80 px-1">Kategória</label>
+                        <!-- Kategórie sa tu načítajú dynamicky cez JS -->
+                        <select id="input-category"
+                            class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark text-base appearance-none cursor-pointer">
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1.5 opacity-80 px-1">Sken bloku</label>
+                        <input type="file" id="input-image" accept="image/*, application/pdf" class="hidden">
+                        <button type="button" onclick="document.getElementById('input-image').click()"
+                            class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark hover:bg-black/5 dark:hover:bg-white/10 transition-colors border-none rounded-2xl px-5 py-4 flex items-center justify-center gap-2 text-primary-light dark:text-primary-dark font-medium px-2">
+                            <span class="material-symbols-rounded">document_scanner</span>
+                            <span>Súbor</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kontajner pre náhľad (podporuje obrázok aj PDF) -->
+                <div id="preview-container" class="hidden flex-col gap-2 w-full">
+
+                    <!-- Náhľad obrázka - Po novom klikateľný pre zväčšenie -->
+                    <div id="image-preview-wrapper"
+                        class="relative w-full h-32 rounded-2xl overflow-hidden border border-black/10 dark:border-white/10 hidden group cursor-pointer"
+                        onclick="previewCurrentFile()">
+                        <img id="image-preview" src="" alt="Náhľad" class="w-full h-full object-cover">
+                        <div
+                            class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="material-symbols-rounded text-white drop-shadow-md text-3xl">zoom_in</span>
+                        </div>
+                        <button type="button"
+                            class="btn-remove-file absolute top-2 right-2 bg-black/50 text-white p-1 rounded-full hover:bg-black/70 backdrop-blur-md z-10">
+                            <span class="material-symbols-rounded text-sm">close</span>
+                        </button>
+                    </div>
+
+                    <!-- Náhľad PDF - Po novom klikateľný pre zväčšenie -->
+                    <div id="pdf-preview-wrapper"
+                        class="relative w-full h-16 rounded-2xl bg-surfaceVariant-light dark:bg-surfaceVariant-dark hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center px-4 border border-black/10 dark:border-white/10 hidden cursor-pointer"
+                        onclick="previewCurrentFile()">
+                        <span class="material-symbols-rounded text-red-500 mr-3">picture_as_pdf</span>
+                        <span id="pdf-filename" class="truncate flex-1 text-sm font-medium">dokument.pdf</span>
+                        <span
+                            class="material-symbols-rounded text-gray-400 dark:text-gray-500 mr-2 text-sm">zoom_in</span>
+                        <button type="button"
+                            class="btn-remove-file bg-black/10 dark:bg-white/10 text-gray-800 dark:text-gray-200 p-1 rounded-full hover:bg-black/20 dark:hover:bg-white/20 ml-2 z-10">
+                            <span class="material-symbols-rounded text-sm">close</span>
+                        </button>
+                    </div>
+
+                    <!-- AI Automatické vyplnenie -->
+                    <button type="button" id="btn-ai-scan"
+                        class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#6366F1] hover:from-[#7C3AED] hover:to-[#4F46E5] text-white transition-all duration-300 border-none rounded-2xl px-5 py-3 flex items-center justify-center gap-2 font-bold shadow-md shadow-indigo-500/30 active:scale-[0.98]">
+                        <span class="text-xl">✨</span>
+                        <span>Automaticky vyplniť zo skenu</span>
+                    </button>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" id="btn-cancel"
+                        class="flex-1 py-4 rounded-full bg-black/5 dark:bg-white/10 font-semibold hover:bg-black/10 dark:hover:bg-white/20 transition-colors">
+                        Zrušiť
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-4 rounded-full bg-primary-light dark:bg-primary-dark text-white dark:text-gray-900 font-bold hover:opacity-90 active:scale-[0.98] transition-all">
+                        Uložiť blok
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modálne okno pre NASTAVENIA -->
+    <div id="settings-modal"
+        class="fixed inset-0 z-50 hidden flex-col justify-end sm:justify-center items-center bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div id="settings-modal-content"
+            class="glass-card w-full max-w-md rounded-t-[32px] sm:rounded-[32px] p-6 transform translate-y-full sm:translate-y-8 sm:scale-95 transition-transform duration-300 border-b-0 sm:border-b max-h-[90vh] overflow-y-auto">
+
+            <div class="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 sm:hidden"></div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Nastavenia</h3>
+                <button id="btn-close-settings"
+                    class="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+
+            <form id="settings-form" class="space-y-6">
+
+                <!-- Téma -->
+                <div>
+                    <label class="block text-sm font-medium mb-2 opacity-80 px-1">Vzhľad aplikácie</label>
+                    <div class="relative">
+                        <select id="setting-theme"
+                            class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark text-base appearance-none cursor-pointer">
+                            <option value="auto">Automaticky (podľa systému)</option>
+                            <option value="light">Svetlý režim</option>
+                            <option value="dark">Tmavý režim</option>
+                        </select>
+                        <span
+                            class="material-symbols-rounded absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">expand_more</span>
+                    </div>
+                </div>
+
+                <!-- Vlastný API kľúč -->
+                <div>
+                    <label class="block text-sm font-medium mb-2 opacity-80 px-1">Gemini API Kľúč</label>
+                    <input type="password" id="setting-api-key" placeholder="Vlož tvoj API kľúč..."
+                        class="w-full bg-surfaceVariant-light dark:bg-surfaceVariant-dark border-none rounded-2xl px-5 py-4 outline-none focus:ring-2 focus:ring-primary-light dark:focus:ring-primary-dark text-base placeholder-gray-400">
+                    <p class="text-[11px] opacity-60 px-2 mt-1.5 leading-tight">Potrebný pre automatické vyčítanie
+                        údajov z naskenovaných blokov a PDF súborov.</p>
+                </div>
+
+                <!-- Kategórie -->
+                <div>
+                    <label class="block text-sm font-medium mb-2 opacity-80 px-1">Farby a názvy kategórií</label>
+                    <div id="settings-categories" class="space-y-3 max-h-48 overflow-y-auto pr-2 pb-1 custom-scrollbar">
+                        <!-- Generované JS -->
+                    </div>
+                    <button type="button" id="btn-add-category"
+                        class="mt-3 w-full py-3 rounded-2xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors flex items-center justify-center gap-2 font-medium text-sm">
+                        <span class="material-symbols-rounded text-xl">add</span>
+                        Pridať kategóriu
+                    </button>
+                </div>
+
+                <!-- Záloha dát -->
+                <div class="pt-2 border-t border-black/10 dark:border-white/10 mt-6">
+                    <label class="block text-sm font-medium mb-3 opacity-80 px-1 mt-4">Záloha dát</label>
+                    <div class="flex gap-3">
+                        <button type="button" id="btn-export"
+                            class="flex-1 py-3 rounded-2xl bg-surfaceVariant-light dark:bg-surfaceVariant-dark hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center gap-2 font-medium text-sm border border-black/5 dark:border-white/5">
+                            <span class="material-symbols-rounded text-lg">download</span> Stiahnuť
+                        </button>
+                        <input type="file" id="input-import" accept=".json" class="hidden">
+                        <button type="button" id="btn-import" onclick="document.getElementById('input-import').click()"
+                            class="flex-1 py-3 rounded-2xl bg-surfaceVariant-light dark:bg-surfaceVariant-dark hover:bg-black/5 dark:hover:bg-white/10 transition-colors flex items-center justify-center gap-2 font-medium text-sm text-red-600 dark:text-red-400 border border-black/5 dark:border-white/5">
+                            <span class="material-symbols-rounded text-lg">upload</span> Nahrať
+                        </button>
+                    </div>
+                    <p class="text-[11px] opacity-60 px-2 mt-2 leading-tight">Nahratie zálohy úplne prepíše tvoje
+                        aktuálne bloky a kategórie.</p>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="submit"
+                        class="w-full py-4 rounded-full bg-primary-light dark:bg-primary-dark text-white dark:text-gray-900 font-bold hover:opacity-90 active:scale-[0.98] transition-all shadow-md shadow-primary-light/20 dark:shadow-primary-dark/20">
+                        Uložiť zmeny
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modálne okno pre zobrazenie naskenovaného bloku (fullscreen) -->
+    <div id="image-modal"
+        class="fixed inset-0 z-[60] hidden flex-col items-center justify-center bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-300 p-4">
+        <button id="btn-close-image"
+            class="absolute top-6 right-6 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+        <!-- Kontajner pre Fotku alebo PDF -->
+        <div class="w-full h-full max-w-4xl flex items-center justify-center mt-12 mb-4">
+            <img id="full-image-view" src="" alt="Naskenovaný blok"
+                class="hidden max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl transform scale-95 transition-transform duration-300">
+            <iframe id="full-pdf-view" src=""
+                class="hidden w-full h-[85vh] rounded-xl shadow-2xl bg-white transform scale-95 transition-transform duration-300"
+                type="application/pdf"></iframe>
+        </div>
+    </div>
+
+    <!-- Upozornenie (Toast) -->
+    <div id="toast"
+        class="fixed top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-full shadow-lg z-[100] transform -translate-y-24 transition-transform duration-300 flex items-center gap-2">
+        <span id="toast-icon" class="material-symbols-rounded">error</span>
+        <span id="toast-msg">Správa</span>
+    </div>
+
+    <!-- JavaScript Logika -->
+    <script>
+        // --- 0. GEMINI API SETUP ---
+
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    console.warn(`Pokus ${i + 1} zlyhal. Skúšam znova za ${delays[i] / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
+        async function analyzeReceiptWithGemini(base64DataUrl, apiKeyToUse) {
+            const mimeType = base64DataUrl.split(';')[0].split(':')[1];
+            const base64Data = base64DataUrl.split(',')[1];
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKeyToUse}`;
+
+            const prompt = `Analyze this receipt image or document. Extract the store name or main item name, the total amount as a number, the date in YYYY-MM-DD format, and suggest a category from this exact list: [potraviny, restauracie, elektronika, oblecenie, ostatne]. If you can't find a date, leave it empty or return today's date.`;
+
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: mimeType, data: base64Data } }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            name: { type: "STRING", description: "Name of the store or main item" },
+                            amount: { type: "NUMBER", description: "Total amount on the receipt" },
+                            date: { type: "STRING", description: "Date of the receipt in YYYY-MM-DD format" },
+                            category: { type: "STRING", description: "Must be exactly one of: potraviny, restauracie, elektronika, oblecenie, ostatne" }
+                        },
+                        required: ["name", "amount", "date", "category"]
+                    }
+                }
+            };
+
+            const result = await fetchWithRetry(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error("Neplatná odpoveď z API.");
+            return JSON.parse(text);
+        }
+
+        // --- 1. SPRÁVA TÉMY (Dark/Light/Auto Mode) ---
+        let savedThemePref = localStorage.getItem('themePref') || 'auto';
+        const htmlElement = document.documentElement;
+
+        function applyTheme() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = savedThemePref === 'dark' || (savedThemePref === 'auto' && prefersDark);
+
+            if (isDark) {
+                htmlElement.classList.add('dark');
+            } else {
+                htmlElement.classList.remove('dark');
+            }
+        }
+        applyTheme();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (savedThemePref === 'auto') applyTheme();
+        });
+
+
+        // --- 2. SPRÁVA KATEGÓRIÍ A DÁT ---
+        let receipts = JSON.parse(localStorage.getItem('receipts')) || [];
+
+        const defaultCategories = {
+            potraviny: { id: 'potraviny', label: 'Potraviny', icon: 'shopping_cart', color: '#10b981' },
+            restauracie: { id: 'restauracie', label: 'Reštaurácie', icon: 'restaurant', color: '#f97316' },
+            elektronika: { id: 'elektronika', label: 'Elektronika', icon: 'devices', color: '#3b82f6' },
+            oblecenie: { id: 'oblecenie', label: 'Oblečenie', icon: 'checkroom', color: '#ec4899' },
+            ostatne: { id: 'ostatne', label: 'Ostatné', icon: 'category', color: '#6750A4' }
+        };
+
+        let categories = JSON.parse(localStorage.getItem('categories')) || defaultCategories;
+
+        const container = document.getElementById('receipts-container');
+        const emptyState = document.getElementById('empty-state');
+        const totalAmountEl = document.getElementById('total-amount');
+        const itemsCountEl = document.getElementById('items-count');
+
+        const formatCurrency = (amount) => new Intl.NumberFormat('sk-SK', { style: 'currency', currency: 'EUR' }).format(amount);
+        const formatDate = (dateString) => new Intl.DateTimeFormat('sk-SK', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(dateString));
+
+        function populateCategorySelect() {
+            const select = document.getElementById('input-category');
+            select.innerHTML = '';
+            for (const key in categories) {
+                select.innerHTML += `<option value="${key}">${categories[key].label}</option>`;
+            }
+            if (categories['ostatne']) select.value = 'ostatne';
+        }
+        populateCategorySelect();
+
+        function renderReceipts() {
+            container.innerHTML = '';
+            let total = 0;
+
+            if (receipts.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                const sortedReceipts = [...receipts].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                sortedReceipts.forEach((receipt, index) => {
+                    total += parseFloat(receipt.amount);
+
+                    // Bezpečný fallback, ak kategória medzitým zmizla
+                    const cat = categories[receipt.category] || Object.values(categories)[0] || { label: 'Neznáme', icon: 'receipt', color: '#888888' };
+                    const hasImageOrPdf = !!receipt.image;
+                    // Podpora pre staršie záznamy, ktoré nemajú definovaný fileType
+                    const fileType = receipt.fileType || 'image';
+                    const iconType = fileType === 'pdf' ? 'picture_as_pdf' : 'image';
+
+                    const el = document.createElement('div');
+                    el.className = 'glass-card p-4 rounded-3xl flex items-center justify-between group transform transition-all hover:-translate-y-1';
+                    el.style.animation = `fadeInUp 0.4s ease forwards ${index * 0.05}s`;
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(10px)';
+
+                    el.innerHTML = `
+                        <div class="flex items-center gap-4 flex-1 overflow-hidden">
+                            <div class="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center" style="background-color: ${cat.color}26; color: ${cat.color};">
+                                <span class="material-symbols-rounded">${cat.icon}</span>
+                            </div>
+                            <div class="truncate pr-2">
+                                <h4 class="font-bold text-lg leading-tight truncate">${receipt.name}</h4>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-xs opacity-70">${formatDate(receipt.date)}</span>
+                                    <span class="text-[10px] font-medium px-2 py-0.5 rounded-full" style="background-color: ${cat.color}1A; color: ${cat.color};">${cat.label}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="font-bold text-lg mr-1">${formatCurrency(receipt.amount)}</span>
+                            
+                            ${hasImageOrPdf ? `
+                            <button onclick="viewImage('${receipt.id}')" class="w-8 h-8 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-blue-200 focus:opacity-100" title="Zobraziť dokument">
+                                <span class="material-symbols-rounded text-sm">${iconType}</span>
+                            </button>
+                            ` : '<div class="w-8 hidden sm:block"></div>'}
+
+                            <button onclick="deleteReceipt('${receipt.id}')" class="w-8 h-8 rounded-full flex items-center justify-center bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-red-200 focus:opacity-100">
+                                <span class="material-symbols-rounded text-sm">delete</span>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(el);
+                });
+            }
+            totalAmountEl.textContent = formatCurrency(total);
+            itemsCountEl.textContent = `${receipts.length} ${getSklovanie(receipts.length)}`;
+        }
+
+        function getSklovanie(count) {
+            if (count === 1) return 'položka';
+            if (count >= 2 && count <= 4) return 'položky';
+            return 'položiek';
+        }
+
+        window.deleteReceipt = function (id) {
+            receipts = receipts.filter(r => r.id !== id);
+            saveData();
+            renderReceipts();
+        };
+
+        function showToast(msg, type = 'error') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            document.getElementById('toast-msg').textContent = msg;
+
+            if (type === 'success') {
+                toast.classList.remove('bg-red-500', 'bg-yellow-500');
+                toast.classList.add('bg-emerald-500');
+                toastIcon.textContent = 'check_circle';
+            } else if (type === 'warning') {
+                toast.classList.remove('bg-red-500', 'bg-emerald-500');
+                toast.classList.add('bg-yellow-500');
+                toastIcon.textContent = 'warning';
+            } else {
+                toast.classList.remove('bg-emerald-500', 'bg-yellow-500');
+                toast.classList.add('bg-red-500');
+                toastIcon.textContent = 'error';
+            }
+
+            toast.classList.remove('-translate-y-24');
+            setTimeout(() => toast.classList.add('-translate-y-24'), 4000);
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('receipts', JSON.stringify(receipts));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    showToast('Pamäť prehliadača je plná! Skúste vymazať staršie bloky so skenmi.', 'error');
+                    receipts.pop();
+                }
+            }
+        }
+
+        // --- 3. MODÁL: PRIDAŤ BLOK A AI INTEGRÁCIA ---
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+        const fabAdd = document.getElementById('fab-add');
+        const btnClose = document.getElementById('btn-close');
+        const btnCancel = document.getElementById('btn-cancel');
+        const addForm = document.getElementById('add-form');
+
+        const inputImage = document.getElementById('input-image');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreviewWrapper = document.getElementById('image-preview-wrapper');
+        const pdfPreviewWrapper = document.getElementById('pdf-preview-wrapper');
+        const imagePreview = document.getElementById('image-preview');
+        const pdfFilename = document.getElementById('pdf-filename');
+        const btnRemoveFiles = document.querySelectorAll('.btn-remove-file');
+
+        const btnAiScan = document.getElementById('btn-ai-scan');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        let currentBase64File = null;
+        let currentFileType = null; // 'image' alebo 'pdf'
+
+        inputImage.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const isPdf = file.type === 'application/pdf';
+
+            if (isPdf) {
+                // Pre PDF musíme dávať pozor na veľkosť kvôli limitom LocalStorage
+                // 2 MB limit (cca 2.6 MB v base64)
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast('PDF je príliš veľké. Maximálna povolená veľkosť pre ukladanie v prehliadači sú 2 MB.', 'error');
+                    inputImage.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    currentBase64File = event.target.result;
+                    currentFileType = 'pdf';
+
+                    pdfFilename.textContent = file.name;
+                    imagePreviewWrapper.classList.add('hidden');
+                    pdfPreviewWrapper.classList.remove('hidden');
+
+                    previewContainer.classList.remove('hidden');
+                    previewContainer.classList.add('flex');
+                };
+                reader.readAsDataURL(file);
+
+            } else {
+                // Spracovanie Obrázkov (automatické zmenšenie)
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.onload = function () {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxSize = 800;
+
+                        if (width > height && width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        } else if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        currentBase64File = canvas.toDataURL('image/webp', 0.5);
+                        currentFileType = 'image';
+
+                        imagePreview.src = currentBase64File;
+                        pdfPreviewWrapper.classList.add('hidden');
+                        imagePreviewWrapper.classList.remove('hidden');
+
+                        previewContainer.classList.remove('hidden');
+                        previewContainer.classList.add('flex');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Odstránenie súboru
+        btnRemoveFiles.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Zabráni prekliknutiu na otvorenie náhľadu
+                currentBase64File = null;
+                currentFileType = null;
+                inputImage.value = '';
+                previewContainer.classList.add('hidden');
+                previewContainer.classList.remove('flex');
+                imagePreview.src = '';
+                imagePreviewWrapper.classList.add('hidden');
+                pdfPreviewWrapper.classList.add('hidden');
+            });
+        });
+
+        // Zobrazenie dočasne nahraného súboru počas vypĺňania (kliknutím na náhľad)
+        window.previewCurrentFile = function () {
+            if (!currentBase64File) return;
+
+            const isPdf = currentFileType === 'pdf';
+
+            if (isPdf) {
+                fullImageView.classList.add('hidden');
+                fullPdfView.classList.remove('hidden');
+                fullPdfView.src = currentBase64File;
+            } else {
+                fullPdfView.classList.add('hidden');
+                fullImageView.classList.remove('hidden');
+                fullImageView.src = currentBase64File;
+            }
+
+            imageModal.classList.remove('hidden');
+            imageModal.classList.add('flex');
+
+            setTimeout(() => {
+                imageModal.classList.remove('opacity-0');
+                if (isPdf) fullPdfView.classList.remove('scale-95');
+                else fullImageView.classList.remove('scale-95');
+            }, 10);
+        };
+
+        // ✨ Obsluha kliknutia na AI tlačidlo
+        btnAiScan.addEventListener('click', async () => {
+            if (!currentBase64File) return;
+
+            const userApiKey = localStorage.getItem('geminiApiKey');
+            if (!userApiKey) {
+                showToast('Pre túto funkciu si musíš najskôr vložiť API kľúč v Nastaveniach.', 'warning');
+                return;
+            }
+
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+
+            try {
+                const data = await analyzeReceiptWithGemini(currentBase64File, userApiKey);
+
+                if (data.name) document.getElementById('input-name').value = data.name;
+                if (data.amount) document.getElementById('input-amount').value = data.amount.toFixed(2);
+                if (data.date) document.getElementById('input-date').value = data.date;
+                if (data.category && categories[data.category]) {
+                    document.getElementById('input-category').value = data.category;
+                }
+
+                showToast('✨ Údaje boli úspešne vyčítané!', 'success');
+            } catch (error) {
+                console.error("Chyba pri AI skenovaní:", error);
+                showToast('Nepodarilo sa načítať údaje. Skontroluj kvalitu dokumentu alebo tvoj API kľúč.', 'error');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+            }
+        });
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.getElementById('input-date').value = new Date().toISOString().split('T')[0];
+
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('translate-y-full', 'sm:translate-y-8', 'sm:scale-95');
+                document.getElementById('input-name').focus();
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('translate-y-full', 'sm:translate-y-8', 'sm:scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                addForm.reset();
+                if (categories['ostatne']) document.getElementById('input-category').value = 'ostatne';
+
+                // Reset file states
+                currentBase64File = null;
+                currentFileType = null;
+                previewContainer.classList.add('hidden');
+                previewContainer.classList.remove('flex');
+                imagePreviewWrapper.classList.add('hidden');
+                pdfPreviewWrapper.classList.add('hidden');
+                imagePreview.src = '';
+            }, 300);
+        }
+
+        fabAdd.addEventListener('click', openModal);
+        btnClose.addEventListener('click', closeModal);
+        btnCancel.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        addForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('input-name').value.trim();
+            const amount = parseFloat(document.getElementById('input-amount').value);
+            const date = document.getElementById('input-date').value;
+            const category = document.getElementById('input-category').value;
+
+            if (name && amount > 0 && date) {
+                receipts.push({
+                    id: Date.now().toString(),
+                    name, amount, date, category,
+                    image: currentBase64File,
+                    fileType: currentFileType || 'image' // Default to image if none specified
+                });
+                saveData();
+                renderReceipts();
+                closeModal();
+            }
+        });
+
+        // --- 4. ZOBRAZENIE DOKUMENTU CEZ CELÚ OBRAZOVKU ---
+        const imageModal = document.getElementById('image-modal');
+        const fullImageView = document.getElementById('full-image-view');
+        const fullPdfView = document.getElementById('full-pdf-view');
+
+        window.viewImage = function (id) {
+            const receipt = receipts.find(r => r.id === id);
+            if (receipt && receipt.image) {
+                const isPdf = receipt.fileType === 'pdf';
+
+                if (isPdf) {
+                    fullImageView.classList.add('hidden');
+                    fullPdfView.classList.remove('hidden');
+                    fullPdfView.src = receipt.image;
+                } else {
+                    fullPdfView.classList.add('hidden');
+                    fullImageView.classList.remove('hidden');
+                    fullImageView.src = receipt.image;
+                }
+
+                imageModal.classList.remove('hidden');
+                imageModal.classList.add('flex');
+
+                setTimeout(() => {
+                    imageModal.classList.remove('opacity-0');
+                    if (isPdf) fullPdfView.classList.remove('scale-95');
+                    else fullImageView.classList.remove('scale-95');
+                }, 10);
+            }
+        };
+
+        function closeImageModal() {
+            imageModal.classList.add('opacity-0');
+            fullImageView.classList.add('scale-95');
+            fullPdfView.classList.add('scale-95');
+
+            setTimeout(() => {
+                imageModal.classList.add('hidden');
+                imageModal.classList.remove('flex');
+                fullImageView.src = '';
+                fullPdfView.src = ''; // Uvoľnenie pamäte pre iframe
+            }, 300);
+        }
+        document.getElementById('btn-close-image').addEventListener('click', closeImageModal);
+        imageModal.addEventListener('click', (e) => { if (e.target === imageModal) closeImageModal(); });
+
+
+        // --- 5. MODÁL: NASTAVENIA ---
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsModalContent = document.getElementById('settings-modal-content');
+        const btnOpenSettings = document.getElementById('btn-open-settings');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const settingsForm = document.getElementById('settings-form');
+        const settingsCategoriesContainer = document.getElementById('settings-categories');
+        const themeSelect = document.getElementById('setting-theme');
+        const apiKeyInput = document.getElementById('setting-api-key');
+        const btnAddCategory = document.getElementById('btn-add-category');
+        const btnExport = document.getElementById('btn-export');
+        const inputImport = document.getElementById('input-import');
+
+        let tempCategories = {};
+
+        function saveTempCategoriesState() {
+            for (const key in tempCategories) {
+                const nameInput = document.getElementById(`cat-name-${key}`);
+                const colorInput = document.getElementById(`cat-color-${key}`);
+                if (nameInput && nameInput.value.trim()) tempCategories[key].label = nameInput.value.trim();
+                if (colorInput) tempCategories[key].color = colorInput.value;
+            }
+        }
+
+        function renderSettingsCategories() {
+            settingsCategoriesContainer.innerHTML = '';
+            for (const [key, cat] of Object.entries(tempCategories)) {
+                settingsCategoriesContainer.innerHTML += `
+                    <div class="flex items-center gap-3 bg-surfaceVariant-light/50 dark:bg-surfaceVariant-dark/50 p-2.5 rounded-2xl group">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background-color: ${cat.color}26; color: ${cat.color};">
+                            <span class="material-symbols-rounded">${cat.icon}</span>
+                        </div>
+                        <input type="text" id="cat-name-${key}" value="${cat.label}" required placeholder="Názov kategórie" 
+                               class="flex-1 bg-transparent border-none outline-none font-medium text-sm placeholder-gray-400 min-w-0">
+                        <input type="color" id="cat-color-${key}" value="${cat.color}" 
+                               class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none flex-shrink-0">
+                        <button type="button" onclick="removeTempCategory('${key}')" class="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 focus:outline-none transition-colors ml-1">
+                            <span class="material-symbols-rounded text-lg block">delete</span>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        window.removeTempCategory = function (key) {
+            if (Object.keys(tempCategories).length <= 1) {
+                showToast('Aplikácia vyžaduje aspoň jednu kategóriu.', 'warning');
+                return;
+            }
+            saveTempCategoriesState();
+            delete tempCategories[key];
+            renderSettingsCategories();
+        };
+
+        btnAddCategory.addEventListener('click', () => {
+            saveTempCategoriesState();
+            const newKey = 'custom_' + Date.now();
+            tempCategories[newKey] = {
+                id: newKey,
+                label: 'Nová kategória',
+                icon: 'label',
+                color: '#6366F1' // Predvolená Indigo farba
+            };
+            renderSettingsCategories();
+
+            // Automatický scroll na koniec, aby používateľ videl novú kategóriu
+            setTimeout(() => {
+                settingsCategoriesContainer.scrollTop = settingsCategoriesContainer.scrollHeight;
+                document.getElementById(`cat-name-${newKey}`).select();
+            }, 50);
+        });
+
+        function openSettingsModal() {
+            themeSelect.value = savedThemePref;
+            apiKeyInput.value = localStorage.getItem('geminiApiKey') || '';
+
+            // Vytvorenie hlbokej kópie pre bezpečnú editáciu
+            tempCategories = JSON.parse(JSON.stringify(categories));
+            renderSettingsCategories();
+
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+            setTimeout(() => {
+                settingsModal.classList.remove('opacity-0');
+                settingsModalContent.classList.remove('translate-y-full', 'sm:translate-y-8', 'sm:scale-95');
+            }, 10);
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.add('opacity-0');
+            settingsModalContent.classList.add('translate-y-full', 'sm:translate-y-8', 'sm:scale-95');
+            setTimeout(() => {
+                settingsModal.classList.add('hidden');
+                settingsModal.classList.remove('flex');
+            }, 300);
+        }
+
+        btnOpenSettings.addEventListener('click', openSettingsModal);
+        btnCloseSettings.addEventListener('click', closeSettingsModal);
+        settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
+
+        settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // Uloženie API kľúča
+            localStorage.setItem('geminiApiKey', apiKeyInput.value.trim());
+
+            // Uloženie nastavenia témy
+            savedThemePref = themeSelect.value;
+            localStorage.setItem('themePref', savedThemePref);
+            applyTheme();
+
+            // Uloženie kategórií z tempCategories do hlavného objektu
+            saveTempCategoriesState();
+            categories = JSON.parse(JSON.stringify(tempCategories));
+            localStorage.setItem('categories', JSON.stringify(categories));
+
+            populateCategorySelect();
+            renderReceipts();
+            closeSettingsModal();
+            showToast('Nastavenia boli uložené.', 'success');
+        });
+
+        // --- 6. EXPORT A IMPORT ZÁLOHY ---
+
+        btnExport.addEventListener('click', () => {
+            const backupData = {
+                receipts: receipts,
+                categories: categories
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            downloadAnchorNode.setAttribute("download", `moje_bloky_zaloha_${dateStr}.json`);
+
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+
+            showToast('Záloha bola úspešne stiahnutá.', 'success');
+        });
+
+        inputImport.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+
+                    // Jednoduchá validácia štruktúry
+                    if (data.receipts && Array.isArray(data.receipts) && data.categories) {
+                        receipts = data.receipts;
+                        categories = data.categories;
+
+                        saveData();
+                        localStorage.setItem('categories', JSON.stringify(categories));
+
+                        populateCategorySelect();
+                        renderReceipts();
+                        closeSettingsModal();
+                        showToast('Dáta boli úspešne obnovené zo zálohy!', 'success');
+                    } else {
+                        throw new Error("Nesprávny formát zálohy");
+                    }
+                } catch (err) {
+                    console.error("Chyba pri importe:", err);
+                    showToast('Nepodarilo sa načítať zálohu. Súbor je neplatný alebo poškodený.', 'error');
+                }
+
+                // Reset file inputu pre možnosť nahrať ten istý súbor znova
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        // Animácia zoznamu CSS
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeInUp {
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Úvodný render
+        renderReceipts();
+
+    </script>
+</body>
+
+</html>
