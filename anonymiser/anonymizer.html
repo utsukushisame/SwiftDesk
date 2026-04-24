@@ -280,6 +280,7 @@
         // Globálny stav aplikácie
         let imageObj = null;
         let rectangles = [];
+        let allRectangles = {};
         let isDrawing = false;
         let startPos = { x: 0, y: 0 };
         let currentRect = null;
@@ -410,7 +411,7 @@
 
                 await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
 
-                rectangles = []; // Vymazať cenzúry
+                rectangles = allRectangles[pageNumber] || []; // Načítať cenzúry pre danú stranu
                 pageNum = pageNumber;
                 loadImageFromUrl(tempCanvas.toDataURL('image/png'));
             } catch (error) {
@@ -428,6 +429,7 @@
             if (file.type === 'application/pdf') {
                 showView('loading');
                 try {
+                    allRectangles = {};
                     const arrayBuffer = await file.arrayBuffer();
                     pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                     numPages = pdfDoc.numPages;
@@ -442,6 +444,7 @@
                 pageNum = 1;
                 numPages = 0;
                 rectangles = [];
+                allRectangles = {};
 
                 const reader = new FileReader();
                 reader.onload = (event) => loadImageFromUrl(event.target.result);
@@ -675,11 +678,7 @@
 
         // Stránkovanie PDF
         async function changePage(newPg) {
-            if (rectangles.length > 0) {
-                if (!confirm("Máte neuložené cenzúry na tejto strane. Ak prepnete stranu bez stiahnutia, zmeny sa stratia. Chcete napriek tomu pokračovať?")) {
-                    return;
-                }
-            }
+            allRectangles[pageNum] = [...rectangles];
             await renderPdfPage(newPg);
         }
 
@@ -702,22 +701,78 @@
             document.body.removeChild(link);
         });
 
-        els.btnDownloadPdf.addEventListener('click', () => {
+        els.btnDownloadPdf.addEventListener('click', async () => {
             if (!window.jspdf) {
                 alert("Knižnica pre export do PDF nebola načítaná.");
                 return;
             }
-            const { jsPDF } = window.jspdf;
-            const dataUrl = els.canvas.toDataURL('image/png');
 
-            const pdf = new jsPDF({
-                orientation: els.canvas.width > els.canvas.height ? 'landscape' : 'portrait',
-                unit: 'px',
-                format: [els.canvas.width, els.canvas.height]
-            });
+            const loadingStateHeading = els.loadingState.querySelector('h3');
+            const originalHeading = loadingStateHeading.innerText;
+            loadingStateHeading.innerText = "Generujem PDF dokument...";
+            showView('loading');
 
-            pdf.addImage(dataUrl, 'PNG', 0, 0, els.canvas.width, els.canvas.height);
-            pdf.save(`anonymizovane_dokument_${new Date().getTime()}.pdf`);
+            // Počkáme malú chvíľu, aby sa UI stihlo prekresliť
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            try {
+                const { jsPDF } = window.jspdf;
+
+                if (pdfDoc) {
+                    allRectangles[pageNum] = [...rectangles];
+                    let pdf = null;
+
+                    for (let i = 1; i <= numPages; i++) {
+                        const page = await pdfDoc.getPage(i);
+                        const viewport = page.getViewport({ scale: 2.0 });
+
+                        const tempCanvas = document.createElement('canvas');
+                        const tempCtx = tempCanvas.getContext('2d');
+                        tempCanvas.width = viewport.width;
+                        tempCanvas.height = viewport.height;
+
+                        await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
+
+                        const pageRects = allRectangles[i] || [];
+                        tempCtx.fillStyle = '#000000';
+                        pageRects.forEach(rect => {
+                            tempCtx.fillRect(rect.x, rect.y, rect.width, rect.height);
+                        });
+
+                        const dataUrl = tempCanvas.toDataURL('image/png');
+                        const isLandscape = tempCanvas.width > tempCanvas.height;
+
+                        if (i === 1) {
+                            pdf = new jsPDF({
+                                orientation: isLandscape ? 'landscape' : 'portrait',
+                                unit: 'px',
+                                format: [tempCanvas.width, tempCanvas.height]
+                            });
+                        } else {
+                            pdf.addPage([tempCanvas.width, tempCanvas.height], isLandscape ? 'landscape' : 'portrait');
+                        }
+
+                        pdf.addImage(dataUrl, 'PNG', 0, 0, tempCanvas.width, tempCanvas.height);
+                    }
+
+                    pdf.save(`anonymizovane_dokument_${new Date().getTime()}.pdf`);
+                } else {
+                    const dataUrl = els.canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: els.canvas.width > els.canvas.height ? 'landscape' : 'portrait',
+                        unit: 'px',
+                        format: [els.canvas.width, els.canvas.height]
+                    });
+                    pdf.addImage(dataUrl, 'PNG', 0, 0, els.canvas.width, els.canvas.height);
+                    pdf.save(`anonymizovane_dokument_${new Date().getTime()}.pdf`);
+                }
+            } catch (error) {
+                console.error("Chyba pri generovaní PDF:", error);
+                alert("Nastala chyba pri generovaní PDF.");
+            } finally {
+                loadingStateHeading.innerText = originalHeading;
+                showView('editor');
+            }
         });
 
     </script>
