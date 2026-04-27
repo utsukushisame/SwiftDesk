@@ -129,17 +129,27 @@
 
             <!-- Navigácia PDF (zobrazí sa len pri viacstranovom PDF) -->
             <div id="pdfNav"
-                class="hidden flex items-center justify-center gap-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-3 rounded-[2rem] shadow-sm border border-white/50 dark:border-slate-700/50 mb-2 w-max mx-auto">
+                class="hidden flex items-center justify-center gap-2 sm:gap-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl p-3 rounded-[2rem] shadow-sm border border-white/50 dark:border-slate-700/50 mb-2 w-max mx-auto">
+                <button id="btnPrev10Page"
+                    class="p-2 rounded-full bg-blue-50/50 dark:bg-slate-800/50 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 disabled:opacity-40 disabled:hover:bg-blue-50/50 dark:disabled:hover:bg-slate-800/50 transition-colors" title="-10 Strán">
+                    <i class="ph ph-caret-double-left text-xl"></i>
+                </button>
                 <button id="btnPrevPage"
-                    class="p-2 rounded-full bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 disabled:opacity-40 disabled:hover:bg-blue-50 dark:disabled:hover:bg-slate-800 transition-colors">
+                    class="p-2 rounded-full bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 disabled:opacity-40 disabled:hover:bg-blue-50 dark:disabled:hover:bg-slate-800 transition-colors" title="Predchádzajúca strana">
                     <i class="ph ph-caret-left text-xl"></i>
                 </button>
-                <span id="pageInfo"
-                    class="text-sm font-semibold text-slate-800 dark:text-white px-4 py-1 bg-white/50 dark:bg-slate-800/80 rounded-full">Strana
-                    1 z 1</span>
+                <div class="flex items-center text-sm font-semibold text-slate-800 dark:text-white px-3 py-1 bg-white/50 dark:bg-slate-800/80 rounded-full shadow-inner border border-white/40 dark:border-slate-700/50">
+                    <span class="mr-2">Strana</span>
+                    <input type="number" id="pageInput" min="1" value="1" class="w-12 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md py-0.5 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <span class="ml-2">z <span id="totalPages">1</span></span>
+                </div>
                 <button id="btnNextPage"
-                    class="p-2 rounded-full bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 disabled:opacity-40 disabled:hover:bg-blue-50 dark:disabled:hover:bg-slate-800 transition-colors">
+                    class="p-2 rounded-full bg-blue-50 dark:bg-slate-800 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 disabled:opacity-40 disabled:hover:bg-blue-50 dark:disabled:hover:bg-slate-800 transition-colors" title="Nasledujúca strana">
                     <i class="ph ph-caret-right text-xl"></i>
+                </button>
+                <button id="btnNext10Page"
+                    class="p-2 rounded-full bg-blue-50/50 dark:bg-slate-800/50 hover:bg-blue-100 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 disabled:opacity-40 disabled:hover:bg-blue-50/50 dark:disabled:hover:bg-slate-800/50 transition-colors" title="+10 Strán">
+                    <i class="ph ph-caret-double-right text-xl"></i>
                 </button>
             </div>
 
@@ -155,6 +165,17 @@
                         class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-900 dark:text-red-300 bg-red-100/50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-full disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap">
                         <i class="ph ph-trash text-lg"></i> Zmazať všetko
                     </button>
+                    <button id="btnSaveBackup"
+                        class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-emerald-900 dark:text-emerald-200 bg-emerald-100/50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-full disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                        title="Uložiť rozpracovanú zálohu cenzúr">
+                        <i class="ph ph-floppy-disk text-lg"></i> Uložiť zálohu
+                    </button>
+                    <button id="btnLoadBackup"
+                        class="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-orange-900 dark:text-orange-200 bg-orange-100/50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-full transition-colors whitespace-nowrap"
+                        title="Načítať uloženú zálohu cenzúr">
+                        <i class="ph ph-folder-open text-lg"></i> Načítať zálohu
+                    </button>
+                    <input type="file" id="backupInput" accept="application/json" class="hidden">
                 </div>
 
                 <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
@@ -304,8 +325,12 @@
             ctx: document.getElementById('canvas').getContext('2d'),
             pdfNav: document.getElementById('pdfNav'),
             pageInfo: document.getElementById('pageInfo'),
+            pageInput: document.getElementById('pageInput'),
+            totalPages: document.getElementById('totalPages'),
             btnPrevPage: document.getElementById('btnPrevPage'),
             btnNextPage: document.getElementById('btnNextPage'),
+            btnPrev10Page: document.getElementById('btnPrev10Page'),
+            btnNext10Page: document.getElementById('btnNext10Page'),
             btnUndo: document.getElementById('btnUndo'),
             btnClear: document.getElementById('btnClear'),
             rectCount: document.getElementById('rectCount'),
@@ -324,7 +349,10 @@
             settingsModal: document.getElementById('settingsModal'),
             btnCloseSettings: document.getElementById('btnCloseSettings'),
             apiKeyInput: document.getElementById('apiKeyInput'),
-            btnSaveSettings: document.getElementById('btnSaveSettings')
+            btnSaveSettings: document.getElementById('btnSaveSettings'),
+            btnSaveBackup: document.getElementById('btnSaveBackup'),
+            btnLoadBackup: document.getElementById('btnLoadBackup'),
+            backupInput: document.getElementById('backupInput')
         };
 
         // Kontrola skrytého Info panelu
@@ -351,12 +379,20 @@
             els.btnUndo.disabled = rectangles.length === 0;
             els.btnClear.disabled = rectangles.length === 0;
 
+            const hasAnyRectangles = rectangles.length > 0 || Object.keys(allRectangles).some(page => allRectangles[page].length > 0);
+            if (els.btnSaveBackup) els.btnSaveBackup.disabled = !hasAnyRectangles;
+
             if (pdfDoc && numPages > 1) {
                 els.pdfNav.classList.remove('hidden');
                 els.pdfNav.classList.add('flex');
-                els.pageInfo.innerText = `Strana ${pageNum} z ${numPages}`;
+                if (els.pageInfo) els.pageInfo.innerText = `Strana ${pageNum} z ${numPages}`;
+                if (els.pageInput) els.pageInput.value = pageNum;
+                if (els.pageInput) els.pageInput.max = numPages;
+                if (els.totalPages) els.totalPages.innerText = numPages;
                 els.btnPrevPage.disabled = pageNum <= 1;
                 els.btnNextPage.disabled = pageNum >= numPages;
+                if (els.btnPrev10Page) els.btnPrev10Page.disabled = pageNum <= 1;
+                if (els.btnNext10Page) els.btnNext10Page.disabled = pageNum >= numPages;
             } else {
                 els.pdfNav.classList.add('hidden');
                 els.pdfNav.classList.remove('flex');
@@ -676,6 +712,49 @@
             updateToolbar();
         });
 
+        // Uloženie zálohy
+        els.btnSaveBackup.addEventListener('click', () => {
+            allRectangles[pageNum] = [...rectangles];
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allRectangles));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", `anonymizer_zaloha_${new Date().getTime()}.json`);
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+
+        // Načítanie zálohy (otvorí sa input)
+        els.btnLoadBackup.addEventListener('click', () => {
+            els.backupInput.click();
+        });
+
+        // Načítanie súboru
+        els.backupInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const loadedRectangles = JSON.parse(event.target.result);
+                    allRectangles = loadedRectangles;
+                    rectangles = allRectangles[pageNum] || [];
+                    drawCanvas();
+                    updateToolbar();
+                    alert("Záloha bola úspešne načítaná.");
+                } catch (error) {
+                    console.error("Chyba pri načítaní zálohy:", error);
+                    alert("Chyba: Neplatný formát zálohy.");
+                }
+            };
+            reader.readAsText(file);
+            
+            // Vyčistenie inputu
+            els.backupInput.value = '';
+        });
+
         // Stránkovanie PDF
         async function changePage(newPg) {
             allRectangles[pageNum] = [...rectangles];
@@ -689,6 +768,28 @@
         els.btnNextPage.addEventListener('click', () => {
             if (pageNum < numPages) changePage(pageNum + 1);
         });
+
+        if(els.btnPrev10Page) {
+            els.btnPrev10Page.addEventListener('click', () => {
+                if (pageNum > 1) changePage(Math.max(1, pageNum - 10));
+            });
+        }
+
+        if(els.btnNext10Page) {
+            els.btnNext10Page.addEventListener('click', () => {
+                if (pageNum < numPages) changePage(Math.min(numPages, pageNum + 10));
+            });
+        }
+
+        if(els.pageInput) {
+            els.pageInput.addEventListener('change', (e) => {
+                let val = parseInt(e.target.value, 10);
+                if (isNaN(val)) val = pageNum;
+                val = Math.max(1, Math.min(numPages, val));
+                e.target.value = val;
+                if (val !== pageNum) changePage(val);
+            });
+        }
 
         // Sťahovanie súborov
         els.btnDownloadImage.addEventListener('click', () => {
@@ -723,23 +824,36 @@
                     let pdf = null;
 
                     for (let i = 1; i <= numPages; i++) {
+                        loadingStateHeading.innerText = `Generujem PDF dokument... (Strana ${i} z ${numPages})`;
+                        // Vynútime prekreslenie UI, aby používateľ videl progres
+                        await new Promise(resolve => setTimeout(resolve, 10));
+
                         const page = await pdfDoc.getPage(i);
-                        const viewport = page.getViewport({ scale: 2.0 });
+                        // Znížime scale pre veľmi dlhé dokumenty, aby sme šetrili pamäť
+                        const exportScale = numPages > 50 ? 1.5 : 2.0;
+                        const viewport = page.getViewport({ scale: exportScale });
 
                         const tempCanvas = document.createElement('canvas');
                         const tempCtx = tempCanvas.getContext('2d');
                         tempCanvas.width = viewport.width;
                         tempCanvas.height = viewport.height;
 
+                        // Zabezpečíme biele pozadie (dôležité pre JPEG formát)
+                        tempCtx.fillStyle = '#ffffff';
+                        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
                         await page.render({ canvasContext: tempCtx, viewport: viewport }).promise;
 
                         const pageRects = allRectangles[i] || [];
                         tempCtx.fillStyle = '#000000';
                         pageRects.forEach(rect => {
-                            tempCtx.fillRect(rect.x, rect.y, rect.width, rect.height);
+                            // Prepočítanie súradníc pre exportScale
+                            const scaleRatio = exportScale / 2.0;
+                            tempCtx.fillRect(rect.x * scaleRatio, rect.y * scaleRatio, rect.width * scaleRatio, rect.height * scaleRatio);
                         });
 
-                        const dataUrl = tempCanvas.toDataURL('image/png');
+                        // Použijeme JPEG (0.8 kvalita) namiesto PNG pre radikálne zníženie spotreby pamäte
+                        const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.8);
                         const isLandscape = tempCanvas.width > tempCanvas.height;
 
                         if (i === 1) {
@@ -752,7 +866,11 @@
                             pdf.addPage([tempCanvas.width, tempCanvas.height], isLandscape ? 'landscape' : 'portrait');
                         }
 
-                        pdf.addImage(dataUrl, 'PNG', 0, 0, tempCanvas.width, tempCanvas.height);
+                        pdf.addImage(dataUrl, 'JPEG', 0, 0, tempCanvas.width, tempCanvas.height);
+
+                        // Explicitné uvoľnenie pamäte pre plátno pre každú stranu
+                        tempCanvas.width = 0;
+                        tempCanvas.height = 0;
                     }
 
                     pdf.save(`anonymizovane_dokument_${new Date().getTime()}.pdf`);
