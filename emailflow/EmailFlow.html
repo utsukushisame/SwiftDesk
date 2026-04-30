@@ -181,6 +181,16 @@
         </div>
 
         <div class="flex items-center gap-2 sm:gap-3">
+            <button onclick="openCategoriesModal()"
+                class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-gray-700/50 rounded-full transition-colors"
+                title="Kategórie">
+                <i class="fa-solid fa-tags text-lg"></i>
+            </button>
+            <button onclick="openPeopleModal()"
+                class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-gray-700/50 rounded-full transition-colors"
+                title="Ľudia">
+                <i class="fa-solid fa-users text-lg"></i>
+            </button>
             <button onclick="openSettingsModal()"
                 class="w-10 h-10 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-gray-700/50 rounded-full transition-colors"
                 title="Nastavenia">
@@ -231,9 +241,16 @@
         <!-- Sidebar: Saved Templates -->
         <aside
             class="w-72 bg-white dark:bg-[#1e1e1e] rounded-[2rem] flex flex-col z-0 hidden md:flex shrink-0 shadow-sm border border-transparent dark:border-gray-800">
-            <div class="p-6 pb-2">
-                <h2 class="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-2">Uložené
-                    šablóny</h2>
+            <div class="p-6 pb-2 space-y-4">
+                <h2 class="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest ml-2">Uložené šablóny</h2>
+                <div class="flex flex-col gap-2">
+                    <select id="filterPerson" onchange="renderTemplateList()" class="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 text-slate-600 dark:text-gray-300 text-xs rounded-xl px-3 py-2 outline-none appearance-none cursor-pointer">
+                        <option value="">Všetci ľudia</option>
+                    </select>
+                    <select id="filterCategory" onchange="renderTemplateList()" class="bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700 text-slate-600 dark:text-gray-300 text-xs rounded-xl px-3 py-2 outline-none appearance-none cursor-pointer">
+                        <option value="">Všetky kategórie</option>
+                    </select>
+                </div>
             </div>
             <div id="templateList" class="flex-1 overflow-y-auto px-4 py-2 space-y-2">
                 <!-- Templates injected here -->
@@ -258,6 +275,20 @@
                                 šablóny</label>
                             <input type="text" id="templateName" placeholder="Napr. Mesačný report"
                                 class="material-input w-full px-5 py-3 rounded-2xl outline-none transition-all dark:text-white dark:placeholder-gray-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-2 ml-1">Príjemca</label>
+                                <select id="templatePerson" class="material-input w-full px-5 py-3 rounded-2xl outline-none transition-all dark:text-white appearance-none cursor-pointer">
+                                    <option value="">Nevybrané</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 dark:text-gray-300 mb-2 ml-1">Kategória</label>
+                                <select id="templateCategory" class="material-input w-full px-5 py-3 rounded-2xl outline-none transition-all dark:text-white appearance-none cursor-pointer">
+                                    <option value="">Nevybrané</option>
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <div class="flex justify-between items-center mb-2 ml-1">
@@ -498,6 +529,61 @@
         </div>
     </div>
 
+    <!-- People Modal -->
+    <div id="peopleModal"
+        class="fixed inset-0 bg-gray-900/40 backdrop-blur-md hidden flex items-center justify-center z-50">
+        <div
+            class="bg-white dark:bg-[#1e1e1e] rounded-[2rem] shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-white/20 flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5 shrink-0">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white flex items-center"><i
+                        class="fa-solid fa-users mr-3 text-primary-500"></i>Správa ľudí</h3>
+                <button onclick="closeModal('peopleModal')"
+                    class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 flex flex-col gap-4 overflow-y-auto flex-1">
+                <div class="flex gap-2">
+                    <input type="text" id="newPersonName" placeholder="Meno (napr. Janko Hraško)"
+                        class="material-input flex-1 px-4 py-2.5 rounded-xl text-sm outline-none dark:text-white">
+                    <button onclick="addPerson()"
+                        class="px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-bold transition-colors">Pridať</button>
+                </div>
+                <div id="peopleList" class="space-y-2 mt-2">
+                    <!-- People injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories Modal -->
+    <div id="categoriesModal"
+        class="fixed inset-0 bg-gray-900/40 backdrop-blur-md hidden flex items-center justify-center z-50">
+        <div
+            class="bg-white dark:bg-[#1e1e1e] rounded-[2rem] shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-white/20 flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5 shrink-0">
+                <h3 class="font-bold text-lg text-slate-800 dark:text-white flex items-center"><i
+                        class="fa-solid fa-tags mr-3 text-indigo-500"></i>Správa kategórií</h3>
+                <button onclick="closeModal('categoriesModal')"
+                    class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 flex flex-col gap-4 overflow-y-auto flex-1">
+                <div class="flex gap-2 items-center">
+                    <input type="color" id="newCategoryColor" value="#3b82f6" class="w-10 h-10 rounded-xl cursor-pointer border-0 bg-transparent p-0">
+                    <input type="text" id="newCategoryName" placeholder="Názov (napr. Dôležité)"
+                        class="material-input flex-1 px-4 py-2.5 rounded-xl text-sm outline-none dark:text-white">
+                    <button onclick="addCategory()"
+                        class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-colors">Pridať</button>
+                </div>
+                <div id="categoriesList" class="space-y-2 mt-2">
+                    <!-- Categories injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notification Toast -->
     <div id="toast"
         class="fixed bottom-8 right-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-4 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-4 z-50 font-medium">
@@ -513,11 +599,15 @@
         // State
         let templates = [];
         let variableValues = {};
+        let people = [];
+        let categories = [];
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             loadTemplates();
+            loadPeople();
+            loadCategories();
             loadApiKey();
 
             if (templates.length === 0) loadExampleTemplate();
@@ -528,7 +618,7 @@
             document.getElementById('emailSubject').addEventListener('input', updatePreview);
 
             // Modal outside clicks
-            ['aiModal', 'settingsModal', 'replyModal'].forEach(id => {
+            ['aiModal', 'settingsModal', 'replyModal', 'peopleModal', 'categoriesModal'].forEach(id => {
                 document.getElementById(id).addEventListener('click', (e) => {
                     if (e.target === document.getElementById(id)) closeModal(id);
                 });
@@ -887,11 +977,84 @@
             }
         }
 
+        // --- People Management ---
+        function loadPeople() {
+            const stored = localStorage.getItem('email_people');
+            if (stored) { people = JSON.parse(stored); renderPeopleList(); }
+        }
+        function savePeopleToStorage() { localStorage.setItem('email_people', JSON.stringify(people)); renderPeopleList(); if(typeof updateSelectOptions === 'function') updateSelectOptions(); }
+        function renderPeopleList() {
+            const list = document.getElementById('peopleList');
+            if(!list) return;
+            list.innerHTML = '';
+            people.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700";
+                div.innerHTML = `
+                    <span class="text-sm font-medium dark:text-gray-200">${p.name}</span>
+                    <button onclick="deletePerson(${p.id})" class="text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        function addPerson() {
+            const input = document.getElementById('newPersonName');
+            const name = input.value.trim();
+            if(!name) return;
+            people.push({ id: Date.now(), name });
+            input.value = '';
+            savePeopleToStorage();
+        }
+        function deletePerson(id) {
+            people = people.filter(p => p.id !== id);
+            savePeopleToStorage();
+        }
+
+        // --- Categories Management ---
+        function loadCategories() {
+            const stored = localStorage.getItem('email_categories');
+            if (stored) { categories = JSON.parse(stored); renderCategoriesList(); }
+        }
+        function saveCategoriesToStorage() { localStorage.setItem('email_categories', JSON.stringify(categories)); renderCategoriesList(); if(typeof updateSelectOptions === 'function') updateSelectOptions(); }
+        function renderCategoriesList() {
+            const list = document.getElementById('categoriesList');
+            if(!list) return;
+            list.innerHTML = '';
+            categories.forEach(c => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-4 h-4 rounded-full" style="background-color: ${c.color}"></div>
+                        <span class="text-sm font-medium dark:text-gray-200">${c.name}</span>
+                    </div>
+                    <button onclick="deleteCategory(${c.id})" class="text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        function addCategory() {
+            const nameInput = document.getElementById('newCategoryName');
+            const colorInput = document.getElementById('newCategoryColor');
+            const name = nameInput.value.trim();
+            const color = colorInput.value;
+            if(!name) return;
+            categories.push({ id: Date.now(), name, color });
+            nameInput.value = '';
+            saveCategoriesToStorage();
+        }
+        function deleteCategory(id) {
+            categories = categories.filter(c => c.id !== id);
+            saveCategoriesToStorage();
+        }
+
         // --- UI Utils ---
 
         function openAiModal() { document.getElementById('aiModal').classList.remove('hidden'); document.getElementById('aiPrompt').focus(); }
         function openReplyModal() { document.getElementById('replyModal').classList.remove('hidden'); document.getElementById('receivedEmail').focus(); }
         function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); }
+        function openPeopleModal() { document.getElementById('peopleModal').classList.remove('hidden'); document.getElementById('newPersonName').focus(); }
+        function openCategoriesModal() { document.getElementById('categoriesModal').classList.remove('hidden'); document.getElementById('newCategoryName').focus(); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
         // --- Template Management ---
@@ -900,10 +1063,12 @@
             const name = document.getElementById('templateName').value || "Bez názvu";
             const subject = document.getElementById('emailSubject').value;
             const body = document.getElementById('emailBody').value;
+            const personId = document.getElementById('templatePerson').value;
+            const categoryId = document.getElementById('templateCategory').value;
 
             if (!subject && !body) { showToast("Nemôžem uložiť prázdnu šablónu", true); return; }
 
-            const newTemplate = { id: Date.now(), name, subject, body };
+            const newTemplate = { id: Date.now(), name, subject, body, personId, categoryId };
             templates.push(newTemplate);
             saveTemplatesToStorage();
             renderTemplateList();
@@ -920,9 +1085,33 @@
         function renderTemplateList() {
             const list = document.getElementById('templateList');
             list.innerHTML = '';
-            templates.slice().reverse().forEach((t) => {
+            
+            const filterPerson = document.getElementById('filterPerson')?.value;
+            const filterCategory = document.getElementById('filterCategory')?.value;
+
+            let filteredTemplates = templates.slice().reverse();
+            if (filterPerson) filteredTemplates = filteredTemplates.filter(t => t.personId === filterPerson);
+            if (filterCategory) filteredTemplates = filteredTemplates.filter(t => t.categoryId === filterCategory);
+
+            if (filteredTemplates.length === 0) {
+                list.innerHTML = '<div class="text-center p-8 text-slate-400 dark:text-gray-600 text-sm italic">Žiadne šablóny zatiaľ...</div>';
+                return;
+            }
+
+            filteredTemplates.forEach((t) => {
+                const person = people.find(p => p.id.toString() === t.personId);
+                const category = categories.find(c => c.id.toString() === t.categoryId);
+                
+                let badgesHtml = '';
+                if(person || category) {
+                    badgesHtml = '<div class="flex gap-1 mt-2">';
+                    if(category) badgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded-md text-white shadow-sm font-medium" style="background-color: ${category.color}">${category.name}</span>`;
+                    if(person) badgesHtml += `<span class="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 shadow-sm font-medium"><i class="fa-solid fa-user mr-1"></i>${person.name}</span>`;
+                    badgesHtml += '</div>';
+                }
+
                 const div = document.createElement('div');
-                div.className = "p-3 rounded-lg cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-700 group border border-transparent hover:border-primary-100 dark:hover:border-gray-600 transition-all";
+                div.className = "p-3 rounded-lg cursor-pointer hover:bg-primary-50 dark:hover:bg-gray-700 group border border-transparent hover:border-primary-100 dark:hover:border-gray-600 transition-all flex flex-col";
                 div.onclick = () => selectTemplate(t.id);
                 div.innerHTML = `
                     <div class="flex justify-between items-start">
@@ -932,6 +1121,7 @@
                         </button>
                     </div>
                     <p class="text-xs text-gray-400 dark:text-gray-500 truncate mt-1">${t.subject || 'Bez predmetu'}</p>
+                    ${badgesHtml}
                 `;
                 list.appendChild(div);
             });
@@ -943,6 +1133,8 @@
                 document.getElementById('templateName').value = t.name;
                 document.getElementById('emailSubject').value = t.subject;
                 document.getElementById('emailBody').value = t.body;
+                if(document.getElementById('templatePerson')) document.getElementById('templatePerson').value = t.personId || "";
+                if(document.getElementById('templateCategory')) document.getElementById('templateCategory').value = t.categoryId || "";
                 autoFillDateVariables();
                 updatePreview();
             }
@@ -961,6 +1153,8 @@
             document.getElementById('templateName').value = '';
             document.getElementById('emailSubject').value = '';
             document.getElementById('emailBody').value = '';
+            if(document.getElementById('templatePerson')) document.getElementById('templatePerson').value = '';
+            if(document.getElementById('templateCategory')) document.getElementById('templateCategory').value = '';
             variableValues = {};
             autoFillDateVariables();
             updatePreview();
@@ -972,6 +1166,36 @@
             document.getElementById('emailBody').value = `Ahoj {meno},\n\nPosielam prehľad prác na projekte {projekt} za mesiac {mesiac}.\n\nHlavné body:\n1. Dokončená fáza A\n2. Začatá fáza B\n\nDátum vystavenia: {dnes}\n\nS pozdravom,\nTvoj Kolega`;
             autoFillDateVariables();
             updatePreview();
+        }
+
+        // --- UI Dynamic Data ---
+        function updateSelectOptions() {
+            const tempPerson = document.getElementById('templatePerson');
+            const filtPerson = document.getElementById('filterPerson');
+            const tempCategory = document.getElementById('templateCategory');
+            const filtCategory = document.getElementById('filterCategory');
+
+            if (tempPerson && filtPerson) {
+                const currentTempPerson = tempPerson.value;
+                const currentFiltPerson = filtPerson.value;
+                const personOptions = `<option value="">Nevybrané</option>` + people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                const filterPersonOptions = `<option value="">Všetci ľudia</option>` + people.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                tempPerson.innerHTML = personOptions;
+                filtPerson.innerHTML = filterPersonOptions;
+                tempPerson.value = currentTempPerson || "";
+                filtPerson.value = currentFiltPerson || "";
+            }
+
+            if (tempCategory && filtCategory) {
+                const currentTempCategory = tempCategory.value;
+                const currentFiltCategory = filtCategory.value;
+                const categoryOptions = `<option value="">Nevybrané</option>` + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                const filterCategoryOptions = `<option value="">Všetky kategórie</option>` + categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                tempCategory.innerHTML = categoryOptions;
+                filtCategory.innerHTML = filterCategoryOptions;
+                tempCategory.value = currentTempCategory || "";
+                filtCategory.value = currentFiltCategory || "";
+            }
         }
 
         // --- Export Functions ---
