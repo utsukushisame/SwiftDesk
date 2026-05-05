@@ -411,9 +411,10 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Gemini API Kľúč</label>
-                    <input type="password" id="inputApiKey" placeholder="AIzaSy..."
+                    <input type="password" id="inputApiKey" placeholder="Zadaj kľúč (len pre lokálne použitie)..."
                         class="glass-input w-full rounded-xl py-3 px-4 text-gray-800">
-                    <p class="text-xs text-gray-500 mt-1">Ukladá sa bezpečne iba v tvojom prehliadači.</p>
+                    <p class="text-xs text-gray-500 mt-1">Tu v tomto náhľade ho vypĺňať nemusíš, systém si ho doplní
+                        sám. Ukladá sa len u teba v prehliadači.</p>
                 </div>
 
                 <div>
@@ -468,11 +469,13 @@
     </div>
 
     <script>
+        // --- Configuration & Init ---
+        let defaultApiKey = "AIzaSyClpLRXNAFJOcjRCmxFxXrX5VIf3KuvKWw"; // Kľúč od používateľa
         document.addEventListener('DOMContentLoaded', () => {
             // --- STATE MANAGEMENT & SETTINGS ---
             let appSettings = { apiKey: '', theme: 'auto' };
             let savedTemplates = [];
-            let currentProjectData = null; // Uchováva dáta aktuálneho projektu pre možnosť uloženia
+            let currentProjectData = null;
 
             const loadState = () => {
                 const s = localStorage.getItem('aiEstimatorSettings');
@@ -496,7 +499,6 @@
                 } else if (appSettings.theme === 'light') {
                     document.body.classList.remove('dark');
                 } else {
-                    // Auto
                     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                         document.body.classList.add('dark');
                     } else {
@@ -524,14 +526,12 @@
             const categorySummary = document.getElementById('categorySummary');
             const totalPriceEl = document.getElementById('totalPrice');
 
-            // Modal Elements
             const settingsModal = document.getElementById('settingsModal');
             const templatesModal = document.getElementById('templatesModal');
             const inputApiKey = document.getElementById('inputApiKey');
             const selectTheme = document.getElementById('selectTheme');
             const templatesList = document.getElementById('templatesList');
 
-            // Inicializácia
             loadState();
 
             // --- FORMATTING & UTILS ---
@@ -561,7 +561,6 @@
                     if (!categoryTotals[category]) categoryTotals[category] = 0;
                     categoryTotals[category] += price;
 
-                    // Aktualizácia modelu pre uloženie
                     if (currentProjectData) {
                         const index = input.dataset.index;
                         currentProjectData.items[index].price = price;
@@ -609,7 +608,7 @@
             };
 
             const loadProjectToUI = (data) => {
-                currentProjectData = JSON.parse(JSON.stringify(data)); // Deep copy
+                currentProjectData = JSON.parse(JSON.stringify(data));
                 generatedProjectTitle.textContent = currentProjectData.projectTitle || "Tvoj projekt";
                 renderItems(currentProjectData.items);
                 recalculateTotals();
@@ -622,12 +621,6 @@
             };
 
             const generateEstimate = async () => {
-                if (!appSettings.apiKey) {
-                    showError("Zadaj si prosím Gemini API kľúč v nastaveniach (ikona vpravo hore).");
-                    document.getElementById('btnOpenSettings').click();
-                    return;
-                }
-
                 const promptText = projectDescription.value.trim();
                 if (!promptText) {
                     showError("Prosím, napíš najprv o aký projekt ide.");
@@ -642,7 +635,16 @@
                 const systemInstruction = `Si expertný rozpočtár a odhadca cien na Slovensku. Rozbi projekt na 4-10 položiek a odhadni realistické ceny pre SR v Eurách. Výstup MUSÍ BYŤ LEN VALIDNÝ JSON. 
                 Formát: {"projectTitle": "Názov", "items": [{"name": "Položka", "category": "Kategória", "price": 150}]}`;
 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${appSettings.apiKey}`;
+                const key = appSettings.apiKey || defaultApiKey;
+                if (!key) {
+                    showError("Zadaj si prosím Gemini API kľúč v nastaveniach (ikona vpravo hore).");
+                    document.getElementById('btnOpenSettings').click();
+                    return;
+                }
+
+                const MODEL_NAME = "gemini-2.5-flash";
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${key}`;
+
                 const payload = {
                     contents: [{ parts: [{ text: promptText }] }],
                     systemInstruction: { parts: [{ text: systemInstruction }] },
@@ -652,27 +654,37 @@
                 try {
                     let response;
                     let delay = 1000;
-                    for (let i = 0; i < 3; i++) {
+
+                    // Vylepšený systém pokusov (Exponential Backoff - pre prípad výpadku siete)
+                    for (let i = 0; i < 5; i++) {
                         try {
                             response = await fetch(url, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payload)
                             });
+
                             if (response.ok) break;
-                            throw new Error(`HTTP Error ${response.status}`);
+
+                            const errData = await response.json().catch(() => ({}));
+                            const errMsg = errData?.error?.message || `HTTP Error ${response.status}`;
+                            throw new Error(`API Error: ${errMsg}`);
+
                         } catch (e) {
-                            if (i === 2) throw e;
+                            if (i === 4) throw e;
                             await new Promise(res => setTimeout(res, delay));
                             delay *= 2;
                         }
                     }
 
                     const data = await response.json();
-                    if (data.error) throw new Error(data.error.message || "Chyba API kľúča.");
+                    if (data.error) throw new Error(`API Error: ${data.error.message}`);
 
-                    const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    let jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     if (!jsonText) throw new Error("AI nevrátila žiadne dáta.");
+
+                    // Pre istotu vyčistíme text od markdown formátovania
+                    jsonText = jsonText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
 
                     const parsedData = JSON.parse(jsonText);
                     parsedData.prompt = promptText;
@@ -682,7 +694,17 @@
                     console.error("Chyba API/JSON:", error);
                     loadingState.classList.add('hidden');
                     step1Prompt.classList.remove('hidden');
-                    showError(error.message.includes('API') ? "Chybný API kľúč alebo problém s pripojením." : "Nepodarilo sa spojiť s AI. Skús to znova.");
+
+                    let displayMsg = "Nepodarilo sa spojiť s AI. Skús to znova.";
+                    if (error.message.includes('API Error:')) {
+                        displayMsg = error.message;
+                    } else if (error.message.includes('JSON')) {
+                        displayMsg = "AI vygenerovala nesprávny formát. Skús to, prosím, vygenerovať znova.";
+                    } else {
+                        displayMsg = "Chybný API kľúč alebo problém s pripojením k internetu.";
+                    }
+
+                    showError(displayMsg);
                 }
             };
 
@@ -710,7 +732,7 @@
                     currentProjectData.id = Date.now().toString();
                     currentProjectData.date = new Date().toLocaleDateString('sk-SK');
 
-                    savedTemplates.unshift(currentProjectData); // Pridá na začiatok
+                    savedTemplates.unshift(currentProjectData);
                     saveState();
                     renderTemplatesList();
                     alert("Šablóna bola úspešne uložená!");
@@ -816,7 +838,6 @@
                 }
             });
 
-            // Modal Toggles
             document.getElementById('btnOpenSettings').addEventListener('click', openSettings);
             document.getElementById('btnCloseSettings').addEventListener('click', () => settingsModal.classList.remove('active'));
             document.getElementById('btnSaveSettings').addEventListener('click', saveSettings);
@@ -827,7 +848,6 @@
             });
             document.getElementById('btnCloseTemplates').addEventListener('click', () => templatesModal.classList.remove('active'));
 
-            // Zatvorenie kliknutím mimo
             window.addEventListener('click', (e) => {
                 if (e.target === settingsModal) settingsModal.classList.remove('active');
                 if (e.target === templatesModal) templatesModal.classList.remove('active');
