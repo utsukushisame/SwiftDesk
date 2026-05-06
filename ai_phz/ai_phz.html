@@ -548,71 +548,275 @@
             };
 
             // --- CORE LOGIC ---
+            const generateId = () => Math.random().toString(36).substr(2, 9);
+
             const recalculateTotals = () => {
-                let total = 0;
+                if (!currentProjectData) return;
+                
+                let grandTotal = 0;
                 let categoryTotals = {};
-                const priceInputs = document.querySelectorAll('.editable-price');
+                
+                if (currentProjectData.categories) {
+                    currentProjectData.categories.forEach(cat => {
+                        let catTotal = 0;
+                        if (cat.subcategories) {
+                            cat.subcategories.forEach(sub => {
+                                let subTotal = 0;
+                                if (sub.items) {
+                                    sub.items.forEach(item => {
+                                        subTotal += parseFloat(item.price) || 0;
+                                    });
+                                }
+                                sub.total = subTotal;
+                                catTotal += subTotal;
+                                
+                                const subEl = document.getElementById(`sum-${sub.id}`);
+                                if (subEl) subEl.textContent = formatCurrency(subTotal);
+                            });
+                        }
+                        cat.total = catTotal;
+                        grandTotal += catTotal;
+                        categoryTotals[cat.name] = catTotal;
+                        
+                        const catEl = document.getElementById(`sum-${cat.id}`);
+                        if (catEl) catEl.textContent = formatCurrency(catTotal);
+                    });
+                }
+                
+                currentProjectData.total = grandTotal;
 
-                priceInputs.forEach(input => {
-                    const price = parseFloat(input.value) || 0;
-                    const category = input.dataset.category;
+                if (Object.keys(categoryTotals).length === 0) {
+                    categorySummary.innerHTML = '<p class="italic text-gray-400">Zatiaľ nie sú vygenerované žiadne údaje.</p>';
+                } else {
+                    categorySummary.innerHTML = Object.entries(categoryTotals).map(([catName, sum]) => `
+                        <div class="flex justify-between items-center p-2 rounded-lg hover:bg-white/40 transition-colors">
+                            <span class="flex items-center gap-2"><i class="ph ${getCategoryIcon(catName)} text-violet-500"></i> ${catName}</span>
+                            <span class="text-gray-800 font-mono font-bold">${formatCurrency(sum)}</span>
+                        </div>
+                    `).join('');
+                }
 
-                    total += price;
-                    if (!categoryTotals[category]) categoryTotals[category] = 0;
-                    categoryTotals[category] += price;
-
-                    if (currentProjectData) {
-                        const index = input.dataset.index;
-                        currentProjectData.items[index].price = price;
-                    }
-                });
-
-                categorySummary.innerHTML = Object.entries(categoryTotals).map(([cat, sum]) => `
-                    <div class="flex justify-between items-center p-2 rounded-lg hover:bg-white/40 transition-colors">
-                        <span class="flex items-center gap-2"><i class="ph ${getCategoryIcon(cat)} text-violet-500"></i> ${cat}</span>
-                        <span class="text-gray-800 font-mono font-bold">${formatCurrency(sum)}</span>
-                    </div>
-                `).join('');
-
-                totalPriceEl.textContent = new Intl.NumberFormat('sk-SK', { maximumFractionDigits: 0 }).format(total);
-                if (currentProjectData) currentProjectData.total = total;
+                totalPriceEl.textContent = new Intl.NumberFormat('sk-SK', { maximumFractionDigits: 0 }).format(grandTotal);
             };
 
-            const renderItems = (items) => {
-                itemsContainer.innerHTML = '';
-                items.forEach((item, index) => {
-                    const itemHTML = `
-                        <div class="item-row glass-panel bg-white/50 p-4 rounded-2xl flex items-center justify-between gap-4 border border-white/60">
-                            <div class="flex-1">
-                                <h4 class="font-bold text-gray-800 text-sm md:text-base">${item.name}</h4>
-                                <span class="text-xs font-semibold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-md inline-block mt-1">${item.category}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="relative">
-                                    <input type="number" 
-                                           value="${item.price}" 
-                                           data-category="${item.category}"
-                                           data-index="${index}"
-                                           class="editable-price glass-input w-24 md:w-32 rounded-xl py-2 px-3 text-right text-gray-900 font-bold font-mono text-lg focus:bg-white focus:ring-2 ring-violet-400">
+            itemsContainer.addEventListener('input', (e) => {
+                if (e.target.classList.contains('editable-price')) {
+                    const price = parseFloat(e.target.value) || 0;
+                    const catId = e.target.dataset.catId;
+                    const subId = e.target.dataset.subId;
+                    const itemId = e.target.dataset.itemId;
+                    
+                    const cat = currentProjectData.categories?.find(c => c.id === catId);
+                    if (cat) {
+                        const sub = cat.subcategories?.find(s => s.id === subId);
+                        if (sub) {
+                            const item = sub.items?.find(i => i.id === itemId);
+                            if (item) {
+                                item.price = price;
+                                recalculateTotals();
+                            }
+                        }
+                    }
+                }
+                if (e.target.classList.contains('editable-name')) {
+                    const name = e.target.value;
+                    const type = e.target.dataset.type;
+                    const catId = e.target.dataset.catId;
+                    const subId = e.target.dataset.subId;
+                    const itemId = e.target.dataset.itemId;
+                    
+                    if (type === 'category') {
+                         const cat = currentProjectData.categories?.find(c => c.id === catId);
+                         if(cat) { cat.name = name; recalculateTotals(); } 
+                    } else if (type === 'subcategory') {
+                         const cat = currentProjectData.categories?.find(c => c.id === catId);
+                         if(cat) {
+                             const sub = cat.subcategories?.find(s => s.id === subId);
+                             if (sub) sub.name = name;
+                         }
+                    } else if (type === 'item') {
+                         const cat = currentProjectData.categories?.find(c => c.id === catId);
+                         if(cat) {
+                             const sub = cat.subcategories?.find(s => s.id === subId);
+                             if (sub) {
+                                 const item = sub.items?.find(i => i.id === itemId);
+                                 if (item) item.name = name;
+                             }
+                         }
+                    }
+                }
+            });
+
+            window.addItem = (catId, subId) => {
+                const cat = currentProjectData.categories.find(c => c.id === catId);
+                const sub = cat.subcategories.find(s => s.id === subId);
+                if(!sub.items) sub.items = [];
+                sub.items.push({ id: generateId(), name: "Nová položka", price: 0 });
+                renderItems();
+            };
+
+            window.addSubcategory = (catId) => {
+                const cat = currentProjectData.categories.find(c => c.id === catId);
+                if(!cat.subcategories) cat.subcategories = [];
+                cat.subcategories.push({ id: generateId(), name: "Nová podkategória", items: [] });
+                renderItems();
+            };
+
+            window.addCategory = () => {
+                if(!currentProjectData.categories) currentProjectData.categories = [];
+                currentProjectData.categories.push({ id: generateId(), name: "Nová kategória", subcategories: [] });
+                renderItems();
+            };
+
+            window.deleteItem = (catId, subId, itemId) => {
+                const cat = currentProjectData.categories.find(c => c.id === catId);
+                const sub = cat.subcategories.find(s => s.id === subId);
+                sub.items = sub.items.filter(i => i.id !== itemId);
+                renderItems();
+            };
+
+            window.deleteSubcategory = (catId, subId) => {
+                if(confirm("Naozaj vymazať podkategóriu aj so všetkými položkami?")) {
+                    const cat = currentProjectData.categories.find(c => c.id === catId);
+                    cat.subcategories = cat.subcategories.filter(s => s.id !== subId);
+                    renderItems();
+                }
+            };
+
+            window.deleteCategory = (catId) => {
+                if(confirm("Naozaj vymazať kategóriu aj so všetkými podkategóriami a položkami?")) {
+                    currentProjectData.categories = currentProjectData.categories.filter(c => c.id !== catId);
+                    renderItems();
+                }
+            };
+
+            const renderItems = () => {
+                if (!currentProjectData || !currentProjectData.categories) {
+                    itemsContainer.innerHTML = '';
+                    return;
+                }
+                
+                let html = '';
+                
+                currentProjectData.categories.forEach(cat => {
+                    if (!cat.id) cat.id = generateId();
+                    
+                    html += `
+                        <details class="group mb-4 glass-panel bg-white/40 rounded-2xl overflow-hidden border border-white/60" open>
+                            <summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-white/50 transition-colors list-none">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <div class="p-2 bg-violet-100 rounded-lg text-violet-600 transition-transform group-open:rotate-90">
+                                        <i class="ph ph-caret-right text-xl"></i>
+                                    </div>
+                                    <input type="text" value="${cat.name}" data-type="category" data-cat-id="${cat.id}" class="editable-name font-bold text-lg text-gray-800 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-violet-500 focus:outline-none w-2/3 transition-colors" onclick="event.stopPropagation()">
                                 </div>
-                                <span class="text-gray-500 font-bold">€</span>
-                            </div>
-                        </div>
+                                <div class="flex items-center gap-2 md:gap-4">
+                                    <span class="font-bold text-gray-900 text-base md:text-lg font-mono whitespace-nowrap" id="sum-${cat.id}">0 €</span>
+                                    <button onclick="event.preventDefault(); addSubcategory('${cat.id}')" class="p-1.5 text-violet-600 hover:bg-violet-100 rounded-lg transition" title="Pridať podkategóriu"><i class="ph ph-plus-circle text-xl"></i></button>
+                                    <button onclick="event.preventDefault(); deleteCategory('${cat.id}')" class="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition" title="Vymazať kategóriu"><i class="ph ph-trash text-xl"></i></button>
+                                </div>
+                            </summary>
+                            <div class="p-4 pt-0 space-y-4">
                     `;
-                    itemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+                    
+                    if(cat.subcategories) {
+                        cat.subcategories.forEach(sub => {
+                            if (!sub.id) sub.id = generateId();
+                            
+                            html += `
+                                <details class="group/sub mb-2 ml-2 md:ml-6 bg-white/50 rounded-xl overflow-hidden shadow-sm border border-white/40" open>
+                                    <summary class="flex items-center justify-between p-3 cursor-pointer hover:bg-white/60 transition-colors list-none border-b border-gray-100/50">
+                                        <div class="flex items-center gap-2 flex-1">
+                                            <div class="text-violet-500 transition-transform group-open/sub:rotate-90">
+                                                <i class="ph ph-caret-right"></i>
+                                            </div>
+                                            <input type="text" value="${sub.name}" data-type="subcategory" data-cat-id="${cat.id}" data-sub-id="${sub.id}" class="editable-name font-semibold text-gray-700 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-violet-500 focus:outline-none w-2/3 text-sm transition-colors" onclick="event.stopPropagation()">
+                                        </div>
+                                        <div class="flex items-center gap-2 md:gap-3">
+                                            <span class="font-bold text-gray-800 font-mono text-sm whitespace-nowrap" id="sum-${sub.id}">0 €</span>
+                                            <button onclick="event.preventDefault(); addItem('${cat.id}', '${sub.id}')" class="p-1 text-violet-500 hover:bg-violet-100 rounded transition" title="Pridať položku"><i class="ph ph-plus text-lg"></i></button>
+                                            <button onclick="event.preventDefault(); deleteSubcategory('${cat.id}', '${sub.id}')" class="p-1 text-red-400 hover:bg-red-50 rounded transition" title="Vymazať podkategóriu"><i class="ph ph-trash text-lg"></i></button>
+                                        </div>
+                                    </summary>
+                                    <div class="p-3 space-y-2 bg-gray-50/30">
+                            `;
+                            
+                            if(sub.items) {
+                                sub.items.forEach(item => {
+                                    if (!item.id) item.id = generateId();
+                                    
+                                    html += `
+                                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4 p-2 rounded-lg hover:bg-white/80 transition-colors item-row">
+                                            <div class="flex-1 ml-4 md:ml-6 flex items-center gap-2">
+                                                <i class="ph ph-arrow-elbow-down-right text-gray-400 shrink-0"></i>
+                                                <input type="text" value="${item.name}" data-type="item" data-cat-id="${cat.id}" data-sub-id="${sub.id}" data-item-id="${item.id}" class="editable-name text-gray-600 text-sm bg-transparent border-b border-transparent hover:border-gray-300 focus:border-violet-500 focus:outline-none w-full transition-colors">
+                                            </div>
+                                            <div class="flex items-center justify-end gap-2 ml-10 md:ml-0">
+                                                <div class="relative">
+                                                    <input type="number" 
+                                                           value="${item.price}" 
+                                                           data-cat-id="${cat.id}"
+                                                           data-sub-id="${sub.id}"
+                                                           data-item-id="${item.id}"
+                                                           class="editable-price glass-input w-24 rounded-lg py-1 px-2 text-right text-gray-800 font-bold font-mono text-sm focus:bg-white focus:ring-2 ring-violet-400 transition-all">
+                                                </div>
+                                                <span class="text-gray-500 font-bold text-sm">€</span>
+                                                <button onclick="deleteItem('${cat.id}', '${sub.id}', '${item.id}')" class="text-gray-400 hover:text-red-500 transition p-1" title="Vymazať položku"><i class="ph ph-x"></i></button>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                            }
+                            html += `</div></details>`;
+                        });
+                    }
+                    html += `</div></details>`;
                 });
 
-                document.querySelectorAll('.editable-price').forEach(input => {
-                    input.addEventListener('input', recalculateTotals);
-                });
+                html += `
+                    <div class="mt-4 flex justify-center pb-4">
+                        <button onclick="addCategory()" class="bg-violet-100 hover:bg-violet-200 text-violet-700 font-bold py-2 px-6 rounded-full shadow-sm transition-all flex items-center gap-2 text-sm dark:bg-violet-900/40 dark:text-violet-300">
+                            <i class="ph ph-plus-circle text-lg"></i> Pridať novú kategóriu
+                        </button>
+                    </div>
+                `;
+
+                itemsContainer.innerHTML = html;
+                recalculateTotals();
             };
 
             const loadProjectToUI = (data) => {
                 currentProjectData = JSON.parse(JSON.stringify(data));
-                generatedProjectTitle.textContent = currentProjectData.projectTitle || "Tvoj projekt";
-                renderItems(currentProjectData.items);
-                recalculateTotals();
+                
+                // MIGRATION: Convert old flat structure to hierarchical structure
+                if (currentProjectData.items && !currentProjectData.categories) {
+                    const migratedCats = {};
+                    currentProjectData.items.forEach(item => {
+                        const catName = item.category || 'Ostatné';
+                        if (!migratedCats[catName]) {
+                            migratedCats[catName] = {
+                                id: generateId(),
+                                name: catName,
+                                subcategories: [{
+                                    id: generateId(),
+                                    name: "Všeobecné",
+                                    items: []
+                                }]
+                            };
+                        }
+                        migratedCats[catName].subcategories[0].items.push({
+                            id: generateId(),
+                            name: item.name,
+                            price: item.price
+                        });
+                    });
+                    currentProjectData.categories = Object.values(migratedCats);
+                    delete currentProjectData.items;
+                }
 
+                generatedProjectTitle.textContent = currentProjectData.projectTitle || "Tvoj projekt";
+                renderItems();
+                
                 loadingState.classList.add('hidden');
                 step1Prompt.classList.add('hidden');
                 errorState.classList.add('hidden');
@@ -632,8 +836,8 @@
                 loadingState.classList.remove('hidden');
                 step2Editor.classList.add('hidden');
 
-                const systemInstruction = `Si expertný rozpočtár a odhadca cien na Slovensku. Rozbi projekt na 4-10 položiek a odhadni realistické ceny pre SR v Eurách. Výstup MUSÍ BYŤ LEN VALIDNÝ JSON. 
-                Formát: {"projectTitle": "Názov", "items": [{"name": "Položka", "category": "Kategória", "price": 150}]}`;
+                const systemInstruction = `Si expertný rozpočtár a odhadca cien na Slovensku. Rozbi projekt na detailnú 3-úrovňovú hierarchiu: Kategórie -> Podkategórie -> Položky. Vždy zohľadni a doplň aj skryté výdavky ako doprava, odvoz odpadu, spojovací a spotrebný materiál, a prácu, do najmenších detailov. Odhadni realistické ceny pre SR v Eurách. Výstup MUSÍ BYŤ LEN VALIDNÝ JSON.
+Formát: {"projectTitle": "Názov", "categories": [{"id": "c1", "name": "Kategória 1", "subcategories": [{"id": "sc1", "name": "Podkategória", "items": [{"id": "i1", "name": "Položka", "price": 150}]}]}]}`;
 
                 const key = appSettings.apiKey || defaultApiKey;
                 if (!key) {
@@ -684,7 +888,17 @@
                     if (!jsonText) throw new Error("AI nevrátila žiadne dáta.");
 
                     // Pre istotu vyčistíme text od markdown formátovania
-                    jsonText = jsonText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+                    let jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/i);
+                    if (jsonMatch) {
+                        jsonText = jsonMatch[1];
+                    } else {
+                        // V prípade, že AI nepošle markdown, ale len JSON s nejakým textom
+                        const start = jsonText.indexOf('{');
+                        const end = jsonText.lastIndexOf('}');
+                        if (start !== -1 && end !== -1) {
+                            jsonText = jsonText.substring(start, end + 1);
+                        }
+                    }
 
                     const parsedData = JSON.parse(jsonText);
                     parsedData.prompt = promptText;
