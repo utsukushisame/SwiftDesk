@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kontrola Textu SK | Váš inteligentný korektor</title>
+    <meta name="description" content="Online nástroj pre rýchlu kontrolu slovenskej gramatiky a interpunkcie.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/><path d="m15 5 3 3"/></svg>
+                <h1>Kontrola Textu <span>SK</span></h1>
+            </div>
+            <nav class="top-nav">
+                <button id="theme-toggle" class="btn-icon" aria-label="Prepnúť tmavý režim" title="Prepnúť tému">
+                    <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Editor Area -->
+            <main class="editor-section">
+                <div class="editor-wrapper glass-panel">
+                    <div id="editor" class="text-editor" contenteditable="true" spellcheck="false" data-placeholder="Vložte text, ktorý chcete skontrolovať..."></div>
+                    
+                    <!-- Loading Overlay -->
+                    <div id="loading-overlay" class="loading-overlay hidden">
+                        <div class="spinner"></div>
+                        <span>Analyzujem text...</span>
+                    </div>
+                </div>
+
+                <!-- Controls Below Editor -->
+                <div class="editor-controls glass-panel">
+                    <div class="action-buttons">
+                        <button id="btn-check" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Skontrolovať text
+                        </button>
+                        <button id="btn-clear" class="btn btn-secondary">
+                            Vyčistiť
+                        </button>
+                    </div>
+                    
+                    <div class="status-bar">
+                        <span id="status-message">Pripravený</span>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="word-count">0</span>
+                            <span class="stat-label">Slov</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="char-count">0</span>
+                            <span class="stat-label">Znakov</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Sidebar -->
+            <aside class="sidebar glass-panel">
+                <div class="sidebar-header">
+                    <h2>Nájdené chyby</h2>
+                    <button id="btn-fix-all" class="btn btn-outline btn-small" disabled>Opraviť všetko</button>
+                </div>
+                
+                <div class="errors-container" id="errors-list">
+                    <div class="empty-state">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <p>Zatiaľ žiadne chyby. Napíšte text a spustite kontrolu.</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Tooltip Element -->
+    <div id="error-tooltip" class="tooltip hidden">
+        <div class="tooltip-header">
+            <span class="tooltip-type">Gramatika</span>
+            <span class="tooltip-title">Nesprávne slovo</span>
+        </div>
+        <div class="tooltip-body">
+            <p class="tooltip-desc">Možno ste mali na mysli:</p>
+            <div class="suggestions" id="tooltip-suggestions">
+                <!-- Suggestions will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

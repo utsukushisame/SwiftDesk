@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Európa 1968 - Interaktívny Plagát</title>
+    <!-- Tailwind CSS cez CDN pre rýchle štýlovanie -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Knižnice na manuálny export do presného PDF (A1) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Custom štýly pre lepšiu interaktivitu */
+        .editable-text:hover {
+            outline: 1px dashed #b91c1c;
+            background-color: rgba(255, 255, 255, 0.5);
+            cursor: text;
+        }
+
+        .editable-text:focus {
+            outline: 1px solid #b91c1c;
+            background-color: white;
+        }
+
+        /* Štýl pre obal kartičky a symbolov (zmena veľkosti) */
+        .card-container,
+        .symbol-content,
+        .image-upload-container {
+            resize: both;
+            overflow: hidden;
+        }
+
+        .card-container {
+            min-width: 120px;
+            min-height: 80px;
+        }
+
+        .symbol-content {
+            min-width: 50px;
+            min-height: 50px;
+        }
+
+        /* Skrytie posuvníkov ak je to možné */
+        .card-container::-webkit-scrollbar,
+        .symbol-content::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        .card-container::-webkit-scrollbar-thumb,
+        .symbol-content::-webkit-scrollbar-thumb {
+            background-color: #d6d3d1;
+            border-radius: 4px;
+        }
+
+        body {
+            background-color: #171717;
+            /* neutral-900 */
+        }
+
+        /* Zamedzenie označovania textu pri posúvaní */
+        .no-select {
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 font-sans relative overflow-x-hidden">
+
+    <!-- Ovládací panel -->
+    <div id="tools-panel"
+        class="fixed top-4 left-4 z-50 bg-stone-800 p-4 rounded-lg shadow-xl border border-stone-600 flex flex-col gap-2 transition-opacity"
+        data-html2canvas-ignore="true">
+        <div class="flex justify-between items-center border-b border-stone-600 pb-2 mb-1">
+            <h3 class="text-white text-sm font-bold uppercase tracking-widest">Nástroje</h3>
+            <button id="hide-tools-btn" class="text-stone-400 hover:text-white transition-colors" title="Skryť panel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <button id="add-card-btn"
+            class="bg-red-700 hover:bg-red-600 text-white text-xs font-bold py-2 px-3 rounded transition-colors shadow flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Pridať kartičku
+        </button>
+
+        <!-- Nová sekcia: Symboly na pozadie -->
+        <div class="border-t border-stone-600 mt-1 pt-2 flex flex-col gap-1">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-stone-400 text-[9px] uppercase font-bold tracking-widest">Pridať na pozadie:</span>
+                <label class="flex items-center gap-1 cursor-pointer"
+                    title="Dočasne presunie symboly nad kartičky pre jednoduchšiu úpravu">
+                    <input type="checkbox" id="bring-symbols-front" class="accent-red-700 w-3 h-3">
+                    <span class="text-stone-300 text-[8px] uppercase tracking-widest">Do popredia</span>
+                </label>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="addSymbol('peace')"
+                    class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow flex-1 text-center"
+                    title="Znak mieru">☮️ Mier</button>
+                <button onclick="addSymbol('megaphone')"
+                    class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow flex-1 text-center"
+                    title="Megafón">📢 Megafón</button>
+            </div>
+            <div class="flex gap-2 mt-0.5">
+                <button onclick="addSymbol('anarchy')"
+                    class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow flex-1 text-center"
+                    title="Znak anarchie">Ⓐ Anarchia</button>
+                <button onclick="addSymbol('star')"
+                    class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow flex-1 text-center"
+                    title="Revolučná hviezda">⭐ Hviezda</button>
+            </div>
+            <div class="flex gap-2 mt-0.5">
+                <button onclick="addSymbol('flame')"
+                    class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow flex-1 text-center"
+                    title="Oheň / Barikády">🔥 Oheň</button>
+                <button onclick="addSymbol('bomb')"
+                    class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow flex-1 text-center"
+                    title="Bomba / Radikalizmus">💣 Bomba</button>
+            </div>
+            <button onclick="addSymbol('banner')"
+                class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-1 px-2 rounded transition-colors shadow w-full text-center mt-1"
+                title="Slogan na pozadie">🏳️ Protestný Slogan</button>
+        </div>
+
+        <div class="border-t border-stone-600 my-1 pt-2 flex flex-col gap-2">
+            <button id="save-json-btn"
+                class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-2 px-3 rounded transition-colors shadow flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Uložiť zálohu (JSON)
+            </button>
+            <button id="load-json-btn"
+                class="bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold py-2 px-3 rounded transition-colors shadow flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Načítať zálohu
+            </button>
+            <input type="file" id="load-json-input" class="hidden" accept=".json">
+        </div>
+
+        <button id="download-pdf-btn"
+            class="bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded transition-colors shadow flex items-center gap-2 mt-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Stiahnuť ako PDF (A1)
+        </button>
+
+        <p class="text-stone-400 text-[9px] max-w-[150px] leading-tight mt-2 italic">
+            Kartičky a symboly sa dajú presúvať a zväčšovať (vpravo dole).
+        </p>
+    </div>
+
+    <!-- Tlačidlo na opätovné zobrazenie nástrojov -->
+    <button id="show-tools-btn"
+        class="fixed top-4 left-4 z-40 bg-stone-800 hover:bg-stone-700 text-white p-2.5 rounded-lg shadow-xl border border-stone-600 hidden transition-colors"
+        title="Zobraziť nástroje" data-html2canvas-ignore="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path
+                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+            </path>
+        </svg>
+    </button>
+
+    <!-- Container plagátu A1 (presný matematický pomer A1: 594x841) -->
+    <div id="poster"
+        class="w-full max-w-4xl aspect-[594/841] bg-[#F4F1EA] shadow-[0_0_40px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col box-border border-[8px] sm:border-[12px] border-white text-stone-900 transform origin-top">
+
+        <!-- Textúra pozadia -->
+        <div class="absolute inset-0 opacity-20 pointer-events-none"
+            style="background-image: radial-gradient(#888 1px, transparent 1px); background-size: 12px 12px; z-index: 0;">
+        </div>
+
+        <!-- Kontajner pre symboly na pozadí (pod kartičkami) -->
+        <div id="symbols-container" class="absolute inset-0 w-full h-full pointer-events-none"
+            style="z-index: 5; transition: z-index 0.2s;"></div>
+
+        <!-- HLAVIČKA -->
+        <header class="pt-5 pb-2 px-8 text-center relative z-10 mx-8 flex flex-col justify-center shrink-0">
+            <h1 class="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-none editable-text"
+                contenteditable="true">
+                ŠTUDENTSKÉ NEPOKOJE V ZÁPADNEJ EURÓPE 1968
+            </h1>
+            <h2 class="text-lg sm:text-xl font-bold text-stone-700 tracking-tight leading-none mt-1.5 mb-2.5 editable-text"
+                contenteditable="true">
+                Geopolitický vývoj sveta po 1956
+            </h2>
+
+            <div class="border-t-2 border-stone-800 w-full mb-2"></div>
+
+            <div class="flex gap-6 text-left">
+                <div class="w-1/2 pr-2">
+                    <h3 class="text-red-700 font-bold uppercase text-[6px] mb-0.5 editable-text" contenteditable="true">
+                        Úvod k študentským nepokojom</h3>
+                    <p class="text-[5px] sm:text-[5.5px] text-stone-700 font-serif italic leading-[1.3] editable-text text-justify"
+                        contenteditable="true">
+                        Rok 1968 sa zapísal do moderných dejín ako prelomový bod a globálna explózia sociálneho a
+                        politického napätia, kedy študentské hnutia masovo vystúpili proti stávajúcemu poriadku a
+                        inštitúciám („Fenomenológia a politická ekonómia“, n.d.). Táto celoeurópska vlna nepokojov,
+                        podnietená ideálmi Novej ľavice, pacifizmom a odporom voči konzumnej spoločnosti, zjednotila
+                        študentov i robotníkov v snahe o radikálnu premenu spoločnosti a dokázala, že protesty už neboli
+                        len izolovaným národným problémom, ale skutočným európskym fenoménom (Klimke & Scharloth, 2008).
+                        Mládež v západnej Európe spochybňovala samotné základy priemyselnej modernity, búrila sa proti
+                        zastaraným hierarchiám, imperializmu stelesnenom vojnou vo Vietname a prežitému konzervativizmu
+                        vtedajších politických elít (Takáč, 2018).
+                    </p>
+                </div>
+                <div class="w-1/2 pl-2">
+                    <h3 class="text-red-700 font-bold uppercase text-[6px] mb-0.5 editable-text" contenteditable="true">
+                        Historický kontext (Cesta k roku 1968)</h3>
+                    <p class="text-[5px] sm:text-[5.5px] text-stone-700 font-serif italic leading-[1.3] editable-text text-justify"
+                        contenteditable="true">
+                        Týmto búrlivým udalostiam predchádzalo v západnej Európe obdobie bezprecedentného povojnového
+                        ekonomického rastu a prosperity (tzv. „Trente Glorieuses“ vo Francúzsku), ktoré však sprevádzalo
+                        prehlbovanie odcudzenia v novovzniknutej konzumnej spoločnosti („1968 in Europe: Youth
+                        Movements“, n.d.). Kľúčovým štrukturálnym faktorom bol povojnový demografický „baby boom“, ktorý
+                        viedol k obrovskej masifikácii vysokého školstva v 60. rokoch. Napríklad vo Francúzsku sa počet
+                        študentov za dekádu strojnásobil, čo spôsobilo katastrofálnu preplnenosť prednáškových sál a
+                        obrovskú frustráciu mládeže zo zastaraných, paternalistických a silne centralizovaných
+                        inštitúcií („Fenomenológia a politická ekonómia“, n.d.). K výbuchu protestov prispela aj rastúca
+                        všeobecná nedôvera voči establišmentu a politickej byrokracii, snaha o demokratizáciu a
+                        politickú participáciu, ako aj širšie kultúrne vplyvy spojené so sexuálnou revolúciou a
+                        subkultúrami, ktoré odmietali konzervatívne hodnoty svojich rodičov poznačené studenou vojnou
+                        (Fazio, 2023; „Studentská hnutí 60. let 20. století“, n.d.).
+                    </p>
+                </div>
+            </div>
+        </header>
+
+        <!-- HLAVNÁ ČASŤ - KARTIČKY A HADÍK -->
+        <main id="canvas-area" class="flex-1 relative w-full z-10 block">
+            <!-- S-krivka (Hadík) -->
+            <svg preserveAspectRatio="none" viewBox="0 0 100 100"
+                class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10;">
+                <path d="M 12 15 L 80 15 A 17.5 17.5 0 0 1 80 50 L 20 50 A 17.5 17.5 0 0 0 20 85 L 88 85" fill="none"
+                    stroke="#b91c1c" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"
+                    class="opacity-90"></path>
+            </svg>
+
+            <!-- Tu sa vygenerujú kartičky -->
+            <div id="cards-container" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 20;">
+            </div>
+        </main>
+
+        <!-- SPODNÁ ČASŤ -->
+        <div class="px-8 pb-3 z-30 relative flex flex-col justify-end pointer-events-none shrink-0 w-full">
+            <div class="border-t-2 border-stone-800 pt-2 flex gap-4 pointer-events-auto">
+                <!-- Mapa -->
+                <div class="w-1/3 flex flex-col gap-1">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-red-700">
+                            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"></polygon>
+                            <line x1="9" y1="3" x2="9" y2="18"></line>
+                            <line x1="15" y1="6" x2="15" y2="21"></line>
+                        </svg>
+                        <h4 class="text-[7px] font-bold uppercase tracking-widest text-stone-900 editable-text"
+                            contenteditable="true">Mapa protestov</h4>
+                    </div>
+                    <div id="map-upload-container"
+                        class="image-upload-container bg-stone-200 border border-stone-400 flex flex-col items-center justify-center text-stone-500 relative cursor-pointer hover:bg-stone-300 transition-colors group/img shrink-0"
+                        style="width: 100%; height: 90px;">
+                        <input type="file" id="map-upload-input" class="hidden" accept="image/*"
+                            data-html2canvas-ignore="true">
+                        <span
+                            class="text-[6px] uppercase tracking-widest font-bold opacity-50 pointer-events-none">Vložiť
+                            mapu</span>
+                    </div>
+                    <p class="text-[5.5px] text-stone-600 font-serif text-justify leading-tight editable-text mt-0.5"
+                        contenteditable="true">
+                        Epicentrá nepokojov: Paríž, Západný Berlín, Rím, Londýn.
+                    </p>
+                </div>
+
+                <!-- Stredný Textový Blok (Závery) plne obnovený -->
+                <div class="w-1/3 flex flex-col justify-start px-2">
+                    <h4 class="text-[6px] font-bold uppercase tracking-widest text-red-700 mb-0.5 text-center editable-text"
+                        contenteditable="true">Záver a dôsledky protestov v jednotlivých krajinách</h4>
+                    <p class="text-[4.5px] text-stone-700 font-serif text-justify leading-[1.25] editable-text"
+                        contenteditable="true">
+                        Hoci revolta nepriniesla okamžitý pád režimov, jej dlhodobé kultúrne a sociálne dôsledky zásadne
+                        zmenili tvár západnej Európy. Vo Francúzsku protesty z roku 1968 priniesli transformáciu
+                        rigidného univerzitného systému, obrovskú liberalizáciu morálky, zníženie volebného veku na 18
+                        rokov, lepšie pracovné podmienky pre robotníkov a dlhodobú rekonštrukciu politickej ľavice
+                        („1968 in Europe: Youth Movements“, n.d.; „Máj 1968 v Paríži“, 2025). V Západnom Nemecku hnutie
+                        zanechalo trvalú stopu vo forme vynúteného kritického prehodnotenia nacistickej minulosti
+                        staršej generácie (tzv. Vergangenheitsbewältigung) a vzostupu ekologického aktivizmu i strany
+                        Zelených („Fenomenológia a politická ekonómia“, n.d.). V Taliansku sa pôvodná študentská vzbura
+                        prepojila s robotníkmi a vyústila do tzv. „horúcej jesene“ (1969 – 1970). Hoci to prinieslo
+                        skrátenie pracovného času a vyššie mzdy, spoločenské otrasy pripravili pôdu pre turbulentné a
+                        násilné „olovené roky“ plné politického terorizmu („Horký podzim“, n.d.). Vo Veľkej Británii
+                        viedli okupácie (ako tá na Hornsey College of Art) k debatám o alternatívnych modeloch v
+                        umeleckom vzdelávaní („50 years ago“, n.d.). V Španielsku, napriek diktatúre, kontinuálny odpor
+                        študentov sťažoval fungovanie Francovho represívneho aparátu a živil snahy o neskoršiu
+                        demokratizáciu (Brown, 2020). V štátoch Beneluxu hnutia typu Provo (v Amsterdame) natrvalo
+                        etablovali libertariánsku kontrakultúru a v Belgicku silný tlak viedol k rozdeleniu univerzít na
+                        základe jazykového kľúča (Klimke & Scharloth, 2008; Pas, 2008).
+                    </p>
+                </div>
+
+                <!-- Graf -->
+                <div class="w-1/3 flex flex-col gap-1">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-red-700">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="16"></line>
+                        </svg>
+                        <h4 class="text-[7px] font-bold uppercase tracking-widest text-stone-900 editable-text"
+                            contenteditable="true">Graf intenzity</h4>
+                    </div>
+                    <div id="chart-upload-container"
+                        class="image-upload-container bg-stone-200 border border-stone-400 flex flex-col items-center justify-center text-stone-500 relative cursor-pointer hover:bg-stone-300 transition-colors group/img shrink-0"
+                        style="width: 100%; height: 90px;">
+                        <input type="file" id="chart-upload-input" class="hidden" accept="image/*"
+                            data-html2canvas-ignore="true">
+                        <span
+                            class="text-[6px] uppercase tracking-widest font-bold opacity-50 pointer-events-none">Vložiť
+                            graf</span>
+                    </div>
+                    <p class="text-[5.5px] text-stone-600 font-serif text-justify leading-tight editable-text mt-0.5"
+                        contenteditable="true">
+                        Odhadovaný počet ľudí. Vrchol v máji (vyše 10 mil.).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Logá a QR kód so zdrojmi -->
+            <div class="border-t border-stone-300 mt-2 pt-2 flex justify-between items-end gap-2 pointer-events-auto">
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-2">
+                        <div id="logo1-upload-container"
+                            class="image-upload-container bg-stone-200 border border-stone-300 flex flex-col items-center justify-center text-stone-500 relative cursor-pointer hover:bg-stone-300 transition-colors group/img shrink-0"
+                            style="width: 32px; height: 32px;">
+                            <input type="file" id="logo1-upload-input" class="hidden" accept="image/*"
+                                data-html2canvas-ignore="true">
+                            <span
+                                class="text-[4px] uppercase tracking-widest font-bold opacity-50 pointer-events-none text-center">Logo</span>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <span
+                                class="text-[5px] font-bold text-stone-500 uppercase tracking-widest editable-text leading-tight"
+                                contenteditable="true">Názov Univerzity</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div id="logo2-upload-container"
+                            class="image-upload-container bg-stone-200 border border-stone-300 flex flex-col items-center justify-center text-stone-500 relative cursor-pointer hover:bg-stone-300 transition-colors group/img shrink-0"
+                            style="width: 32px; height: 32px;">
+                            <input type="file" id="logo2-upload-input" class="hidden" accept="image/*"
+                                data-html2canvas-ignore="true">
+                            <span
+                                class="text-[4px] uppercase tracking-widest font-bold opacity-50 pointer-events-none text-center">Logo</span>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <span
+                                class="text-[5px] font-bold text-stone-500 uppercase tracking-widest editable-text leading-tight"
+                                contenteditable="true">Názov Fakulty</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div id="logo3-upload-container"
+                            class="image-upload-container bg-stone-200 border border-stone-300 flex flex-col items-center justify-center text-stone-500 relative cursor-pointer hover:bg-stone-300 transition-colors group/img shrink-0"
+                            style="width: 32px; height: 32px;">
+                            <input type="file" id="logo3-upload-input" class="hidden" accept="image/*"
+                                data-html2canvas-ignore="true">
+                            <span
+                                class="text-[4px] uppercase tracking-widest font-bold opacity-50 pointer-events-none text-center">Logo</span>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <span
+                                class="text-[5px] font-bold text-stone-500 uppercase tracking-widest editable-text leading-tight"
+                                contenteditable="true">Názov Katedry</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <div class="flex flex-col justify-end text-[5px] text-stone-500 uppercase tracking-widest font-bold text-right editable-text"
+                        contenteditable="true">
+                        <strong>Zdroje a literatúra</strong><br>
+                        Naskenujte QR kód pre<br>kompletný zoznam
+                    </div>
+                    <div id="qr-upload-container"
+                        class="image-upload-container bg-stone-200 border border-stone-400 flex flex-col items-center justify-center text-stone-500 relative cursor-pointer hover:bg-stone-300 transition-colors group/img shrink-0"
+                        style="width: 40px; height: 40px;">
+                        <input type="file" id="qr-upload-input" class="hidden" accept="image/*"
+                            data-html2canvas-ignore="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="opacity-60 group-hover/img:scale-110 transition-transform pointer-events-none">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <rect x="7" y="7" width="3" height="3"></rect>
+                            <rect x="14" y="7" width="3" height="3"></rect>
+                            <rect x="7" y="14" width="3" height="3"></rect>
+                            <rect x="14" y="14" width="3" height="3"></rect>
+                        </svg>
+                        <span
+                            class="text-[4px] uppercase tracking-widest font-bold opacity-50 mt-0.5 pointer-events-none text-center leading-none">Vložiť<br>QR</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript pre logiku Plátna (Canvas) -->
+    <script>
+        const initialEvents = [
+            { id: 1, date: "Začiatok r. 1968", location: "Benelux", title: "Amsterdam a Brusel", description: "Rok 1968 sa v Holandsku niesol v duchu kontrakultúry, kde v Amsterdame boli aktívne subkultúrne hnutia ako Provo, presadzujúce provokatívny prístup voči establišmentu. V Belgicku sa masívne protestovalo za rozdelenie univerzít podľa jazykového kľúča (Leuven) (Klimke & Scharloth, 2008; Pas, 2008).", x: 12, y: 15, w: 140 },
+            { id: 2, date: "14. feb 1968", location: "Francúzsko", title: "Obsadenie Nanterre", description: "Radikálna skupina ľavicových študentov, známa ako Enragés, obsadila študentské internáty na univerzite v Nanterre, čím sa začalo formovať podhubie pre neskoršie celonárodné francúzske protesty („Květen 1968 ve Francii“, n.d.).", x: 35, y: 15, w: 140 },
+            { id: 3, date: "1. mar 1968", location: "Taliansko", title: "Valle Giulia", description: "V Ríme sa odohrala tzv. „bitka o Valle Giulia“, kedy študenti prvýkrát prešli do tvrdej násilnej ofenzívy proti polícii. Talianske hnutie „Sessantotto“ sa rýchlo rozšírilo do Ríma, Milána a postupne do celého Talianska („1968 movement in Italy“, n.d.; „Battle of Valle Giulia“, n.d.).", x: 58, y: 15, w: 140 },
+            { id: 4, date: "17. mar 1968", location: "Veľká Británia", title: "Grosvenor Square", description: "Protesty v Londýne boli síce miernejšie, no zahŕňali masové demonštrácie proti vojne vo Vietname. Najznámejšia sa konala pred americkou ambasádou na Grosvenor Square a vyústila do násilných zrážok a zatýkania („Fenomenológia a politická ekonómia“, n.d.; „Protests of 1968“, n.d.).", x: 81, y: 15, w: 140 },
+            { id: 5, date: "22. mar 1968", location: "Francúzsko", title: "Hnutie 22. marca", description: "V reakcii na rastúce napätie sa na fakulte v Nanterre sformovalo „Hnutie 22. marca“, na čele ktorého stál Daniel Cohn-Bendit. Univerzita sa tak stala počiatočným ohniskom celoštátneho napätia („Máj 1968 v Paríži“, n.d.).", x: 88, y: 32, w: 140 },
+            { id: 6, date: "Jar 1968", location: "Španielsko", title: "Protesty proti Francovi", description: "Obdobie jari a celého roka 1968 bolo poznačené masovými protestmi. Napriek tvrdej diktatúre generála Franca študenti neustále demonštrovali za demokratizáciu a zmeny, čelili pri tom tvrdým štátnym represiám a zatýkaniu (Brown, 2020; Klimke & Scharloth, 2008).", x: 75, y: 50, w: 140 },
+            { id: 7, date: "11. apr 1968", location: "Záp. Nemecko", title: "Atentát na Dutschkeho", description: "Pravicový radikál spáchal atentát na lídra Rudiho Dutschkeho. Významný impulz k radikalizácii a masovým nepokojom. Študenti protestovali najmä proti tzv. núdzovým zákonom a vplyvu bývalých nacistov v štátnej správe („Fenomenológia a politická ekonómia“, n.d.; „Rudi Dutschke – Wikipédia“, n.d.).", x: 50, y: 50, w: 140 },
+            { id: 8, date: "2.–3. máj 1968", location: "Francúzsko", title: "Epicentrum v Paríži", description: "Po úradnom uzavretí univerzity v Nanterre sa agitácia presunula a epicentrom sa stal priamo Paríž. Študenti obsadili Sorbonnu a následný tvrdý policajný zásah vyvolal masový odpor v uliciach („Květen 1968 ve Francii“, n.d.).", x: 25, y: 50, w: 140 },
+            { id: 9, date: "10.–11. máj 1968", location: "Francúzsko", title: "Noc barikád", description: "Nepokoje sa plne presunuli do Latinskej štvrte v Paríži, kde prebehla legendárna „noc barikád“. Desaťtisíce študentov a ich sympatizantov zvádzali tvrdé pouličné boje proti bezpečnostným zložkám („Fenomenológia a politická ekonómia“, n.d.; „Máj 1968 v Paríži“, n.d.).", x: 12, y: 67, w: 140 },
+            { id: 10, date: "13. máj – Jún", location: "Francúzsko", title: "Generálny štrajk", description: "Vlna solidarity so študentmi vyústila do generálneho štrajku približne 10 miliónov pracovníkov. Celonárodná paralýza a zastavenie výroby takmer viedli k pádu de Gaullovej vlády (Takáč, 2018).", x: 30, y: 85, w: 140 },
+            { id: 11, date: "28. máj 1968", location: "Veľká Británia", title: "Hornsey College", description: "Okrem protivojnových akcií zahŕňalo britské hnutie aj okupácie univerzít. Začala sa kľúčová šesťtýždňová okupácia inštitúcie Hornsey College of Art v Londýne, ktorú študenti prevzali pod vlastnú správu, aby nastolili alternatívny model vzdelávania („50 years ago“, n.d.; „Hornsey College of Art“, n.d.).", x: 55, y: 85, w: 140 },
+            { id: 12, date: "Jeseň 1968", location: "Taliansko", title: "Horúca jeseň", description: "Talianske študentské hnutie plynule rástlo počas celého roka a do jesene 1968 vytvorilo silné spojenectvo s robotníckym hnutím. Odštartovali tak obdobie, ktoré neskôr kulminovalo do masívnych štrajkov počas tzv. horúcej jesene (Autunno caldo) („Fenomenológia a politická ekonómia“, n.d.; „Horký podzim“, n.d.).", x: 80, y: 85, w: 140 }
+        ];
+
+        // Predvolené symboly na pozadí
+        const initialSymbols = [
+            { id: 1, type: 'peace', x: 15, y: 25, w: 100 },
+            { id: 2, type: 'banner', x: 70, y: 12, w: 160, text: "SOYEZ RÉALISTES,<br>DEMANDEZ L'IMPOSSIBLE" },
+            { id: 3, type: 'megaphone', x: 82, y: 62, w: 80 },
+            { id: 4, type: 'peace', x: 8, y: 75, w: 120 }
+        ];
+
+        const container = document.getElementById('cards-container');
+        const symbolsContainer = document.getElementById('symbols-container');
+        let cardCounter = 100;
+        let symbolCounter = 500;
+        let zIndexCounter = 30;
+        let symbolZIndexCounter = 5;
+
+        // Logika pre Nástrojový panel
+        const toolsPanel = document.getElementById('tools-panel');
+        const hideToolsBtn = document.getElementById('hide-tools-btn');
+        const showToolsBtn = document.getElementById('show-tools-btn');
+
+        hideToolsBtn.addEventListener('click', () => {
+            toolsPanel.classList.add('hidden');
+            showToolsBtn.classList.remove('hidden');
+        });
+
+        showToolsBtn.addEventListener('click', () => {
+            toolsPanel.classList.remove('hidden');
+            showToolsBtn.classList.add('hidden');
+        });
+
+        // Prepínanie vrstvy (Do popredia) pre symboly
+        document.getElementById('bring-symbols-front').addEventListener('change', function (e) {
+            if (e.target.checked) {
+                symbolsContainer.style.zIndex = "50"; // Hodí symboly úplne navrch
+            } else {
+                symbolsContainer.style.zIndex = "5";  // Vráti symboly do pozadia pod kartičky
+            }
+        });
+
+        function handleImageUpload(container, input) {
+            input.addEventListener('change', function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        container.style.backgroundImage = `url(${event.target.result})`;
+                        container.style.backgroundSize = 'cover';
+                        container.style.backgroundPosition = 'center';
+                        container.style.backgroundRepeat = 'no-repeat';
+                        Array.from(container.children).forEach(child => {
+                            if (child.tagName !== 'INPUT') child.style.display = 'none';
+                        });
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+            container.addEventListener('click', (e) => {
+                // Aby sa neotváral výber súboru, keď používateľ len mení veľkosť obrázka (klik na roh)
+                const rect = container.getBoundingClientRect();
+                const isResizeHandle = (e.clientX > rect.right - 20) && (e.clientY > rect.bottom - 20);
+                if (!isResizeHandle) {
+                    input.click();
+                }
+            });
+        }
+
+        // Inicializácia plagátu
+        function init() {
+            initialEvents.forEach(evt => createCard(evt));
+            initialSymbols.forEach(sym => createSymbol(sym));
+
+            handleImageUpload(document.getElementById('map-upload-container'), document.getElementById('map-upload-input'));
+            handleImageUpload(document.getElementById('chart-upload-container'), document.getElementById('chart-upload-input'));
+            handleImageUpload(document.getElementById('qr-upload-container'), document.getElementById('qr-upload-input'));
+            handleImageUpload(document.getElementById('logo1-upload-container'), document.getElementById('logo1-upload-input'));
+            handleImageUpload(document.getElementById('logo2-upload-container'), document.getElementById('logo2-upload-input'));
+            handleImageUpload(document.getElementById('logo3-upload-container'), document.getElementById('logo3-upload-input'));
+        }
+
+        /* --- SYMBOLY NA POZADIE --- */
+        function createSymbol(data) {
+            const sym = document.createElement('div');
+            // Pridané pointer-events-auto a cursor-move
+            sym.className = "symbol-wrapper absolute group flex flex-col pointer-events-auto cursor-move";
+            sym.style.left = data.x + '%';
+            sym.style.top = data.y + '%';
+            sym.style.zIndex = symbolZIndexCounter++;
+            sym.dataset.type = data.type;
+
+            let contentHtml = '';
+            let defaultWidth = data.w || 80;
+
+            if (data.type === 'peace') {
+                contentHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-stone-900 opacity-20 pointer-events-none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="12" y1="12" x2="5" y2="19"></line><line x1="12" y1="12" x2="19" y2="19"></line></svg>`;
+            } else if (data.type === 'megaphone') {
+                contentHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-stone-900 opacity-20 pointer-events-none"><path d="m3 11 18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>`;
+            } else if (data.type === 'anarchy') {
+                contentHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-stone-900 opacity-20 pointer-events-none"><circle cx="12" cy="12" r="10"></circle><path d="M12 2l-7 18M12 2l7 18M6 14h12"></path></svg>`;
+            } else if (data.type === 'star') {
+                contentHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-stone-900 opacity-20 pointer-events-none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+            } else if (data.type === 'flame') {
+                contentHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-stone-900 opacity-20 pointer-events-none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
+            } else if (data.type === 'bomb') {
+                contentHtml = `<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="text-stone-900 opacity-20 pointer-events-none"><circle cx="11" cy="13" r="9"></circle><path d="M14.35 4.65 16.3 2.7a2.41 2.41 0 0 1 3.4 0l1.6 1.6a2.4 2.4 0 0 1 0 3.4l-1.95 1.95M22 2l-1.5 1.5"></path></svg>`;
+            } else if (data.type === 'banner') {
+                defaultWidth = data.w || 150;
+                contentHtml = `<div class="w-full h-full border-[3px] border-stone-800 p-2 text-stone-800 font-black text-[12px] uppercase leading-tight flex items-center justify-center text-center opacity-30 editable-text" contenteditable="true" style="background-color: #F4F1EA; cursor: text;">${data.text || "ZÁKAZ ZAKAZOVAŤ!"}</div>`;
+            } else if (data.type === 'custom') {
+                contentHtml = data.html;
+            }
+
+            sym.innerHTML = `
+                <div class="drag-handle absolute -top-4 left-0 right-0 h-4 bg-stone-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex justify-end items-center px-1 z-30" data-html2canvas-ignore="true">
+                    <button class="delete-btn text-red-700 hover:text-red-900 text-[10px] font-bold leading-none px-1 rounded cursor-pointer">&times;</button>
+                </div>
+                <div class="symbol-content w-full h-full flex-1" style="width: ${defaultWidth}px; ${data.h ? `height: ${data.h}px;` : ''}">
+                    ${contentHtml}
+                </div>
+            `;
+
+            symbolsContainer.appendChild(sym);
+            setupDraggable(sym, true);
+
+            sym.querySelector('.delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                sym.remove();
+            });
+        }
+
+        // Tlačidlá pre pridanie symbolov
+        window.addSymbol = function (type) {
+            symbolCounter++;
+            createSymbol({ id: symbolCounter, type: type, x: 40, y: 40 });
+        };
+
+        /* --- KARTIČKY --- */
+        function createCard(data) {
+            const card = document.createElement('div');
+            card.className = "card-container absolute bg-[#F4F1EA]/95 backdrop-blur-sm border border-stone-300 shadow-md p-2 group flex flex-col pointer-events-auto";
+            card.style.left = data.x + '%';
+            card.style.top = data.y + '%';
+            card.style.width = (data.w || 140) + 'px';
+            if (data.h) card.style.height = data.h + 'px';
+            card.style.zIndex = zIndexCounter++;
+
+            card.innerHTML = `
+                <div class="absolute -left-1.5 -top-1.5 w-3 h-3 bg-stone-900 rounded-full border-[2px] border-[#F4F1EA] shadow-sm z-20" data-html2canvas-ignore="true"></div>
+                
+                <div class="drag-handle absolute top-0 left-0 right-0 h-4 bg-red-700/10 cursor-move opacity-0 group-hover:opacity-100 transition-opacity flex justify-between items-center px-1 z-30" data-html2canvas-ignore="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-stone-500 pointer-events-none"><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+                    <button class="delete-btn text-red-600 hover:text-red-800 text-[10px] font-bold leading-none px-1 rounded cursor-pointer">&times;</button>
+                </div>
+
+                <div class="mt-2 h-full flex flex-col flex-1">
+                    <div class="image-upload-container mb-1.5 bg-stone-300 border border-stone-400 flex flex-col items-center justify-center text-stone-500 shrink-0 cursor-pointer hover:bg-stone-200 transition-colors relative group/img" style="width: ${data.imgW || '100%'}; height: ${data.imgH || '80px'};">
+                        <input type="file" class="hidden" accept="image/*" data-html2canvas-ignore="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-60 group-hover/img:scale-110 transition-transform pointer-events-none"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                        <span class="text-[5px] uppercase tracking-widest font-bold opacity-50 mt-1 pointer-events-none">Fotka</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-start mb-1 border-b border-stone-300 pb-0.5 gap-2 shrink-0">
+                        <span class="text-red-700 font-black text-[7px] tracking-wider editable-text card-date leading-normal cursor-text" contenteditable="true">${data.date}</span>
+                        <span class="text-stone-500 font-bold text-[5px] uppercase tracking-widest editable-text card-location text-right leading-normal cursor-text" contenteditable="true">${data.location}</span>
+                    </div>
+                    
+                    <h3 class="text-[8.5px] font-bold uppercase leading-normal mb-1 text-stone-900 editable-text card-title shrink-0 cursor-text" contenteditable="true">${data.title}</h3>
+                    <p class="text-[5.5px] font-serif leading-normal text-stone-700 text-justify editable-text card-desc flex-1 cursor-text" contenteditable="true">${data.description || data.desc}</p>
+                </div>
+            `;
+
+            container.appendChild(card);
+            setupDraggable(card, false);
+
+            const imgContainer = card.querySelector('.image-upload-container');
+            if (data.img && data.img !== 'none') {
+                imgContainer.style.backgroundImage = data.img;
+                imgContainer.style.backgroundSize = 'cover';
+                imgContainer.style.backgroundPosition = 'center';
+                Array.from(imgContainer.children).forEach(child => { if (child.tagName !== 'INPUT') child.style.display = 'none'; });
+            } else {
+                handleImageUpload(imgContainer, imgContainer.querySelector('input[type="file"]'));
+            }
+
+            card.querySelector('.delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                card.remove();
+            });
+        }
+
+        document.getElementById('add-card-btn').addEventListener('click', () => {
+            cardCounter++;
+            createCard({
+                id: cardCounter, date: "Dátum", location: "Miesto", title: "Nová udalosť", description: "Tu napíšte popis...",
+                x: 40, y: 40, w: 140
+            });
+        });
+
+        // Logika posúvania (spoločná pre Karty aj Symboly)
+        function setupDraggable(element, isSymbol) {
+            // Ak je to symbol, chceme chytať celé telo. Ak kartička, tak len vrchnú lištu (drag-handle)
+            const dragTarget = isSymbol ? element : element.querySelector('.drag-handle');
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+            dragTarget.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                // Ak sme klikli na tlačidlo X, na text (editable), alebo na vkladanie obrázka, tak len klikni a nedraguj
+                if (e.target.closest('.delete-btn') || e.target.closest('.editable-text') || e.target.closest('input')) {
+                    return;
+                }
+
+                // Ak sme na symbole, neblokujme mu funkciu na zmenu veľkosti v pravom dolnom rohu (20x20 pixelov)
+                if (isSymbol) {
+                    const contentNode = element.querySelector('.symbol-content');
+                    if (contentNode) {
+                        const rect = contentNode.getBoundingClientRect();
+                        if (e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20) {
+                            return;
+                        }
+                    }
+                }
+
+                e.preventDefault();
+                element.style.zIndex = isSymbol ? symbolZIndexCounter++ : zIndexCounter++;
+
+                // Uložíme si počiatočnú pozíciu myši a objektu
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = parseFloat(element.style.left) || 0;
+                startTop = parseFloat(element.style.top) || 0;
+
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                document.body.style.cursor = 'move';
+                element.classList.add('no-select');
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+
+                // Vypočítame fyzický posun myši
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                // Zistíme presné fyzické rozmery plagátu na aktuálnej obrazovke
+                const poster = document.getElementById('poster');
+                const rect = poster.getBoundingClientRect();
+
+                // Prepočítame posun myši na percentá šírky/výšky plagátu
+                let newLeft = startLeft + (dx / rect.width) * 100;
+                let newTop = startTop + (dy / rect.height) * 100;
+
+                // Jemné obmedzenie pre karty, aby nevyšli mimo plagátu
+                if (!isSymbol) {
+                    if (newTop < 0) newTop = 0;
+                    if (newLeft < 0) newLeft = 0;
+                    if (newTop > 95) newTop = 95;
+                    if (newLeft > 95) newLeft = 95;
+                }
+
+                element.style.top = newTop + "%";
+                element.style.left = newLeft + "%";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.body.style.cursor = 'default';
+                element.classList.remove('no-select');
+            }
+        }
+
+        /* --- ZÁLOHOVANIE (JSON Export / Import) --- */
+        document.getElementById('save-json-btn').addEventListener('click', () => {
+            const getImgData = (id) => {
+                const el = document.getElementById(id);
+                return { url: el.style.backgroundImage, w: el.style.width, h: el.style.height };
+            };
+
+            const backup = {
+                texts: Array.from(document.querySelectorAll('#poster .editable-text:not(.card-date):not(.card-location):not(.card-title):not(.card-desc):not(.symbol-content .editable-text)')).map(el => el.innerHTML),
+                images: {
+                    map: getImgData('map-upload-container'),
+                    chart: getImgData('chart-upload-container'),
+                    logo1: getImgData('logo1-upload-container'),
+                    logo2: getImgData('logo2-upload-container'),
+                    logo3: getImgData('logo3-upload-container'),
+                    qr: getImgData('qr-upload-container'),
+                },
+                cards: Array.from(document.querySelectorAll('.card-container')).map(card => {
+                    const imgContainer = card.querySelector('.image-upload-container');
+                    return {
+                        left: card.style.left,
+                        top: card.style.top,
+                        width: card.style.width,
+                        height: card.style.height,
+                        date: card.querySelector('.card-date').innerHTML,
+                        location: card.querySelector('.card-location').innerHTML,
+                        title: card.querySelector('.card-title').innerHTML,
+                        desc: card.querySelector('.card-desc').innerHTML,
+                        img: imgContainer.style.backgroundImage,
+                        imgW: imgContainer.style.width,
+                        imgH: imgContainer.style.height
+                    };
+                }),
+                symbols: Array.from(document.querySelectorAll('.symbol-wrapper')).map(sym => ({
+                    left: sym.style.left,
+                    top: sym.style.top,
+                    type: 'custom',
+                    html: sym.querySelector('.symbol-content').innerHTML,
+                    width: sym.querySelector('.symbol-content').style.width,
+                    height: sym.querySelector('.symbol-content').style.height
+                }))
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "Plagat1968_Zaloha.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        });
+
+        document.getElementById('load-json-btn').addEventListener('click', () => document.getElementById('load-json-input').click());
+
+        document.getElementById('load-json-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                try {
+                    const backup = JSON.parse(event.target.result);
+                    // 1. Obnova textov
+                    const textEls = document.querySelectorAll('#poster .editable-text:not(.card-date):not(.card-location):not(.card-title):not(.card-desc):not(.symbol-content .editable-text)');
+                    if (backup.texts) backup.texts.forEach((text, i) => { if (textEls[i]) textEls[i].innerHTML = text; });
+
+                    // 2. Obnova statických obrázkov a ich veľkostí
+                    const applyImg = (id, imgData) => {
+                        if (!imgData) return;
+                        const el = document.getElementById(id);
+                        if (el) {
+                            if (typeof imgData === 'string') {
+                                if (imgData === 'none') return;
+                                el.style.backgroundImage = imgData;
+                            } else {
+                                if (!imgData.url || imgData.url === 'none') return;
+                                el.style.backgroundImage = imgData.url;
+                                if (imgData.w) el.style.width = imgData.w;
+                                if (imgData.h) el.style.height = imgData.h;
+                            }
+                            el.style.backgroundSize = 'cover';
+                            el.style.backgroundPosition = 'center';
+                            Array.from(el.children).forEach(child => { if (child.tagName !== 'INPUT') child.style.display = 'none'; });
+                        }
+                    };
+                    if (backup.images) {
+                        applyImg('map-upload-container', backup.images.map);
+                        applyImg('chart-upload-container', backup.images.chart);
+                        applyImg('logo1-upload-container', backup.images.logo1);
+                        applyImg('logo2-upload-container', backup.images.logo2);
+                        applyImg('logo3-upload-container', backup.images.logo3);
+                        applyImg('qr-upload-container', backup.images.qr);
+                    }
+
+                    // 3. Obnova kartičiek a veľkostí ich obrázkov
+                    if (backup.cards) {
+                        container.innerHTML = '';
+                        backup.cards.forEach(c => {
+                            createCard({
+                                id: ++cardCounter, x: parseFloat(c.left), y: parseFloat(c.top),
+                                w: parseFloat(c.width), h: parseFloat(c.height),
+                                date: c.date, location: c.location, title: c.title, desc: c.desc,
+                                img: c.img, imgW: c.imgW, imgH: c.imgH
+                            });
+                        });
+                    }
+
+                    // 4. Obnova symbolov
+                    if (backup.symbols) {
+                        symbolsContainer.innerHTML = '';
+                        backup.symbols.forEach(s => {
+                            createSymbol({
+                                id: ++symbolCounter, type: s.type, html: s.html,
+                                x: parseFloat(s.left), y: parseFloat(s.top),
+                                w: parseFloat(s.width), h: parseFloat(s.height)
+                            });
+                        });
+                    }
+                } catch (err) {
+                    alert('Chyba pri načítaní zálohy: neplatný formát súboru.');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        /* --- EXPORT DO PDF (Formát A1) --- */
+        document.getElementById('download-pdf-btn').addEventListener('click', () => {
+            const btn = document.getElementById('download-pdf-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Generujem A1 PDF... (počkajte)';
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            setTimeout(() => {
+                const element = document.getElementById('poster');
+
+                html2canvas(element, {
+                    scale: 4,
+                    useCORS: true,
+                    logging: false
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a1');
+
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                    pdf.save('Plagat_1968_A1.pdf');
+
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }).catch(err => {
+                    console.error('PDF Export Error: ', err);
+                    alert('Chyba pri generovaní PDF. Skúste to znova.');
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+            }, 100);
+        });
+
+        init();
+    </script>
+</body>
+
+</html>
