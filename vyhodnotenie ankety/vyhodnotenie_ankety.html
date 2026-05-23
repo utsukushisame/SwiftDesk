@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vyhodnotenie ankety: Patrí Ukrajina do EÚ?</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse for CSV processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Premium Data-URI SVG Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%230f172a'/%3E%3Cstop offset='50%25' stop-color='%231e3a8a'/%3E%3Cstop offset='100%25' stop-color='%231d4ed8'/%3E%3C/linearGradient%3E%3Cg id='star'%3E%3Cpolygon points='0,-2.6 0.8,-0.8 2.6,-0.8 1.1,0.4 1.7,2.2 0,1.2 -1.7,2.2 -1.1,0.4 -2.6,-0.8 -0.8,-0.8' fill='%23facc15'/%3E%3C/g%3E%3ClinearGradient id='gold' x1='0%25' y1='100%25' x2='0%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23eab308'/%3E%3Cstop offset='100%25' stop-color='%23facc15'/%3E%3C/linearGradient%3E%3ClinearGradient id='cyan' x1='0%25' y1='100%25' x2='0%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%2306b6d4'/%3E%3Cstop offset='100%25' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3ClinearGradient id='emerald' x1='0%25' y1='100%25' x2='0%25' y2='0%25'%3E%3Cstop offset='0%25' stop-color='%23059669'/%3E%3Cstop offset='100%25' stop-color='%2334d399'/%3E%3C/linearGradient%3E%3Cfilter id='shadow' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeDropShadow dx='0' dy='1.5' stdDeviation='1.5' flood-color='%23000000' flood-opacity='0.4'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' rx='28' fill='url(%23bg)'/%3E%3Crect x='2.5' y='2.5' width='95' height='95' rx='25.5' fill='none' stroke='%233b82f6' stroke-width='1.5' stroke-opacity='0.6'/%3E%3Cuse href='%23star' x='50' y='13'/%3E%3Cuse href='%23star' x='68.5' y='18'/%3E%3Cuse href='%23star' x='82' y='31.5'/%3E%3Cuse href='%23star' x='87' y='50'/%3E%3Cuse href='%23star' x='82' y='68.5'/%3E%3Cuse href='%23star' x='68.5' y='82'/%3E%3Cuse href='%23star' x='50' y='87'/%3E%3Cuse href='%23star' x='31.5' y='82'/%3E%3Cuse href='%23star' x='18' y='68.5'/%3E%3Cuse href='%23star' x='13' y='50'/%3E%3Cuse href='%23star' x='18' y='31.5'/%3E%3Cuse href='%23star' x='31.5' y='18'/%3E%3Cg filter='url(%23shadow)'%3E%3Crect x='35' y='44' width='8' height='24' rx='3.5' fill='url(%23gold)'/%3E%3Crect x='46' y='32' width='8' height='36' rx='3.5' fill='url(%23cyan)'/%3E%3Crect x='57' y='38' width='8' height='30' rx='3.5' fill='url(%23emerald)'/%3E%3Ccircle cx='39' cy='40.5' r='1.5' fill='%23ffd700' opacity='0.8'/%3E%3Ccircle cx='50' cy='28.5' r='1.5' fill='%2322d3ee' opacity='0.8'/%3E%3Ccircle cx='61' cy='34.5' r='1.5' fill='%2334d399' opacity='0.8'/%3E%3C/g%3E%3C/svg%3E">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1d4ed8',
+                        sentiment: {
+                            1: '#22c55e', // Jednoznačne podporujem (Zelená)
+                            2: '#86efac', // Skôr podporujem (Svetlo zelená)
+                            3: '#eab308', // Neviem (Žltá)
+                            4: '#fca5a5', // Skôr som proti (Svetlo červená)
+                            5: '#ef4444'  // Jednoznačne som proti (Červená)
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header & File Upload -->
+        <header class="bg-white rounded-2xl shadow-sm p-6 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">
+                    <i class="fa-solid fa-chart-pie text-blue-600"></i>
+                    Výsledky ankety: Patrí Ukrajina do EÚ?
+                </h1>
+                <p class="text-slate-500 mt-1">Interaktívny prehľad odpovedí respondentov</p>
+            </div>
+            
+            <div class="relative">
+                <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
+                <label for="csvFileInput" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg shadow cursor-pointer transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-upload"></i>
+                    Nahrať vlastný CSV súbor
+                </label>
+            </div>
+        </header>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden text-center py-12">
+            <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+            <p class="text-lg text-slate-600">Spracovávam dáta...</p>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboard" class="space-y-6">
+            
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Total Respondents -->
+                <div onclick="openModal('respondentsModal')" class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex items-center gap-4 cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all group">
+                    <div class="w-14 h-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                            Celkový počet respondentov
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </p>
+                        <h3 class="text-3xl font-bold text-slate-900" id="stat-total">-</h3>
+                    </div>
+                </div>
+                
+                <!-- Card 2: Average Age -->
+                <div onclick="openModal('ageModal')" class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex items-center gap-4 cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all group">
+                    <div class="w-14 h-14 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-2xl group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-cake-candles"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                            Priemerný vek
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </p>
+                        <h3 class="text-3xl font-bold text-slate-900" id="stat-age">-</h3>
+                    </div>
+                </div>
+
+                <!-- Card 3: Top Location -->
+                <div onclick="openModal('locationModal')" class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 flex items-center gap-4 cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all group">
+                    <div class="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                        <i class="fa-solid fa-location-dot"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                            Najčastejšie miesto
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </p>
+                        <h3 class="text-xl font-bold text-slate-900 truncate" id="stat-location">-</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Sentiment Chart -->
+                <div onclick="openSentimentModal()" class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 cursor-pointer hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all group">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center justify-between">
+                        <span>Ako vnímate možný vstup Ukrajiny do EÚ?</span>
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                            Podrobnosti
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </span>
+                    </h3>
+                    <div class="relative h-72 w-full flex justify-center">
+                        <canvas id="sentimentChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gender Chart -->
+                <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Rozdelenie podľa pohlavia</h3>
+                    <div class="relative h-72 w-full flex justify-center">
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Age Distribution Bar Chart -->
+                <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 lg:col-span-2">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Vekové rozloženie respondentov</h3>
+                    <div class="relative h-72 w-full">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Comments List -->
+                <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 lg:col-span-1 flex flex-col h-full">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2 w-full">
+                        <span>Vybrané odpovede</span>
+                        <span class="text-xs font-normal bg-slate-100 px-2 py-1 rounded text-slate-500" id="comments-count">0</span>
+                        <button onclick="openAllCommentsModal()" class="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors ml-auto flex items-center gap-1 hover:underline">
+                            Zobraziť všetky
+                            <i class="fa-solid fa-expand text-[10px]"></i>
+                        </button>
+                    </h3>
+                    <div class="overflow-y-auto custom-scrollbar flex-1 pr-2 space-y-3" id="comments-container" style="max-height: 288px;">
+                        <!-- Comments will be injected here -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL 1: CELKOVÝ POČET RESPONDENTOV (Analýza slov) -->
+    <div id="respondentsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick="closeModal('respondentsModal')">
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-all duration-300 relative border border-slate-100" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-file-word text-blue-600"></i>
+                        Analýza slov a komentárov respondentov
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Frekvencia výrazov použitých vo vlastných slovách respondentov</p>
+                </div>
+                <button onclick="closeModal('respondentsModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <!-- Controls -->
+            <div class="p-6 pb-2 border-b border-slate-100 bg-slate-50/20 grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Typ analýzy</label>
+                    <select id="wordAnalysisType" onchange="updateWordCloud()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="single">Jednotlivé slová</option>
+                        <option value="phrase">Slovné spojenia (2 slová)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pohlavie</label>
+                    <select id="wordGenderFilter" onchange="updateWordCloud()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Všetci</option>
+                        <option value="male">Muži</option>
+                        <option value="female">Ženy</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Úroveň podpory</label>
+                    <select id="wordSentimentFilter" onchange="updateWordCloud()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Všetky úrovne podpory</option>
+                        <option value="Jednoznačne podporujem">Jednoznačne podporujem</option>
+                        <option value="Skôr podporujem">Skôr podporujem</option>
+                        <option value="Neviem / nemám názor">Neviem / nemám názor</option>
+                        <option value="Skôr som proti">Skôr som proti</option>
+                        <option value="Jednoznačne som proti">Jednoznačne som proti</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Zoradenie zoznamu</label>
+                    <select id="wordSortFilter" onchange="updateWordCloud()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="freq">Najčastejšie (Frekvencia)</option>
+                        <option value="alpha">Abecedne</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Hidden Words Row -->
+            <div id="hiddenWordsContainer" class="px-6 py-2 border-b border-slate-100 bg-slate-50/10 flex flex-wrap gap-2 items-center hidden">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Skryté slová (kliknutím vrátiš):</span>
+                <!-- Hidden word badges will be injected here -->
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar max-h-[60vh] space-y-6">
+                <!-- Word Cloud and List Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left side: Word Badge Cloud -->
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+                            <i class="fa-solid fa-cloud text-blue-500"></i>
+                            Slovný mrak (Word Cloud)
+                        </h4>
+                        <div id="wordCloudContainer" class="border border-slate-100 rounded-xl p-4 min-h-[250px] bg-slate-50/50 flex flex-wrap gap-2 items-center justify-center content-center select-none">
+                            <!-- Word cloud will be rendered here -->
+                        </div>
+                    </div>
+                    <!-- Right side: Frequency bar list -->
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-ol text-blue-500"></i>
+                            Frekvenčný zoznam
+                        </h4>
+                        <div id="wordListContainer" class="space-y-2 border border-slate-100 rounded-xl p-4 bg-slate-50/50 min-h-[250px] max-h-[300px] overflow-y-auto custom-scrollbar">
+                            <!-- Frequency list will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word Statistics Section -->
+                <div class="border-t border-slate-100 pt-6">
+                    <h4 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-bar text-blue-500"></i>
+                        Štatistiky a graf frekvencie slov (Top 10)
+                    </h4>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Stats numbers -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100/50 flex flex-col justify-center gap-3">
+                            <div>
+                                <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Celkový počet slov</span>
+                                <span id="wordStatsTotal" class="text-2xl font-bold text-slate-800">-</span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Unikátne slová</span>
+                                <span id="wordStatsUnique" class="text-2xl font-bold text-slate-800">-</span>
+                            </div>
+                              <div>
+                                <span class="text-xs text-slate-400 block font-semibold uppercase tracking-wider">Priemerná dĺžka slova</span>
+                                <span id="wordStatsAvgLen" class="text-2xl font-bold text-slate-800">-</span>
+                            </div>
+                        </div>
+                        <!-- Canvas chart -->
+                        <div class="lg:col-span-2 relative h-48">
+                            <canvas id="modalWordChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 italic flex justify-between items-center">
+                <span>* Slová sú vyčistené o bežné predložky a spojky. Zobrazujú sa len výrazy s dĺžkou aspoň 3 znaky.</span>
+                <button onclick="closeModal('respondentsModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-1.5 rounded-lg transition-colors">
+                    Zatvoriť
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: PRIEMERNÝ VEK (Vekové štatistiky podpory) -->
+    <div id="ageModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick="closeModal('ageModal')">
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-all duration-300 relative border border-slate-100" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-purple-600"></i>
+                        Štatistika podpory podľa veku a pohlavia
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Analýza názorov v jednotlivých vekových skupinách</p>
+                </div>
+                <button onclick="closeModal('ageModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <!-- Controls -->
+            <div class="p-6 pb-2 border-b border-slate-100 bg-slate-50/20 flex gap-4">
+                <div class="w-full max-w-xs">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pohlavie</label>
+                    <select id="ageGenderFilter" onchange="updateAgeModalChart()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Všetci</option>
+                        <option value="male">Muži</option>
+                        <option value="female">Ženy</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar flex flex-col justify-center max-h-[55vh]">
+                <div class="relative h-80 w-full">
+                    <canvas id="modalAgeChart"></canvas>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('ageModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-1.5 rounded-lg transition-colors">
+                    Zatvoriť
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: NAJČASTEJŠIE MIESTO (Distribúcia názorov v mestách) -->
+    <div id="locationModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick="closeModal('locationModal')">
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-all duration-300 relative border border-slate-100" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-emerald-600"></i>
+                        Rozdelenie názorov podľa miest a obcí
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Analýza odpovedí na základe geografického miesta respondenta</p>
+                </div>
+                <button onclick="closeModal('locationModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <!-- Controls -->
+            <div class="p-6 pb-2 border-b border-slate-100 bg-slate-50/20 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+                <div class="w-full max-w-xs">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Minimálny počet odpovedí</label>
+                    <select id="locMinCount" onchange="updateLocationModalChart()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="1">Všetky mestá (aspoň 1 odpoveď)</option>
+                        <option value="2">Zobraziť len mestá s aspoň 2 odpoveďami</option>
+                        <option value="3">Zobraziť len mestá s aspoň 3 odpoveďami</option>
+                    </select>
+                </div>
+                <div class="w-full max-w-xs">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Zobrazenie názorov v grafe</label>
+                    <select id="locSentimentGroup" onchange="updateLocationModalChart()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="aggregated">Zlúčené názory (3 hlavné skupiny)</option>
+                        <option value="detailed">Detailné názory (5 špecifických skupín)</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar max-h-[55vh]">
+                <div class="relative min-h-[320px] w-full" id="modalLocationChartContainer">
+                    <canvas id="modalLocationChart"></canvas>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('locationModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-1.5 rounded-lg transition-colors">
+                    Zatvoriť
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: DETAIL KOMENTÁRA (Zväčšená odpoveď) -->
+    <div id="commentDetailsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onclick="closeModal('commentDetailsModal')">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col transform scale-95 transition-all duration-300 relative border border-slate-100" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-quote-left text-blue-600"></i>
+                    Detail odpovede respondenta
+                </h3>
+                <button onclick="closeModal('commentDetailsModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <!-- Body -->
+            <div class="p-8 space-y-6">
+                <!-- Large Quote Text -->
+                <div class="relative">
+                    <span class="text-6xl text-slate-200 font-serif absolute -top-6 -left-4 select-none">“</span>
+                    <p id="detailCommentText" class="text-xl md:text-2xl text-slate-800 italic leading-relaxed relative z-10 pl-4 font-serif">
+                        <!-- Text will be injected here -->
+                    </p>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-slate-100 pt-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Informácie o respondentovi</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100/50">
+                            <span class="text-xs text-slate-400 block font-medium">Pohlavie</span>
+                            <span id="detailCommentGender" class="text-sm font-semibold text-slate-700">-</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100/50">
+                            <span class="text-xs text-slate-400 block font-medium">Vek</span>
+                            <span id="detailCommentAge" class="text-sm font-semibold text-slate-700">-</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100/50">
+                            <span class="text-xs text-slate-400 block font-medium">Lokalita (Miesto)</span>
+                            <span id="detailCommentLocation" class="text-sm font-semibold text-slate-700 truncate">-</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100/50">
+                            <span class="text-xs text-slate-400 block font-medium">Názor na vstup</span>
+                            <span id="detailCommentSentiment" class="text-sm font-semibold text-slate-700">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes Section if present -->
+                <div id="detailCommentNoteContainer" class="hidden bg-yellow-50/50 border border-yellow-100 p-4 rounded-xl">
+                    <span class="text-xs text-yellow-600 font-bold block uppercase tracking-wider mb-1">Poznámka o respondentovi</span>
+                    <p id="detailCommentNote" class="text-sm text-yellow-800 italic"></p>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('commentDetailsModal')" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-xl shadow-sm transition-colors">
+                    Zatvoriť
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: PREHLIADAČ VŠETKÝCH ODPOVEDÍ (Kompletný prieskumník) -->
+    <div id="allCommentsModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick="closeModal('allCommentsModal')">
+        <div class="bg-white w-full max-w-5xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-all duration-300 relative border border-slate-100" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-comments text-blue-600"></i>
+                        Kompletný prehliadač odpovedí respondentov
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Prehliadajte, čítajte a filtrujte všetky vyjadrenia vlastnými slovami</p>
+                </div>
+                <button onclick="closeModal('allCommentsModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Controls / Filters -->
+            <div class="p-6 pb-4 border-b border-slate-100 bg-slate-50/20 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Vyhľadať v odpovediach (fulltext)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                        </span>
+                        <input type="text" id="allCommentsSearch" oninput="renderAllCommentsExplorer()" placeholder="Napíšte hľadané slovo..." class="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pohlavie</label>
+                    <select id="allCommentsGenderFilter" onchange="renderAllCommentsExplorer()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Všetci</option>
+                        <option value="male">Muži</option>
+                        <option value="female">Ženy</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Názor na vstup</label>
+                    <select id="allCommentsSentimentFilter" onchange="renderAllCommentsExplorer()" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Všetky názory</option>
+                        <option value="1">Jednoznačne podporujem</option>
+                        <option value="2">Skôr podporujem</option>
+                        <option value="3">Neviem / nemám názor</option>
+                        <option value="4">Skôr som proti</option>
+                        <option value="5">Jednoznačne som proti</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar max-h-[60vh] space-y-4 bg-slate-50/30" id="allCommentsExplorerContainer">
+                <!-- Comments list will be rendered here -->
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
+                <span id="allCommentsStatsText">Celkom nájdených: -</span>
+                <button onclick="closeModal('allCommentsModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-1.5 rounded-lg transition-colors">
+                    Zatvoriť
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: DETAILNÁ ANALÝZA POSTOJOV K VSTUPU UKRAJINY DO EÚ (Zlúčené štatistiky) -->
+    <div id="sentimentModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" onclick="closeModal('sentimentModal')">
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden transform scale-95 transition-all duration-300 relative border border-slate-100" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-blue-600"></i>
+                        Podrobná analýza postojov k vstupu Ukrajiny do EÚ
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Zlúčená a detailná štatistika podporovateľov, odporcov a nerozhodnutých</p>
+                </div>
+                <button onclick="closeModal('sentimentModal')" class="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar space-y-6">
+                <!-- Aggregated stats widgets -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Support Card -->
+                    <div class="bg-emerald-50 rounded-2xl p-5 border border-emerald-100/50 flex flex-col justify-between">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Celková podpora (Podporujú)</span>
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-3xl font-extrabold text-emerald-800" id="agg-support-val">-</h4>
+                            <p class="text-xs text-emerald-600 font-medium mt-1" id="agg-support-pct">-</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Neutral/Don't know Card -->
+                    <div class="bg-amber-50 rounded-2xl p-5 border border-amber-100/50 flex flex-col justify-between">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Nerozhodnutí (Nevedia)</span>
+                            <i class="fa-solid fa-circle-question text-amber-500 text-lg"></i>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-3xl font-extrabold text-amber-800" id="agg-neutral-val">-</h4>
+                            <p class="text-xs text-amber-600 font-medium mt-1" id="agg-neutral-pct">-</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Oppose Card -->
+                    <div class="bg-rose-50 rounded-2xl p-5 border border-rose-100/50 flex flex-col justify-between">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Celkový odpor (Nepodporujú)</span>
+                            <i class="fa-solid fa-circle-xmark text-rose-500 text-lg"></i>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-3xl font-extrabold text-rose-800" id="agg-oppose-val">-</h4>
+                            <p class="text-xs text-rose-600 font-medium mt-1" id="agg-oppose-pct">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualization grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                    <!-- Left: Doughnut Chart -->
+                    <div class="bg-slate-50/50 border border-slate-100 rounded-2xl p-6 flex flex-col items-center">
+                        <h4 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-1.5 self-start">
+                            <i class="fa-solid fa-chart-pie text-blue-500"></i>
+                            Zlúčený podiel názorov
+                        </h4>
+                        <div class="relative h-64 w-full flex justify-center items-center">
+                            <canvas id="modalSentimentDoughnutChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Detailed Comparison Table -->
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-table-list text-blue-500"></i>
+                            Porovnávací prehľad odpovedí
+                        </h4>
+                        
+                        <div class="border border-slate-100 rounded-2xl overflow-hidden bg-white">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-slate-50 text-slate-500 font-semibold text-xs uppercase tracking-wider border-b border-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-3">Skupina postojov</th>
+                                        <th class="px-4 py-3 text-right">Počet (Abs)</th>
+                                        <th class="px-4 py-3 text-right">Podiel (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-700 font-medium" id="modalSentimentTableBody">
+                                    <!-- Table contents will be dynamically injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('sentimentModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-4 py-1.5 rounded-lg transition-colors">
+                    Zatvoriť
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Store chart instances to destroy them before re-rendering
+        let chartInstances = {};
+
+        // Hardcoded sample data based on the prompt for initial load demonstration
+        const sampleCSV = `Časová pečiatka,Miesto,Vek odhad,Pohlavie,poznámka o respondentovi,Ako vnímate možný vstup Ukrajiny do Európskej únie? ,Vaše slová: (nepovinné – napíšte jednu vetu),vstup_num
+18.5.2026 12:46:28,Lúčenec,40,Žena,,Jednoznačne ho podporujem,,1
+18.5.2026 12:51:06,Lúčenec,60,Žena,,Jednoznačne som proti,"Komu pomohli ukrajionci bandera a zelensý.... vydieranie plynom,... rusi niesu nepriatelia...",5
+18.5.2026 12:52:52,Lúčenec,55,Muž,Skupina romskych respondwtov,Jednoznačne som proti,skor vyjst z europskej unie,5
+18.5.2026 12:55:37,Lúčenec,45,Žena,2 muz a zena,Jednoznačne som proti, Milionary a jednosnz.... Nieste mimozemstan... ake mimozems...,5
+22.5.2026 13:35:30,Bardejov,45,Muž,,Neviem / nemám názor,ano ma dovod... prva vec... robil niekedy v rusku na pozemnych stavbach.... dezim vsetky prsty ukrajine duam ze sa nioc take nestane tu...,3
+22.5.2026 13:38:44,Bardejov,40,Žena,,Skôr ho podporujem,ak splnia vsetky pdomienky.... tak nech tam ide ako naposledy to splnili ...,2
+22.5.2026 14:00:00,Bratislava,25,Muž,,Jednoznačne ho podporujem,Patríme na západ a oni tiež.,1
+22.5.2026 14:30:00,Bratislava,30,Žena,,Skôr ho podporujem,Ak splnia podmienky prečo nie.,2`;
+
+        // Function to handle user file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('dashboard').classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('loading').classList.remove('hidden');
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processAndRender(results.data);
+                },
+                error: function(error) {
+                    alert('Chyba pri spracovaní CSV: ' + error.message);
+                    resetLoadingState();
+                }
+            });
+        }
+
+        // Reset UI state
+        function resetLoadingState() {
+            document.getElementById('dashboard').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        // Process parsed JSON data from CSV
+        function processAndRender(data) {
+            window.allParsedRows = data; // Save to global variable for modals
+            if (!data || data.length === 0) {
+                alert('Súbor neobsahuje žiadne dáta.');
+                resetLoadingState();
+                return;
+            }
+
+            // --- Helper to find columns dynamically (ignoring case & exact spaces) ---
+            const keys = Object.keys(data[0]);
+            const colAge = keys.find(k => k.toLowerCase().includes('vek')) || keys[2];
+            const colGender = keys.find(k => k.toLowerCase().includes('pohlavie')) || keys[3];
+            const colLocation = keys.find(k => k.toLowerCase().includes('miesto') || k.toLowerCase().includes('lokalita')) || keys[1];
+            const colSentiment = keys.find(k => k.toLowerCase().includes('vstup')) || keys[5];
+            const colComment = keys.find(k => k.toLowerCase().includes('slová') || k.toLowerCase().includes('slova')) || keys[6];
+            const colNum = keys.find(k => k.toLowerCase().includes('num')) || keys[7];
+            const colNote = keys.find(k => k.toLowerCase().includes('poznámk') || k.toLowerCase().includes('poznamka') || k.toLowerCase().includes('respondent')) || keys[4];
+
+            // --- Data Aggregation ---
+            let totalRespondents = 0;
+            let validAgesCount = 0;
+            let totalAge = 0;
+            
+            const sentimentCounts = {
+                'Jednoznačne podporujem': 0,
+                'Skôr podporujem': 0,
+                'Neviem / nemám názor': 0,
+                'Skôr som proti': 0,
+                'Jednoznačne som proti': 0
+            };
+            
+            const genderCounts = {};
+            const locationCounts = {};
+            const agePyramid = {
+                male: { '18-25': 0, '26-35': 0, '36-50': 0, '51-65': 0, '65+': 0 },
+                female: { '18-25': 0, '26-35': 0, '36-50': 0, '51-65': 0, '65+': 0 }
+            };
+            const comments = [];
+
+            data.forEach(row => {
+                // Ignore empty rows
+                if (!row[colSentiment] && !row[colAge]) return;
+                totalRespondents++;
+
+                // Gender
+                const gender = (row[colGender] || 'Nezadané').trim();
+                genderCounts[gender] = (genderCounts[gender] || 0) + 1;
+                const genderLower = gender.toLowerCase();
+                const isMale = genderLower === 'muž' || genderLower === 'muz';
+                const isFemale = genderLower === 'žena' || genderLower === 'zena';
+
+                // Age & Age Pyramid
+                const age = parseInt(row[colAge]);
+                if (!isNaN(age)) {
+                    totalAge += age;
+                    validAgesCount++;
+                    
+                    let bracket = '';
+                    if (age <= 25) bracket = '18-25';
+                    else if (age <= 35) bracket = '26-35';
+                    else if (age <= 50) bracket = '36-50';
+                    else if (age <= 65) bracket = '51-65';
+                    else bracket = '65+';
+                    
+                    if (isMale) {
+                        agePyramid.male[bracket]++;
+                    } else if (isFemale) {
+                        agePyramid.female[bracket]++;
+                    }
+                }
+
+                // Location
+                const location = (row[colLocation] || 'Nezadané').trim();
+                locationCounts[location] = (locationCounts[location] || 0) + 1;
+
+                // Sentiment (Robust match using keywords)
+                const rawSentiment = (row[colSentiment] || '').trim();
+                if (rawSentiment !== '') {
+                    const category = getSentimentCategory(rawSentiment);
+                    sentimentCounts[category] = (sentimentCounts[category] || 0) + 1;
+                }
+
+                // Comments
+                const comment = row[colComment];
+                if (comment && comment.trim().length > 5) {
+                    comments.push({
+                        text: comment.trim(),
+                        sentiment: row[colNum] || getSentimentNum(rawSentiment),
+                        age: age,
+                        gender: gender,
+                        location: location,
+                        note: (row[colNote] || '').trim()
+                    });
+                }
+            });
+
+            // --- Update UI Summaries ---
+            document.getElementById('stat-total').innerText = totalRespondents;
+            document.getElementById('stat-age').innerText = validAgesCount > 0 ? Math.round(totalAge / validAgesCount) : '-';
+            
+            // Find top location
+            let topLocation = '-';
+            let maxLocCount = 0;
+            for (const [loc, count] of Object.entries(locationCounts)) {
+                if (count > maxLocCount && loc.toLowerCase() !== 'nezadané' && loc !== '') {
+                    maxLocCount = count;
+                    topLocation = loc;
+                }
+            }
+            if (maxLocCount > 0 && totalRespondents > 0) {
+                const pct = ((maxLocCount / totalRespondents) * 100).toFixed(1);
+                document.getElementById('stat-location').innerText = `${topLocation} (${maxLocCount} • ${pct}%)`;
+                document.getElementById('stat-location').title = `${topLocation}: ${maxLocCount} respondentov z ${totalRespondents} celkovo (${pct}%)`;
+            } else {
+                document.getElementById('stat-location').innerText = '-';
+                document.getElementById('stat-location').title = 'Najčastejšie miesto';
+            }
+
+            // --- Save globally for click details ---
+            window.allComments = comments;
+            window.allSentimentCounts = sentimentCounts;
+
+            // --- Render Charts ---
+            renderSentimentChart(sentimentCounts);
+            renderGenderChart(genderCounts);
+            renderAgeChart(agePyramid);
+
+            // --- Render Comments ---
+            renderComments(comments);
+
+            resetLoadingState();
+        }
+
+        // Helper to map any sentiment text to standard Slovak category
+        function getSentimentCategory(text) {
+            if (!text) return 'Neviem / nemám názor';
+            const norm = text.toLowerCase().trim();
+            if (norm.includes('jednoznačne') && (norm.includes('podpor') || norm.includes('ano') || norm.includes('áno'))) {
+                return 'Jednoznačne podporujem';
+            }
+            if (norm.includes('skôr') && (norm.includes('podpor') || norm.includes('ano') || norm.includes('áno'))) {
+                return 'Skôr podporujem';
+            }
+            if (norm.includes('jednoznačne') && (norm.includes('proti') || norm.includes('nie'))) {
+                return 'Jednoznačne som proti';
+            }
+            if (norm.includes('skôr') && (norm.includes('proti') || norm.includes('nie'))) {
+                return 'Skôr som proti';
+            }
+            if (norm.includes('neviem') || norm.includes('názor') || norm.includes('nazor')) {
+                return 'Neviem / nemám názor';
+            }
+            // Fallback keywords
+            if (norm.includes('podpor')) {
+                return norm.includes('jednoznačne') ? 'Jednoznačne podporujem' : 'Skôr podporujem';
+            }
+            if (norm.includes('proti')) {
+                return norm.includes('jednoznačne') ? 'Jednoznačne som proti' : 'Skôr som proti';
+            }
+            return 'Neviem / nemám názor';
+        }
+
+        // Helper to infer sentiment number for color coding in comments
+        function getSentimentNum(text) {
+            const cat = getSentimentCategory(text);
+            if (cat === 'Jednoznačne podporujem') return 1;
+            if (cat === 'Skôr podporujem') return 2;
+            if (cat === 'Neviem / nemám názor') return 3;
+            if (cat === 'Skôr som proti') return 4;
+            if (cat === 'Jednoznačne som proti') return 5;
+            return 3;
+        }
+
+        function destroyChart(chartId) {
+            if (chartInstances[chartId]) {
+                chartInstances[chartId].destroy();
+            }
+        }
+
+        function renderSentimentChart(dataObj) {
+            destroyChart('sentimentChart');
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            
+            const labels = ['Jednoznačne podporujem', 'Skôr podporujem', 'Neviem / nemám názor', 'Skôr som proti', 'Jednoznačne som proti'];
+            const data = [
+                dataObj['Jednoznačne podporujem'] || 0,
+                dataObj['Skôr podporujem'] || 0,
+                dataObj['Neviem / nemám názor'] || 0,
+                dataObj['Skôr som proti'] || 0,
+                dataObj['Jednoznačne som proti'] || 0
+            ];
+
+            const total = data.reduce((sum, val) => sum + val, 0);
+            const dataPercentages = data.map(val => total > 0 ? parseFloat((val / total * 100).toFixed(1)) : 0);
+
+            const colors = ['#22c55e', '#86efac', '#eab308', '#fca5a5', '#ef4444'];
+
+            chartInstances['sentimentChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Podiel v %',
+                        data: dataPercentages,
+                        backgroundColor: colors,
+                        borderRadius: 6,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + '%'; }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const pct = context.parsed.y;
+                                    const count = data[context.dataIndex];
+                                    return ` Podiel: ${pct}% (${count} respondentov)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGenderChart(dataObj) {
+            destroyChart('genderChart');
+            const ctx = document.getElementById('genderChart').getContext('2d');
+            
+            const labels = Object.keys(dataObj);
+            const data = Object.values(dataObj);
+            
+            // Map common genders to colors
+            const backgroundColor = labels.map(l => {
+                if(l.toLowerCase() === 'muž' || l.toLowerCase() === 'muz') return '#3b82f6';
+                if(l.toLowerCase() === 'žena' || l.toLowerCase() === 'zena') return '#ec4899';
+                return '#94a3b8';
+            });
+
+            chartInstances['genderChart'] = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColor,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        function renderAgeChart(agePyramid) {
+            destroyChart('ageChart');
+            const ctx = document.getElementById('ageChart').getContext('2d');
+            
+            const brackets = ['18-25', '26-35', '36-50', '51-65', '65+'];
+            
+            // Male data (negative values for left side)
+            const maleData = brackets.map(b => -(agePyramid.male[b] || 0));
+            // Female data (positive values for right side)
+            const femaleData = brackets.map(b => agePyramid.female[b] || 0);
+
+            // Calculate absolute symmetric max limit for centering X-axis exactly in the middle
+            const maxVal = Math.max(...maleData.map(Math.abs), ...femaleData.map(Math.abs));
+            const limit = Math.ceil(maxVal * 1.1) || 5; // fallback to 5
+
+            chartInstances['ageChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: brackets,
+                    datasets: [
+                        {
+                            label: 'Muži',
+                            data: maleData,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: { topLeft: 6, bottomLeft: 6 }
+                        },
+                        {
+                            label: 'Ženy',
+                            data: femaleData,
+                            backgroundColor: '#ec4899',
+                            borderRadius: { topRight: 6, bottomRight: 6 }
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            min: -limit,
+                            max: limit,
+                            ticks: {
+                                callback: function(value) {
+                                    return Math.abs(value);
+                                }
+                            }
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = Math.abs(context.parsed.x);
+                                    return ` ${label}: ${value} respondentov`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderComments(commentsList) {
+            const container = document.getElementById('comments-container');
+            document.getElementById('comments-count').innerText = commentsList.length;
+            container.innerHTML = '';
+
+            if (commentsList.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm italic p-4 text-center">Zatiaľ žiadne komentáre.</p>';
+                return;
+            }
+
+            // Colors based on sentiment 1-5
+            const sentimentColors = {
+                1: 'border-l-green-500 bg-green-50',
+                2: 'border-l-green-300 bg-green-50/50',
+                3: 'border-l-yellow-400 bg-yellow-50',
+                4: 'border-l-red-300 bg-red-50/50',
+                5: 'border-l-red-500 bg-red-50'
+            };
+
+            commentsList.forEach((c, idx) => {
+                const num = parseInt(c.sentiment) || 3;
+                const colorClass = sentimentColors[num] || 'border-l-slate-300 bg-slate-50';
+                
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-r-lg border-l-4 ${colorClass} text-sm text-slate-700 cursor-pointer hover:bg-slate-100/70 hover:shadow-sm active:scale-[0.99] transition-all duration-150`;
+                div.onclick = () => openCommentDetails(idx);
+                
+                let meta = [];
+                if (c.gender) meta.push(c.gender);
+                if (c.age && !isNaN(c.age)) meta.push(`${c.age} rokov`);
+                const metaText = meta.length > 0 ? `<div class="text-xs text-slate-500 mt-1 font-semibold">${meta.join(', ')}</div>` : '';
+
+                div.innerHTML = `
+                    <p class="italic">"${c.text}"</p>
+                    ${metaText}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- Modal & Advanced Analytics Logic ---
+        
+        const SLOVAK_STOPWORDS = new Set([
+            'a', 'i', 'že', 'ze', 'v', 'na', 's', 'z', 'o', 'u', 'to', 'je', 'sa', 'si', 'aj', 'ale', 'ako', 'po', 'pred', 'pod', 'za', 'nad', 'pri', 'do', 'od', 'k', 'sú', 'su', 'nie', 'áno', 'ano', 'so', 'vo', 'zo', 'by', 'či', 'ci', 'alebo', 'tu', 'tam', 'iba', 'len', 'lenže', 'lenze', 'tak', 'takže', 'takze', 'kde', 'kto', 'čo', 'co', 'čože', 'coze', 'môže', 'može', 'ich', 'ho', 'mu', 'jej', 'sme', 'ste', 'budú', 'budu', 'bude', 'bol', 'bola', 'bolo', 'boli', 'som', 'tento', 'táto', 'tato', 'toto', 'tieto', 'ten', 'tá', 'ta', 'mňa', 'mna', 'ma', 'mi', 'ťa', 'ta', 'teba', 'ti', 'pre', 'sú', 'sme', 'však', 'vsak', 'teda', 'taktiež', 'taktiez', 'tento', 'tých', 'tych', 'tým', 'tym', 'tomto', 'tamto', 'nám', 'nam', 'vám', 'vam', 'nich', 'nami', 'vami'
+        ]);
+
+        window.hiddenWords = new Set();
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('hidden');
+            const container = modal.firstElementChild;
+            setTimeout(() => {
+                container.classList.remove('scale-95');
+                container.classList.add('scale-100');
+            }, 10);
+
+            // Trigger updates based on the opened modal
+            if (modalId === 'respondentsModal') {
+                updateWordCloud();
+            } else if (modalId === 'ageModal') {
+                updateAgeModalChart();
+            } else if (modalId === 'locationModal') {
+                updateLocationModalChart();
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const container = modal.firstElementChild;
+            container.classList.remove('scale-100');
+            container.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 150);
+        }
+
+        function openSentimentModal() {
+            const counts = window.allSentimentCounts;
+            if (!counts) return;
+
+            const supportVal = (counts['Jednoznačne podporujem'] || 0) + (counts['Skôr podporujem'] || 0);
+            const neutralVal = counts['Neviem / nemám názor'] || 0;
+            const opposeVal = (counts['Jednoznačne som proti'] || 0) + (counts['Skôr som proti'] || 0);
+            const total = supportVal + neutralVal + opposeVal;
+
+            const supportPct = total > 0 ? ((supportVal / total) * 100).toFixed(1) : '0.0';
+            const neutralPct = total > 0 ? ((neutralVal / total) * 100).toFixed(1) : '0.0';
+            const opposePct = total > 0 ? ((opposeVal / total) * 100).toFixed(1) : '0.0';
+
+            // Update Widgets
+            document.getElementById('agg-support-val').innerText = `${supportVal} odpovedí`;
+            document.getElementById('agg-support-pct').innerText = `${supportPct}% zo všetkých`;
+
+            document.getElementById('agg-neutral-val').innerText = `${neutralVal} odpovedí`;
+            document.getElementById('agg-neutral-pct').innerText = `${neutralPct}% zo všetkých`;
+
+            document.getElementById('agg-oppose-val').innerText = `${opposeVal} odpovedí`;
+            document.getElementById('agg-oppose-pct').innerText = `${opposePct}% zo všetkých`;
+
+            // Update Table
+            const tableBody = document.getElementById('modalSentimentTableBody');
+            tableBody.innerHTML = `
+                <tr class="bg-emerald-50/20 text-emerald-800">
+                    <td class="px-4 py-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle text-[8px] text-emerald-500"></i>
+                        Podporujú (zlúčene)
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold">${supportVal}</td>
+                    <td class="px-4 py-3 text-right font-bold">${supportPct} %</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50 text-slate-600 text-xs italic">
+                    <td class="px-4 py-2 pl-8">• Jednoznačne podporujem</td>
+                    <td class="px-4 py-2 text-right">${counts['Jednoznačne podporujem'] || 0}</td>
+                    <td class="px-4 py-2 text-right">${total > 0 ? ((counts['Jednoznačne podporujem'] || 0) / total * 100).toFixed(1) : 0} %</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50 text-slate-600 text-xs italic border-b border-slate-100">
+                    <td class="px-4 py-2 pl-8">• Skôr podporujem</td>
+                    <td class="px-4 py-2 text-right">${counts['Skôr podporujem'] || 0}</td>
+                    <td class="px-4 py-2 text-right">${total > 0 ? ((counts['Skôr podporujem'] || 0) / total * 100).toFixed(1) : 0} %</td>
+                </tr>
+                
+                <tr class="bg-amber-50/20 text-amber-800">
+                    <td class="px-4 py-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle text-[8px] text-amber-500"></i>
+                        Nevedia / Nerozhodnutí
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold">${neutralVal}</td>
+                    <td class="px-4 py-3 text-right font-bold">${neutralPct} %</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50 text-slate-600 text-xs italic border-b border-slate-100">
+                    <td class="px-4 py-2 pl-8">• Neviem / nemám názor</td>
+                    <td class="px-4 py-2 text-right">${counts['Neviem / nemám názor'] || 0}</td>
+                    <td class="px-4 py-2 text-right">${total > 0 ? ((counts['Neviem / nemám názor'] || 0) / total * 100).toFixed(1) : 0} %</td>
+                </tr>
+
+                <tr class="bg-rose-50/20 text-rose-800">
+                    <td class="px-4 py-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle text-[8px] text-rose-500"></i>
+                        Nepodporujú (zlúčene)
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold">${opposeVal}</td>
+                    <td class="px-4 py-3 text-right font-bold">${opposePct} %</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50 text-slate-600 text-xs italic">
+                    <td class="px-4 py-2 pl-8">• Skôr som proti</td>
+                    <td class="px-4 py-2 text-right">${counts['Skôr som proti'] || 0}</td>
+                    <td class="px-4 py-2 text-right">${total > 0 ? ((counts['Skôr som proti'] || 0) / total * 100).toFixed(1) : 0} %</td>
+                </tr>
+                <tr class="hover:bg-slate-50/50 text-slate-600 text-xs italic">
+                    <td class="px-4 py-2 pl-8">• Jednoznačne som proti</td>
+                    <td class="px-4 py-2 text-right">${counts['Jednoznačne som proti'] || 0}</td>
+                    <td class="px-4 py-2 text-right">${total > 0 ? ((counts['Jednoznačne som proti'] || 0) / total * 100).toFixed(1) : 0} %</td>
+                </tr>
+            `;
+
+            // Draw Doughnut Chart
+            destroyChart('modalSentimentDoughnutChart');
+            const ctx = document.getElementById('modalSentimentDoughnutChart').getContext('2d');
+            chartInstances['modalSentimentDoughnutChart'] = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Podporujú (zlúčene)', 'Nevedia / Nerozhodnutí', 'Nepodporujú (zlúčene)'],
+                    datasets: [{
+                        data: [supportVal, neutralVal, opposeVal],
+                        backgroundColor: ['#10b981', '#eab308', '#ef4444'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` Podiel: ${val} odpovedí (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            openModal('sentimentModal');
+        }
+
+        function openAllCommentsModal() {
+            // Reset filters to default when opening
+            document.getElementById('allCommentsSearch').value = '';
+            document.getElementById('allCommentsGenderFilter').value = 'all';
+            document.getElementById('allCommentsSentimentFilter').value = 'all';
+            
+            openModal('allCommentsModal');
+            renderAllCommentsExplorer();
+        }
+
+        function renderAllCommentsExplorer() {
+            const data = window.allComments;
+            if (!data) return;
+
+            const searchVal = document.getElementById('allCommentsSearch').value.toLowerCase().trim();
+            const genderFilter = document.getElementById('allCommentsGenderFilter').value;
+            const sentimentFilter = document.getElementById('allCommentsSentimentFilter').value;
+
+            const filtered = data.filter(c => {
+                // Search filter (handles query in quote, location, and note)
+                if (searchVal !== '') {
+                    const textMatch = c.text && c.text.toLowerCase().includes(searchVal);
+                    const locMatch = c.location && c.location.toLowerCase().includes(searchVal);
+                    const noteMatch = c.note && c.note.toLowerCase().includes(searchVal);
+                    if (!textMatch && !locMatch && !noteMatch) return false;
+                }
+                // Gender Filter
+                if (genderFilter !== 'all') {
+                    const g = (c.gender || '').toLowerCase();
+                    const isMale = g === 'muž' || g === 'muz';
+                    const isFemale = g === 'žena' || g === 'zena';
+                    if (genderFilter === 'male' && !isMale) return false;
+                    if (genderFilter === 'female' && !isFemale) return false;
+                }
+                // Sentiment Filter
+                if (sentimentFilter !== 'all') {
+                    if (parseInt(c.sentiment) !== parseInt(sentimentFilter)) return false;
+                }
+                return true;
+            });
+
+            const container = document.getElementById('allCommentsExplorerContainer');
+            container.innerHTML = '';
+
+            document.getElementById('allCommentsStatsText').innerText = `Zobrazených: ${filtered.length} z celkovo ${data.length} odpovedí`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm italic text-center p-12 bg-white rounded-2xl border border-slate-100/50">Nenašli sa žiadne vyjadrenia vyhovujúce filtrom.</p>';
+                return;
+            }
+
+            const sentimentColors = {
+                1: 'border-l-green-500 bg-green-50/20',
+                2: 'border-l-green-300 bg-green-50/10',
+                3: 'border-l-yellow-400 bg-yellow-50/10',
+                4: 'border-l-red-300 bg-red-50/10',
+                5: 'border-l-red-500 bg-red-50/20'
+            };
+
+            const sentiments = {
+                1: 'Jednoznačne podporujem',
+                2: 'Skôr podporujem',
+                3: 'Neviem / nemám názor',
+                4: 'Skôr som proti',
+                5: 'Jednoznačne som proti'
+            };
+
+            filtered.forEach(c => {
+                const num = parseInt(c.sentiment) || 3;
+                const colorClass = sentimentColors[num] || 'border-l-slate-300 bg-slate-50';
+                const sentimentText = sentiments[num] || 'Neviem / nemám názor';
+
+                const card = document.createElement('div');
+                card.className = `p-5 rounded-2xl border-l-8 ${colorClass} bg-white shadow-sm flex flex-col gap-4 border border-slate-100/80 hover:shadow-md transition-all duration-200`;
+
+                let meta = [];
+                if (c.gender) meta.push(`<span class="font-semibold text-slate-700">${c.gender}</span>`);
+                if (c.age && !isNaN(c.age)) meta.push(`<span class="font-semibold text-slate-700">${c.age} rokov</span>`);
+                if (c.location) meta.push(`Lokalita: <span class="font-semibold text-slate-700">${c.location}</span>`);
+                meta.push(`Názor: <span class="font-semibold text-slate-700">${sentimentText}</span>`);
+
+                const noteBlock = (c.note && c.note.trim() !== '') 
+                    ? `<div class="bg-yellow-50/40 border border-yellow-100/50 p-3 rounded-xl text-xs text-yellow-800 italic mt-1">
+                           <span class="font-bold text-yellow-600 block mb-0.5 uppercase tracking-wider text-[10px]">Poznámka o respondentovi</span>
+                           "${c.note}"
+                       </div>` 
+                    : '';
+
+                card.innerHTML = `
+                    <div class="relative pl-6">
+                        <span class="text-5xl text-slate-100 font-serif absolute -top-4 -left-2 select-none">“</span>
+                        <p class="text-base text-slate-800 italic relative z-10 font-serif leading-relaxed">"${c.text}"</p>
+                    </div>
+                    <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-400 pt-3 border-t border-slate-100/60 items-center">
+                        ${meta.join(' <span class="text-slate-200 select-none">•</span> ')}
+                    </div>
+                    ${noteBlock}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function hideWord(word) {
+            window.hiddenWords.add(word);
+            updateWordCloud();
+        }
+
+        function restoreWord(word) {
+            window.hiddenWords.delete(word);
+            updateWordCloud();
+        }
+
+        function openCommentDetails(idx) {
+            const comment = window.allComments[idx];
+            if (!comment) return;
+
+            document.getElementById('detailCommentText').innerText = `"${comment.text}"`;
+            document.getElementById('detailCommentGender').innerText = comment.gender || 'Nezadané';
+            document.getElementById('detailCommentAge').innerText = (comment.age && !isNaN(comment.age)) ? `${comment.age} rokov` : 'Nezadané';
+            document.getElementById('detailCommentLocation').innerText = comment.location || 'Nezadané';
+            
+            const sentiments = {
+                1: 'Jednoznačne podporujem (Zelená)',
+                2: 'Skôr podporujem (Svetlozelená)',
+                3: 'Neviem / nemám názor (Žltá)',
+                4: 'Skôr som proti (Svetločervená)',
+                5: 'Jednoznačne som proti (Červená)'
+            };
+            const sentimentText = sentiments[comment.sentiment] || 'Neviem / nemám názor';
+            document.getElementById('detailCommentSentiment').innerText = sentimentText;
+
+            const noteContainer = document.getElementById('detailCommentNoteContainer');
+            if (comment.note && comment.note.trim() !== '') {
+                document.getElementById('detailCommentNote').innerText = comment.note;
+                noteContainer.classList.remove('hidden');
+            } else {
+                noteContainer.classList.add('hidden');
+            }
+
+            openModal('commentDetailsModal');
+        }
+
+        function updateWordCloud() {
+            const data = window.allParsedRows;
+            if (!data) return;
+
+            const analysisType = document.getElementById('wordAnalysisType').value;
+            const genderFilter = document.getElementById('wordGenderFilter').value;
+            const sentimentFilter = document.getElementById('wordSentimentFilter').value;
+            const sortOrder = document.getElementById('wordSortFilter').value;
+
+            const keys = Object.keys(data[0]);
+            const colComment = keys.find(k => k.toLowerCase().includes('slová') || k.toLowerCase().includes('slova')) || keys[6];
+            const colGender = keys.find(k => k.toLowerCase().includes('pohlavie')) || keys[3];
+            const colSentiment = keys.find(k => k.toLowerCase().includes('vstup')) || keys[5];
+
+            const wordCounts = {};
+            let totalWordsAnalyzed = 0;
+            let totalWordLength = 0;
+
+            // Handle hidden words container rendering
+            const hiddenContainer = document.getElementById('hiddenWordsContainer');
+            if (window.hiddenWords.size > 0) {
+                hiddenContainer.classList.remove('hidden');
+                hiddenContainer.innerHTML = '<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">Skryté výrazy (kliknutím vrátiš):</span>';
+                window.hiddenWords.forEach(word => {
+                    const badge = document.createElement('span');
+                    badge.className = 'bg-red-50 text-red-600 border border-red-100 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:bg-red-100 hover:scale-105 transition-all flex items-center gap-1';
+                    badge.onclick = () => restoreWord(word);
+                    badge.innerHTML = `${word} <i class="fa-solid fa-xmark text-[10px]"></i>`;
+                    hiddenContainer.appendChild(badge);
+                });
+            } else {
+                hiddenContainer.classList.add('hidden');
+            }
+
+            data.forEach(row => {
+                const comment = row[colComment];
+                if (!comment || comment.trim().length <= 5) return;
+
+                // Gender filter
+                const gender = (row[colGender] || '').trim().toLowerCase();
+                const isMale = gender === 'muž' || gender === 'muz';
+                const isFemale = gender === 'žena' || gender === 'zena';
+
+                if (genderFilter === 'male' && !isMale) return;
+                if (genderFilter === 'female' && !isFemale) return;
+
+                // Sentiment filter
+                const rawSentiment = (row[colSentiment] || '').trim();
+                const category = getSentimentCategory(rawSentiment);
+                if (sentimentFilter !== 'all' && category !== sentimentFilter) return;
+
+                // Process words
+                const rawWords = comment.toLowerCase()
+                    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'„“]/g, " ")
+                    .split(/\s+/);
+
+                const cleanWords = [];
+                rawWords.forEach(word => {
+                    const cleanWord = word.trim();
+                    if (cleanWord.length >= 3 && !SLOVAK_STOPWORDS.has(cleanWord)) {
+                        if (!window.hiddenWords.has(cleanWord)) {
+                            cleanWords.push(cleanWord);
+                        }
+                    }
+                });
+
+                if (analysisType === 'phrase') {
+                    // Generate 2-word phrases (bigrams) from clean words
+                    for (let i = 0; i < cleanWords.length - 1; i++) {
+                        const bigram = cleanWords[i] + ' ' + cleanWords[i+1];
+                        if (window.hiddenWords.has(bigram)) continue; // skip hidden bigram
+
+                        wordCounts[bigram] = (wordCounts[bigram] || 0) + 1;
+                        totalWordsAnalyzed++;
+                        totalWordLength += bigram.length;
+                    }
+                } else {
+                    // Generate single words
+                    cleanWords.forEach(cleanWord => {
+                        wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
+                        totalWordsAnalyzed++;
+                        totalWordLength += cleanWord.length;
+                    });
+                }
+            });
+
+            let wordList = Object.entries(wordCounts).map(([text, count]) => ({ text, count }));
+
+            if (wordList.length === 0) {
+                document.getElementById('wordCloudContainer').innerHTML = '<p class="text-slate-400 text-sm italic text-center p-8">Zatiaľ žiadne výrazy zodpovedajúce filtrom.</p>';
+                document.getElementById('wordListContainer').innerHTML = '<p class="text-slate-400 text-sm italic text-center p-8">Žiadne výrazy.</p>';
+                // Update stats to 0
+                document.getElementById('wordStatsTotal').innerText = '0';
+                document.getElementById('wordStatsUnique').innerText = '0';
+                document.getElementById('wordStatsAvgLen').innerText = '0';
+                destroyChart('modalWordChart');
+                return;
+            }
+
+            // Calculate word stats
+            const avgWordLength = totalWordsAnalyzed > 0 ? (totalWordLength / totalWordsAnalyzed).toFixed(1) : 0;
+            const termLabel = analysisType === 'phrase' ? 'spojení' : 'slov';
+            const avgUnit = analysisType === 'phrase' ? 'znakov' : 'znakov';
+            document.getElementById('wordStatsTotal').innerText = totalWordsAnalyzed;
+            document.getElementById('wordStatsUnique').innerText = wordList.length;
+            document.getElementById('wordStatsAvgLen').innerText = `${avgWordLength} ${avgUnit}`;
+
+            if (sortOrder === 'alpha') {
+                wordList.sort((a, b) => a.text.localeCompare(b.text));
+            } else {
+                wordList.sort((a, b) => b.count - a.count);
+            }
+
+            // Render word cloud
+            const maxCount = Math.max(...wordList.map(w => w.count));
+            const cloudContainer = document.getElementById('wordCloudContainer');
+            cloudContainer.innerHTML = '';
+
+            let cloudWords = [...wordList];
+            if (sortOrder === 'freq') {
+                cloudWords = cloudWords.slice(0, 40);
+                cloudWords.sort(() => Math.random() - 0.5);
+            }
+
+            cloudWords.forEach(w => {
+                const badge = document.createElement('span');
+                const ratio = w.count / maxCount;
+                let sizeClass = 'text-xs';
+                let weightClass = 'font-normal';
+                let opacityClass = 'bg-slate-100 text-slate-700';
+
+                if (ratio > 0.8) {
+                    sizeClass = 'text-2xl';
+                    weightClass = 'font-bold';
+                    opacityClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+                } else if (ratio > 0.5) {
+                    sizeClass = 'text-xl';
+                    weightClass = 'font-bold';
+                    opacityClass = 'bg-indigo-50 text-indigo-700 border border-indigo-100';
+                } else if (ratio > 0.3) {
+                    sizeClass = 'text-base';
+                    weightClass = 'font-semibold';
+                    opacityClass = 'bg-slate-200 text-slate-800';
+                } else if (ratio > 0.15) {
+                    sizeClass = 'text-sm';
+                    weightClass = 'font-medium';
+                    opacityClass = 'bg-slate-100 text-slate-700';
+                }
+
+                badge.className = `px-3 py-1.5 rounded-full ${sizeClass} ${weightClass} ${opacityClass} shadow-sm hover:shadow hover:scale-105 cursor-pointer transition-all duration-200`;
+                badge.title = "Kliknutím skryješ tento výraz";
+                badge.onclick = () => hideWord(w.text);
+                badge.innerHTML = `${w.text} <span class="text-[10px] opacity-60 ml-0.5">${w.count}x</span>`;
+                cloudContainer.appendChild(badge);
+            });
+
+            // Render list (up to 20 items)
+            const listContainer = document.getElementById('wordListContainer');
+            listContainer.innerHTML = '';
+
+            const topListForList = [...wordList].sort((a, b) => b.count - a.count).slice(0, 20);
+
+            topListForList.forEach((w, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-3 text-sm';
+                const pct = (w.count / maxCount) * 100;
+                
+                row.innerHTML = `
+                    <div class="w-6 text-slate-400 font-semibold text-right">${idx + 1}.</div>
+                    <div class="w-24 truncate font-medium text-slate-700 text-left" title="${w.text}">${w.text}</div>
+                    <div class="flex-1 bg-slate-200/50 rounded-full h-2.5 overflow-hidden">
+                        <div class="bg-blue-600 h-full rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                    <div class="w-8 text-right text-slate-500 font-semibold">${w.count}x</div>
+                    <i class="fa-solid fa-eye-slash text-xs text-slate-300 hover:text-red-500 cursor-pointer transition-colors" title="Skryť výraz" onclick="hideWord('${w.text}')"></i>
+                `;
+                listContainer.appendChild(row);
+            });
+
+            // Render top 10 bar chart inside modal
+            renderModalWordChart(wordList, totalWordsAnalyzed);
+        }
+
+        function renderModalWordChart(wordList, totalWordsAnalyzed) {
+            destroyChart('modalWordChart');
+            const ctx = document.getElementById('modalWordChart').getContext('2d');
+
+            const top10 = [...wordList].sort((a, b) => b.count - a.count).slice(0, 10);
+            const labels = top10.map(w => w.text);
+            const dataCounts = top10.map(w => w.count);
+
+            chartInstances['modalWordChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Počet výskytov',
+                        data: dataCounts,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const count = context.parsed.x;
+                                    const pct = totalWordsAnalyzed > 0 ? ((count / totalWordsAnalyzed) * 100).toFixed(1) : 0;
+                                    return ` Výskyty: ${count}x (${pct}% zo všetkých slov)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateAgeModalChart() {
+            destroyChart('modalAgeChart');
+            const data = window.allParsedRows;
+            if (!data) return;
+
+            const genderFilter = document.getElementById('ageGenderFilter').value;
+
+            const keys = Object.keys(data[0]);
+            const colAge = keys.find(k => k.toLowerCase().includes('vek')) || keys[2];
+            const colGender = keys.find(k => k.toLowerCase().includes('pohlavie')) || keys[3];
+            const colSentiment = keys.find(k => k.toLowerCase().includes('vstup')) || keys[5];
+
+            const brackets = ['18-25', '26-35', '36-50', '51-65', '65+'];
+            const sentimentCategories = ['Jednoznačne podporujem', 'Skôr podporujem', 'Neviem / nemám názor', 'Skôr som proti', 'Jednoznačne som proti'];
+
+            const ageStats = {};
+            brackets.forEach(b => {
+                ageStats[b] = {
+                    'Jednoznačne podporujem': 0,
+                    'Skôr podporujem': 0,
+                    'Neviem / nemám názor': 0,
+                    'Skôr som proti': 0,
+                    'Jednoznačne som proti': 0
+                };
+            });
+
+            data.forEach(row => {
+                const age = parseInt(row[colAge]);
+                if (isNaN(age)) return;
+
+                const gender = (row[colGender] || '').trim().toLowerCase();
+                const isMale = gender === 'muž' || gender === 'muz';
+                const isFemale = gender === 'žena' || gender === 'zena';
+
+                if (genderFilter === 'male' && !isMale) return;
+                if (genderFilter === 'female' && !isFemale) return;
+
+                let bracket = '';
+                if (age <= 25) bracket = '18-25';
+                else if (age <= 35) bracket = '26-35';
+                else if (age <= 50) bracket = '36-50';
+                else if (age <= 65) bracket = '51-65';
+                else bracket = '65+';
+
+                const rawSentiment = (row[colSentiment] || '').trim();
+                const category = getSentimentCategory(rawSentiment);
+
+                if (sentimentCategories.includes(category)) {
+                    ageStats[bracket][category]++;
+                }
+            });
+
+            const colors = ['#22c55e', '#86efac', '#eab308', '#fca5a5', '#ef4444'];
+            const datasets = sentimentCategories.map((cat, idx) => {
+                return {
+                    label: cat,
+                    data: brackets.map(b => ageStats[b][cat]),
+                    backgroundColor: colors[idx],
+                    borderRadius: 4
+                };
+            });
+
+            const ctx = document.getElementById('modalAgeChart').getContext('2d');
+            chartInstances['modalAgeChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: brackets,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.parsed.y;
+                                    return ` ${context.dataset.label}: ${val} respondentov`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateLocationModalChart() {
+            destroyChart('modalLocationChart');
+            const data = window.allParsedRows;
+            if (!data) return;
+
+            const minCountFilter = parseInt(document.getElementById('locMinCount').value) || 1;
+            const sentimentGroup = document.getElementById('locSentimentGroup').value;
+
+            const keys = Object.keys(data[0]);
+            const colLocation = keys.find(k => k.toLowerCase().includes('miesto') || k.toLowerCase().includes('lokalita')) || keys[1];
+            const colSentiment = keys.find(k => k.toLowerCase().includes('vstup')) || keys[5];
+
+            const sentimentCategories = ['Jednoznačne podporujem', 'Skôr podporujem', 'Neviem / nemám názor', 'Skôr som proti', 'Jednoznačne som proti'];
+
+            const locData = {};
+            data.forEach(row => {
+                let location = (row[colLocation] || 'Nezadané').trim();
+                if (location === '') location = 'Nezadané';
+
+                const rawSentiment = (row[colSentiment] || '').trim();
+                if (rawSentiment === '') return;
+                const category = getSentimentCategory(rawSentiment);
+
+                if (!locData[location]) {
+                    locData[location] = {
+                        total: 0,
+                        breakdown: {
+                            'Jednoznačne podporujem': 0,
+                            'Skôr podporujem': 0,
+                            'Neviem / nemám názor': 0,
+                            'Skôr som proti': 0,
+                            'Jednoznačne som proti': 0
+                        }
+                    };
+                }
+
+                locData[location].total++;
+                if (sentimentCategories.includes(category)) {
+                    locData[location].breakdown[category]++;
+                }
+            });
+
+            let locList = Object.entries(locData)
+                .map(([name, obj]) => ({ name, ...obj }))
+                .filter(item => item.total >= minCountFilter);
+
+            const container = document.getElementById('modalLocationChartContainer');
+
+            if (locList.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 text-sm italic text-center p-8">Zatiaľ žiadne mestá zodpovedajúce filtrom.</p><canvas id="modalLocationChart" class="hidden"></canvas>';
+                return;
+            }
+
+            container.innerHTML = '<canvas id="modalLocationChart"></canvas>';
+
+            locList.sort((a, b) => b.total - a.total);
+            locList = locList.slice(0, 15); // Top 15 locations
+
+            const canvasHeight = Math.max(locList.length * 40, 240);
+            container.style.height = canvasHeight + 'px';
+
+            const labels = locList.map(item => item.name);
+            let datasets = [];
+
+            if (sentimentGroup === 'aggregated') {
+                const aggCategories = ['Podporujú (zlúčene)', 'Nevedia / Nerozhodnutí', 'Nepodporujú (zlúčene)'];
+                const colors = ['#10b981', '#eab308', '#ef4444'];
+                
+                datasets = aggCategories.map((cat, idx) => {
+                    return {
+                        label: cat,
+                        data: locList.map(item => {
+                            if (idx === 0) {
+                                return (item.breakdown['Jednoznačne podporujem'] || 0) + (item.breakdown['Skôr podporujem'] || 0);
+                            } else if (idx === 1) {
+                                return item.breakdown['Neviem / nemám názor'] || 0;
+                            } else {
+                                return (item.breakdown['Jednoznačne som proti'] || 0) + (item.breakdown['Skôr som proti'] || 0);
+                            }
+                        }),
+                        backgroundColor: colors[idx],
+                        borderRadius: 4
+                    };
+                });
+            } else {
+                const colors = ['#22c55e', '#86efac', '#eab308', '#fca5a5', '#ef4444'];
+                datasets = sentimentCategories.map((cat, idx) => {
+                    return {
+                        label: cat,
+                        data: locList.map(item => item.breakdown[cat]),
+                        backgroundColor: colors[idx],
+                        borderRadius: 4
+                    };
+                });
+            }
+
+            const ctx = document.getElementById('modalLocationChart').getContext('2d');
+            chartInstances['modalLocationChart'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+                        y: { stacked: true }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12 } },
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const idx = context[0].dataIndex;
+                                    const locItem = locList[idx];
+                                    if (locItem) {
+                                        return `${locItem.name} (celkom ${locItem.total} odpovedí)`;
+                                    }
+                                    return context[0].label;
+                                },
+                                label: function(context) {
+                                    const val = context.parsed.x;
+                                    const locItem = locList[context.dataIndex];
+                                    if (locItem && locItem.total > 0) {
+                                        const pct = ((val / locItem.total) * 100).toFixed(1);
+                                        return ` ${context.dataset.label}: ${val} (${pct}%)`;
+                                    }
+                                    return ` ${context.dataset.label}: ${val} respondentov`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize with sample data on load
+        window.onload = function() {
+            Papa.parse(sampleCSV, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processAndRender(results.data);
+                }
+            });
+        };
+    </script>
+</body>
+</html>
