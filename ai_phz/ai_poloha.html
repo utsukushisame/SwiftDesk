@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="sk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa mojej časovej osi</title>
+    <!-- JSZip pre prácu so ZIP súbormi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Tailwind CSS pre moderný dizajn -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS pre mapu -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Leaflet JS pre mapu -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 0.75rem;
+            z-index: 10;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-blue-600 p-6 text-white">
+            <h1 class="text-3xl font-bold">Mapa tvojho výletu</h1>
+            <p class="mt-2 text-blue-100">Vyber svoj súbor z Google Takeout a vizualizuj si trasu pre zvolený týždeň.
+            </p>
+        </div>
+
+        <div class="p-6 md:p-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Dátum od -->
+                <div class="flex flex-col">
+                    <label class="font-semibold mb-2 text-slate-600">Dátum od:</label>
+                    <input type="date" id="startDate"
+                        class="border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Dátum do -->
+                <div class="flex flex-col">
+                    <label class="font-semibold mb-2 text-slate-600">Dátum do:</label>
+                    <input type="date" id="endDate"
+                        class="border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Súbor -->
+                <div class="flex flex-col">
+                    <label class="font-semibold mb-2 text-slate-600">Súbor s dátami (.zip alebo .json):</label>
+                    <input type="file" id="jsonFile" accept=".json,.zip"
+                        class="border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <button id="processBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors shadow-md disabled:bg-slate-400">
+                    Načítať a zobraziť mapu
+                </button>
+
+                <div id="loadingStatus" class="hidden flex items-center space-x-3 text-blue-600 font-medium">
+                    <div class="loader"></div>
+                    <span id="loadingText">Spracovávam dáta...</span>
+                </div>
+            </div>
+
+            <div id="message" class="mb-4 text-sm font-semibold rounded p-3 hidden"></div>
+
+            <!-- Mapa Container -->
+            <div class="border-2 border-slate-200 rounded-xl bg-slate-100 relative">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Predvolené nastavenie dátumov: týždeň okolo 18. mája 2026 (môžeš zmeniť rok, ak bol výlet inokedy)
+        document.getElementById('startDate').value = '2026-05-15';
+        document.getElementById('endDate').value = '2026-05-22';
+
+        // Inicializácia mapy
+        const map = L.map('map').setView([48.6690, 19.6990], 7); // Centrum Slovenska
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap prispievatelia'
+        }).addTo(map);
+
+        let mapLayerGroup = L.layerGroup().addTo(map);
+
+        document.getElementById('processBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('jsonFile');
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+            const msgBox = document.getElementById('message');
+
+            if (!fileInput.files.length) {
+                showMessage("Prosím, vyber najprv .zip alebo .json súbor s tvojou časovou osou.", 'error');
+                return;
+            }
+            if (!startDateStr || !endDateStr) {
+                showMessage("Zadaj prosím počiatočný aj koncový dátum.", 'error');
+                return;
+            }
+
+            const start = new Date(startDateStr);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(endDateStr);
+            end.setHours(23, 59, 59, 999);
+
+            const file = fileInput.files[0];
+            toggleLoading(true, "Načítavam súbor...");
+            showMessage("", ""); // Vyčistiť správy
+
+            // Povolíme UI sa prekresliť predtým, ako ho zablokujeme
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            try {
+                let allPoints = [];
+
+                if (file.name.endsWith('.zip')) {
+                    const zip = new JSZip();
+                    const loadedZip = await zip.loadAsync(file);
+
+                    let jsonFilesToProcess = [];
+                    loadedZip.forEach((relativePath, zipEntry) => {
+                        if (!zipEntry.dir && zipEntry.name.endsWith('.json')) {
+                            const nameLower = zipEntry.name.toLowerCase();
+                            // Chceme len súbory z časovej osi, nie iné náhodné JSON z Takeoutu
+                            if (nameLower.includes('location') || nameLower.includes('časová os') || nameLower.includes('casova os') || nameLower.includes('timeline')) {
+                                jsonFilesToProcess.push(zipEntry);
+                            }
+                        }
+                    });
+
+                    if (jsonFilesToProcess.length === 0) {
+                        throw new Error("V ZIP súbore sa nenašli žiadne dáta časovej osi (.json).");
+                    }
+
+                    for (let i = 0; i < jsonFilesToProcess.length; i++) {
+                        toggleLoading(true, `Rozbaľujem a spracovávam súbor ${i + 1} z ${jsonFilesToProcess.length}...`);
+                        await new Promise(resolve => setTimeout(resolve, 10)); // UI refresh
+
+                        const content = await jsonFilesToProcess[i].async("string");
+                        try {
+                            const data = JSON.parse(content);
+                            const pts = extractPoints(data, start, end);
+                            allPoints = allPoints.concat(pts);
+                        } catch (e) {
+                            console.warn("Nemožno spracovať súbor:", jsonFilesToProcess[i].name);
+                        }
+                    }
+                } else {
+                    // Pre klasický JSON súbor
+                    const content = await file.text();
+                    const data = JSON.parse(content);
+                    allPoints = extractPoints(data, start, end);
+                }
+
+                // Zoradiť a vykresliť
+                allPoints.sort((a, b) => a.time - b.time);
+                drawMap(allPoints);
+                toggleLoading(false);
+
+            } catch (err) {
+                console.error(err);
+                toggleLoading(false);
+                showMessage(err.message || "Chyba pri spracovaní súboru. Uisti sa, že je to správny formát z Google Takeout.", 'error');
+            }
+        });
+
+        function toggleLoading(show, text = "Spracovávam dáta...") {
+            const statusDiv = document.getElementById('loadingStatus');
+            const btn = document.getElementById('processBtn');
+            const textSpan = document.getElementById('loadingText');
+
+            if (textSpan && text) textSpan.textContent = text;
+            statusDiv.classList.toggle('hidden', !show);
+            btn.disabled = show;
+        }
+
+        function showMessage(text, type) {
+            const msgBox = document.getElementById('message');
+            if (!text) {
+                msgBox.classList.add('hidden');
+                return;
+            }
+            msgBox.textContent = text;
+            msgBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+
+            if (type === 'error') msgBox.classList.add('bg-red-100', 'text-red-700');
+            else if (type === 'success') msgBox.classList.add('bg-green-100', 'text-green-700');
+            else msgBox.classList.add('bg-blue-100', 'text-blue-700');
+        }
+
+        // Iteratívna funkcia pre extrakciu bodov (zabraňuje pretečeniu zásobníka pri veľkých JSON dátach)
+        function extractPoints(data, start, end) {
+            let points = [];
+            let stack = [{ obj: data, time: null }];
+
+            while (stack.length > 0) {
+                let current = stack.pop();
+                let obj = current.obj;
+                let time = (obj && (obj.timestamp || obj.startTime || obj.endTime)) || current.time;
+
+                if (obj !== null && typeof obj === 'object') {
+                    // Hľadanie rôznych formátov lokácií v Takeout dátach
+                    let lat = null, lng = null;
+                    if (obj.latE7 && obj.lngE7) {
+                        lat = obj.latE7; lng = obj.lngE7;
+                    } else if (obj.point && obj.point.latE7 && obj.point.lngE7) {
+                        lat = obj.point.latE7; lng = obj.point.lngE7;
+                    } else if (obj.placePoint && obj.placePoint.latE7 && obj.placePoint.lngE7) {
+                        lat = obj.placePoint.latE7; lng = obj.placePoint.lngE7;
+                    }
+
+                    if (lat !== null && lng !== null && time) {
+                        let d = new Date(time);
+                        if (d >= start && d <= end) {
+                            points.push({
+                                lat: lat / 1e7,
+                                lng: lng / 1e7,
+                                time: d
+                            });
+                        }
+                    }
+
+                    // Pridaj deti do zásobníka
+                    for (let key in obj) {
+                        if (obj[key] !== null && typeof obj[key] === 'object') {
+                            stack.push({ obj: obj[key], time: time });
+                        }
+                    }
+                }
+            }
+
+            // Zoradiť body chronologicky
+            return points.sort((a, b) => a.time - b.time);
+        }
+
+        function drawMap(points) {
+            mapLayerGroup.clearLayers(); // Vyčistiť starú mapu
+
+            if (points.length === 0) {
+                showMessage("Pre zvolený dátum neboli v súbore nájdené žiadne údaje o polohe.", 'error');
+                return;
+            }
+
+            const latLngs = points.map(p => [p.lat, p.lng]);
+
+            // Vykreslenie čiary (trasy)
+            const polyline = L.polyline(latLngs, {
+                color: '#3b82f6', // Modrá
+                weight: 4,
+                opacity: 0.7,
+                smoothFactor: 1
+            }).addTo(mapLayerGroup);
+
+            // Pridanie bodov (kruhov) a pop-upov s časom
+            points.forEach((p, index) => {
+                // Aby mapa nebola úplne preplnená, vykreslíme kruhy len pre podmnožinu, alebo pre všetky ak ich je málo
+                if (points.length < 1000 || index % Math.ceil(points.length / 500) === 0) {
+                    L.circleMarker([p.lat, p.lng], {
+                        radius: 4,
+                        fillColor: "#ef4444", // Červená
+                        color: "#ffffff",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(mapLayerGroup)
+                        .bindPopup(`<b>Čas:</b> ${p.time.toLocaleString('sk-SK')}`);
+                }
+            });
+
+            // Zobraziť začiatok a koniec výletu jasnejšie
+            if (points.length > 0) {
+                L.marker(latLngs[0]).addTo(mapLayerGroup).bindPopup('<b>Začiatok trasy</b><br>' + points[0].time.toLocaleString('sk-SK'));
+                L.marker(latLngs[latLngs.length - 1]).addTo(mapLayerGroup).bindPopup('<b>Koniec trasy</b><br>' + points[points.length - 1].time.toLocaleString('sk-SK'));
+            }
+
+            // Priblížiť mapu na celú trasu
+            map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+            showMessage(`Úspešne vykreslených ${points.length} bodov trasy!`, 'success');
+        }
+    </script>
+</body>
+
+</html>
