@@ -1107,8 +1107,10 @@
                 },
                 saveSmartTask() {
                     const title = document.getElementById('smartTitle').value;
-                    if (!title) return;
-                    const newTask = { id: 't' + Date.now(), text: title, q: document.getElementById('smartQ').value, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false };
+                    if (!title) { app.ui.showToast("Zadajte názov úlohy"); return; }
+                    let qVal = document.getElementById('smartQ').value;
+                    if (!['q1', 'q2', 'q3', 'q4'].includes(qVal)) qVal = 'q1';
+                    const newTask = { id: 't' + Date.now(), text: title, q: qVal, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false };
                     app.data.tasks.push(newTask);
                     document.getElementById('smartInputText').value = '';
                     document.getElementById('smartResult').classList.add('hidden');
@@ -1365,7 +1367,11 @@
                             const fp = document.getElementById('smartDate')._flatpickr;
                             if (fp) fp.setDate(d.dl || "");
                             document.getElementById('smartEst').value = d.est || '';
-                            if (d.q) document.getElementById('smartQ').value = d.q;
+                            if (d.q) {
+                                let aiQ = String(d.q).toLowerCase();
+                                if (!['q1', 'q2', 'q3', 'q4'].includes(aiQ)) aiQ = 'q1';
+                                document.getElementById('smartQ').value = aiQ;
+                            }
                             document.getElementById('smartResult').classList.remove('hidden');
                         } catch (e) { }
                     }
