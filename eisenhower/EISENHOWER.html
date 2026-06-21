@@ -174,11 +174,11 @@
 </head>
 
 <body
-    class="h-screen flex flex-col overflow-hidden bg-[#f8fafc] text-[#1e293b] dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
+    class="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-indigo-50 via-[#f8fafc] to-cyan-50 dark:from-slate-900 dark:via-slate-950 dark:to-indigo-950 text-[#1e293b] dark:text-slate-200 transition-colors duration-300">
 
     <!-- Navbar -->
     <header
-        class="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 md:px-6 py-3 flex flex-col lg:flex-row justify-between items-center gap-4 z-20 shadow-sm transition-colors duration-300">
+        class="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 md:px-6 py-3 flex flex-col lg:flex-row justify-between items-center gap-4 z-20 shadow-sm transition-colors duration-300 sticky top-0">
         <!-- Title & Logo -->
         <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
             <div class="flex items-center gap-3">
@@ -270,9 +270,9 @@
 
             <!-- Q1 -->
             <section
-                class="flex flex-col bg-red-50/50 dark:bg-red-950/20 rounded-2xl border border-red-100 dark:border-red-900/30 overflow-hidden relative group transition-colors">
+                class="flex flex-col bg-red-50 dark:bg-red-950/30 rounded-3xl border border-red-200 dark:border-red-900/50 shadow-sm overflow-hidden relative group transition-all">
                 <div
-                    class="px-4 py-3 bg-red-100/80 dark:bg-red-900/40 border-b border-red-200 dark:border-red-900/50 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    class="px-4 py-3 bg-red-100 dark:bg-red-900/50 border-b border-red-200 dark:border-red-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
                     <h2 class="font-bold text-red-800 dark:text-red-200 text-sm uppercase tracking-wide">
                         <i class="fas fa-fire-alt"></i> 1. Urob hneď
                     </h2>
@@ -293,9 +293,9 @@
 
             <!-- Q2 -->
             <section
-                class="flex flex-col bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/30 overflow-hidden relative group transition-colors">
+                class="flex flex-col bg-blue-50 dark:bg-blue-950/30 rounded-3xl border border-blue-200 dark:border-blue-900/50 shadow-sm overflow-hidden relative group transition-all">
                 <div
-                    class="px-4 py-3 bg-blue-100/80 dark:bg-blue-900/40 border-b border-blue-200 dark:border-blue-900/50 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    class="px-4 py-3 bg-blue-100 dark:bg-blue-900/50 border-b border-blue-200 dark:border-blue-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
                     <h2 class="font-bold text-blue-800 dark:text-blue-200 text-sm uppercase tracking-wide">
                         <i class="fas fa-calendar-check"></i> 2. Naplánuj
                     </h2>
@@ -315,9 +315,9 @@
 
             <!-- Q3 -->
             <section
-                class="flex flex-col bg-yellow-50/50 dark:bg-yellow-950/20 rounded-2xl border border-yellow-100 dark:border-yellow-900/30 overflow-hidden relative group transition-colors">
+                class="flex flex-col bg-yellow-50 dark:bg-yellow-950/30 rounded-3xl border border-yellow-200 dark:border-yellow-900/50 shadow-sm overflow-hidden relative group transition-all">
                 <div
-                    class="px-4 py-3 bg-yellow-100/80 dark:bg-yellow-900/40 border-b border-yellow-200 dark:border-yellow-900/50 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    class="px-4 py-3 bg-yellow-100 dark:bg-yellow-900/50 border-b border-yellow-200 dark:border-yellow-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
                     <h2 class="font-bold text-yellow-800 dark:text-yellow-200 text-sm uppercase tracking-wide">
                         <i class="fas fa-user-clock"></i> 3. Deleguj
                     </h2>
@@ -337,11 +337,11 @@
 
             <!-- Q4 -->
             <section
-                class="flex flex-col bg-gray-100/50 dark:bg-slate-900/50 rounded-2xl border border-gray-200 dark:border-slate-700 overflow-hidden relative group transition-colors">
+                class="flex flex-col bg-gray-100 dark:bg-slate-800/50 rounded-3xl border border-gray-200 dark:border-slate-700/50 shadow-sm overflow-hidden relative group transition-all">
                 <div
-                    class="px-4 py-3 bg-gray-200/80 dark:bg-slate-800/80 border-b border-gray-300 dark:border-slate-700 flex justify-between items-center backdrop-blur-sm sticky top-0 z-10 transition-colors">
+                    class="px-4 py-3 bg-gray-200 dark:bg-slate-700/50 border-b border-gray-300 dark:border-slate-600/50 flex justify-between items-center sticky top-0 z-10 transition-all">
                     <h2 class="font-bold text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wide">
-                        <i class="fas fa-trash-alt"></i> 4. Vymaž
+                        <i class="fas fa-trash-alt"></i> 4. Odlož
                     </h2>
                     <div class="flex items-center gap-2">
                         <button onclick="app.tasks.sort('q4')"
@@ -360,10 +360,9 @@
     </main>
 
     <!-- Stopwatch Widget (Left Side) -->
-    <div id="stopwatchWidget"
-        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden z-40 transition-all duration-300 transform"
-        data-open="true">
-        <div class="bg-cyan-700 dark:bg-cyan-900 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
+    <div id="stopwatchWidget" data-open="true"
+        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-300 transform">
+        <div class="bg-gradient-to-r from-cyan-600 to-cyan-700 dark:from-cyan-800 dark:to-cyan-900 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
             onclick="app.stopwatch.toggleCollapse()">
             <div class="flex items-center gap-2">
                 <i class="fas fa-stopwatch"></i>
@@ -397,10 +396,9 @@
     </div>
 
     <!-- Pomodoro Widget (Right Side) -->
-    <div id="pomodoroWidget"
-        class="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden z-40 transition-all duration-300 transform"
-        data-open="true">
-        <div class="bg-gray-900 dark:bg-slate-950 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
+    <div id="pomodoroWidget" data-open="true"
+        class="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-300 transform">
+        <div class="bg-gradient-to-r from-gray-800 to-gray-900 dark:from-slate-800 dark:to-slate-950 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
             onclick="app.timer.toggleCollapse()">
             <div class="flex items-center gap-2">
                 <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" id="timerIndicator" style="display:none">
@@ -409,7 +407,7 @@
             </div>
             <i class="fas fa-chevron-down transition-transform duration-300" id="collapseIcon"></i>
         </div>
-        <div class="p-5 bg-white dark:bg-slate-900 relative">
+        <div class="p-5 bg-white/50 dark:bg-slate-900/50 relative">
             <div class="text-center mb-6">
                 <div id="timerDisplay" class="text-6xl font-mono font-bold text-gray-800 dark:text-white">25:00</div>
                 <p id="currentTaskLabel" class="text-xs text-gray-400 dark:text-slate-500 mt-1 truncate px-2 h-4">--
@@ -444,9 +442,9 @@
 
     <!-- StopWatch Save Modal -->
     <div id="swSaveModal"
-        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div
-            class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm border border-transparent dark:border-slate-800">
+            class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm border border-transparent dark:border-slate-800 shadow-2xl">
             <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2"><i
                     class="fas fa-save text-cyan-500"></i> Uložiť Čas</h3>
             <div class="space-y-3">
@@ -493,8 +491,8 @@
 
     <!-- Settings Modal -->
     <div id="settingsModal"
-        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md">
+        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 class="text-xl font-bold mb-4 dark:text-white">Nastavenia</h3>
 
             <!-- Deadline Settings Section -->
@@ -550,8 +548,8 @@
 
     <!-- Smart Add Modal -->
     <div id="smartAddModal"
-        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-lg">
+        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-lg shadow-2xl">
             <h3 class="text-xl font-bold mb-4 dark:text-white">Smart Add</h3>
             <textarea id="smartInputText" rows="4"
                 class="w-full border rounded p-2 text-sm mb-4 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
@@ -569,7 +567,7 @@
                     <option value="q1" class="dark:text-black">1. Urob hneď</option>
                     <option value="q2" class="dark:text-black">2. Naplánuj</option>
                     <option value="q3" class="dark:text-black">3. Deleguj</option>
-                    <option value="q4" class="dark:text-black">4. Vymaž</option>
+                    <option value="q4" class="dark:text-black">4. Odlož</option>
                 </select>
                 <button onclick="app.tasks.saveSmartTask()"
                     class="w-full bg-green-600 text-white py-2 rounded font-bold">Pridať</button>
@@ -581,9 +579,14 @@
 
     <!-- Edit Modal -->
     <div id="editModal"
-        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-md">
-            <h3 class="text-xl font-bold mb-4 dark:text-white" id="editorTitle">Úloha</h3>
+        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold dark:text-white" id="editorTitle">Úloha</h3>
+                <button onclick="app.ai.breakdownEditor(event)" class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition shadow-sm" title="Rozdeliť na podúlohy pomocou AI">
+                    <i class="fas fa-star"></i> AI Rozdelenie
+                </button>
+            </div>
             <input type="text" id="editName"
                 class="w-full border rounded p-2 mb-4 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 placeholder="Názov">
@@ -617,8 +620,8 @@
 
     <!-- Completed Modal -->
     <div id="completedModal"
-        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col">
+        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold dark:text-white">Splnené</h3>
                 <button onclick="app.ui.closeModal('completedModal')" class="text-gray-500"><i
@@ -630,8 +633,8 @@
 
     <!-- Stats Modal -->
     <div id="statsModal"
-        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-3xl relative">
+        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-3xl relative shadow-2xl">
             <button onclick="app.ui.toggleStats()" class="absolute top-4 right-4 text-gray-400"><i
                     class="fas fa-times text-lg"></i></button>
             <h3 class="text-xl font-bold mb-6 dark:text-white">Prehľad Produktivity</h3>
@@ -677,7 +680,7 @@
 
     <!-- Alert Modal -->
     <div id="alertModal" class="hidden fixed inset-0 bg-gray-900/50 z-[60] flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm text-center">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl">
             <h3 id="alertTitle" class="text-lg font-bold mb-2 dark:text-white">Upozornenie</h3>
             <p id="alertMsg" class="text-sm text-gray-500 dark:text-slate-400 mb-6">Správa...</p>
             <button onclick="document.getElementById('alertModal').classList.add('hidden')"
@@ -1110,13 +1113,21 @@
                     if (!title) { app.ui.showToast("Zadajte názov úlohy"); return; }
                     let qVal = document.getElementById('smartQ').value;
                     if (!['q1', 'q2', 'q3', 'q4'].includes(qVal)) qVal = 'q1';
-                    const newTask = { id: 't' + Date.now(), text: title, q: qVal, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false };
+                    const newTask = { id: 't' + Date.now(), text: title, q: qVal, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false, pinned: false };
                     app.data.tasks.push(newTask);
                     document.getElementById('smartInputText').value = '';
                     document.getElementById('smartResult').classList.add('hidden');
                     app.storage.save();
                     app.ui.render();
                     app.ui.closeModal('smartAddModal');
+                },
+                togglePin(id) {
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (t) {
+                        t.pinned = !t.pinned;
+                        app.storage.save();
+                        app.ui.render();
+                    }
                 },
                 delete(id) {
                     if (confirm("Vymazať túto úlohu?")) {
@@ -1344,16 +1355,24 @@
                         return data.candidates?.[0]?.content?.parts?.[0]?.text;
                     } catch (e) { console.error("AI Error", e); app.ui.showAlert("Chyba AI", "Nepodarilo sa spojiť."); return null; }
                 },
-                async breakdown(taskId) {
-                    const task = app.data.tasks.find(t => t.id === taskId);
-                    if (!task) return;
-                    const res = await this.call(`Break down "${task.text}" into 3 simple subtasks in Slovak. Plain text lines.`);
-                    if (res) {
-                        const lines = res.split('\n').filter(l => l.trim().length > 0);
-                        const subs = lines.map(l => ({ text: l.replace(/^[-*•]\s*/, '').trim(), done: false }));
-                        task.subs = [...task.subs, ...subs];
-                        app.storage.save();
-                        app.ui.render();
+                async breakdownEditor(event) {
+                    const title = document.getElementById('editName').value;
+                    if(!title) { app.ui.showToast("Zadajte najprv názov úlohy!"); return; }
+                    const btn = event.currentTarget;
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i> Pracujem...';
+                    btn.disabled = true;
+                    try {
+                        const res = await this.call(`Break down "${title}" into 3 simple subtasks in Slovak. Plain text lines.`);
+                        if (res) {
+                            const lines = res.split('\n').filter(l => l.trim().length > 0);
+                            const subs = lines.map(l => ({ text: l.replace(/^[-*•]\s*/, '').trim(), done: false }));
+                            app.data.tempSubs = [...app.data.tempSubs, ...subs];
+                            app.tasks.renderModalSubs();
+                        }
+                    } finally {
+                        btn.innerHTML = origHtml;
+                        btn.disabled = false;
                     }
                 },
                 async analyzeSmartAdd() {
@@ -1392,9 +1411,9 @@
                     }
                 },
                 async autoSort() {
-                    const tasks = app.data.tasks.filter(t => !t.done);
+                    const tasks = app.data.tasks.filter(t => !t.done && !t.pinned);
                     if (tasks.length === 0) {
-                        app.ui.showToast("Žiadne úlohy na triedenie.");
+                        app.ui.showToast("Žiadne úlohy na triedenie (všetky sú hotové alebo pripnuté).");
                         return;
                     }
 
@@ -1459,10 +1478,14 @@
                     ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).innerHTML = '');
                     app.data.tasks.filter(t => !t.done).forEach(t => {
                         const el = document.createElement('div');
-                        el.className = `task-card bg-white dark:bg-slate-800 p-3 rounded-lg shadow border-l-4 mb-2 group relative border-gray-200 dark:border-slate-700 ${t.q === 'q1' ? 'border-l-red-500' : t.q === 'q2' ? 'border-l-blue-500' : t.q === 'q3' ? 'border-l-yellow-500' : 'border-l-gray-500'}`;
+                        el.className = `task-card bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm hover:shadow-md border border-gray-100 dark:border-slate-700 mb-2 group relative cursor-pointer active:scale-[0.98] transition-all duration-200 ${t.q === 'q1' ? 'border-l-[5px] border-l-red-500' : t.q === 'q2' ? 'border-l-[5px] border-l-blue-500' : t.q === 'q3' ? 'border-l-[5px] border-l-yellow-500' : 'border-l-[5px] border-l-gray-500'}`;
                         el.draggable = true;
                         el.id = t.id;
                         el.addEventListener('dragstart', app.dnd.drag);
+                        el.addEventListener('click', (e) => {
+                            if(e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+                            app.tasks.openEditor(t.id);
+                        });
                         let subHTML = '';
                         if (t.subs && t.subs.length) {
                             subHTML = `<div class="mt-2 space-y-1">${t.subs.map((s, i) => `<div class="flex items-center text-xs gap-2 text-gray-600 dark:text-gray-400"><input type="checkbox" ${s.done ? 'checked' : ''} onclick="app.tasks.toggleSub('${t.id}',${i})"><span class="${s.done ? 'line-through' : ''}">${s.text}</span></div>`).join('')}</div>`;
@@ -1473,6 +1496,7 @@
                                     <div class="flex items-center gap-2">
                                         <button onclick="app.tasks.complete('${t.id}')" class="w-4 h-4 rounded-full border border-gray-300 hover:bg-green-500 hover:border-green-500"></button>
                                         <span class="text-sm font-medium dark:text-white">${t.text}</span>
+                                        ${t.pinned ? '<i class="fas fa-thumbtack text-[12px] text-indigo-500 transform -rotate-45 ml-1" title="Pripnuté (chránené pred AI)"></i>' : ''}
                                     </div>
                                     ${(() => {
                                 if (!t.dl) return `<div class="text-[10px] text-gray-400 mt-1 pl-6">${t.est ? '⏱ ' + t.est + 'm' : ''}</div>`;
@@ -1494,13 +1518,12 @@
                                     <div class="pl-6">${subHTML}</div>
                                 </div>
                             </div>
-                            <div class="flex justify-end gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="app.timer.setTask('${t.id}')" class="text-gray-400 hover:text-indigo-500"><i class="fas fa-play"></i></button>
-                                <button onclick="app.ai.breakdown('${t.id}')" class="text-gray-400 hover:text-purple-500"><i class="fas fa-star"></i></button>
-                                <button onclick="app.tasks.openEditor('${t.id}')" class="text-gray-400 hover:text-blue-500"><i class="fas fa-pen"></i></button>
-                                <button onclick="app.tasks.delete('${t.id}')" class="text-gray-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 px-1.5 py-1 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm z-10">
+                                <button onclick="app.tasks.togglePin('${t.id}')" class="text-gray-400 hover:text-indigo-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="${t.pinned ? 'Odopnúť' : 'Pripnúť (chráni pred AI)'}"><i class="fas fa-thumbtack ${t.pinned ? 'text-indigo-500 transform -rotate-45' : ''}"></i></button>
+                                <button onclick="app.timer.setTask('${t.id}')" class="text-gray-400 hover:text-indigo-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Časovač"><i class="fas fa-play"></i></button>
+                                <button onclick="app.tasks.delete('${t.id}')" class="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Vymazať"><i class="fas fa-trash"></i></button>
                             </div>
-                             <select onchange="app.dnd.mobileMove('${t.id}', this.value)" class="md:hidden mt-2 w-full text-xs border bg-transparent rounded dark:text-white dark:border-slate-600"><option value="" disabled selected>Presunúť...</option><option value="q1">Urob hneď</option><option value="q2">Naplánuj</option><option value="q3">Deleguj</option><option value="q4">Vymaž</option></select>
+                             <select onchange="app.dnd.mobileMove('${t.id}', this.value)" class="md:hidden mt-2 w-full text-xs border bg-transparent rounded dark:text-white dark:border-slate-600"><option value="" disabled selected>Presunúť...</option><option value="q1">Urob hneď</option><option value="q2">Naplánuj</option><option value="q3">Deleguj</option><option value="q4">Odlož</option></select>
                         `;
                         document.getElementById(t.q).appendChild(el);
                     });
