@@ -472,6 +472,9 @@
                     class="flex-1 py-2 text-xs font-bold transition-colors inactive-tab border-l border-r border-gray-200">Hodnotenie</button>
                 <button onclick="switchTemplate('contract')" id="tab-contract"
                     class="flex-1 py-2 text-xs font-bold transition-colors inactive-tab">Výťah zo Zmluvy</button>
+                <button onclick="switchTemplate('internship')" id="tab-internship"
+                    class="flex-1 py-2 text-xs font-bold transition-colors inactive-tab border-l border-gray-200">Potvrdenie
+                    praxe</button>
             </div>
 
             <!-- Vizuálne úpravy (Zbaliteľné) -->
@@ -770,6 +773,88 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
                 </div>
             </div>
 
+            <!-- FORMULÁR POTVRDENIE PRAXE -->
+            <div id="form-internship-container" class="hidden">
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="form-section-title">2. Údaje o študentovi a praxi</h3>
+                        <div class="space-y-3">
+                            <div><label class="block text-sm text-gray-700 font-medium">Meno a priezvisko
+                                    študenta</label><input type="text" id="int-input-student" value="Bc. Ján Novák"
+                                    class="w-full border p-2 rounded text-sm" oninput="renderDocument()"></div>
+                            <div><label class="block text-sm text-gray-700 font-medium">Názov vysokej školy /
+                                    fakulty</label><input type="text" id="int-input-school"
+                                    value="Fakulta managementu UK" class="w-full border p-2 rounded text-sm"
+                                    oninput="renderDocument()"></div>
+                            <div><label class="block text-sm text-gray-700 font-medium">Študijný program</label><input
+                                    type="text" id="int-input-program" value="Manažment"
+                                    class="w-full border p-2 rounded text-sm" oninput="renderDocument()"></div>
+                            <div><label class="block text-sm text-gray-700 font-medium">Názov spoločnosti</label><input
+                                    type="text" id="int-input-company" value="Firma ABC, s.r.o."
+                                    class="w-full border p-2 rounded text-sm" oninput="renderDocument()"></div>
+                            <div><label class="block text-sm text-gray-700 font-medium">Sídlo spoločnosti /
+                                    Adresa</label><input type="text" id="int-input-address"
+                                    value="Obchodná 1, 811 06 Bratislava" class="w-full border p-2 rounded text-sm"
+                                    oninput="renderDocument()"></div>
+                            <div><label class="block text-sm text-gray-700 font-medium">IČO</label><input type="text"
+                                    id="int-input-ico" value="12345678" class="w-full border p-2 rounded text-sm"
+                                    oninput="renderDocument()"></div>
+                            <div class="grid grid-cols-2 gap-3 items-end">
+                                <div><label class="block text-sm text-gray-700 font-medium">Dátum od</label><input
+                                        type="date" id="int-input-date-from" class="w-full border p-2 rounded text-sm"
+                                        oninput="renderDocument()"></div>
+                                <div>
+                                    <label class="block text-sm text-gray-700 font-medium">Dátum do</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="date" id="int-input-date-to"
+                                            class="w-full border p-2 rounded text-sm" oninput="renderDocument()">
+                                        <label class="flex items-center gap-1 text-sm whitespace-nowrap"><input
+                                                type="checkbox" id="int-checkbox-ongoing" onchange="renderDocument()">
+                                            Stále trvá</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div><label class="block text-sm text-gray-700 font-medium">Celkový počet
+                                    hodín</label><input type="text" id="int-input-total-hours" value="160"
+                                    class="w-full border p-2 rounded text-sm" oninput="renderDocument()"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="form-section-title mb-0">3. Zoznam mesiacov a hodín</h3>
+                            <div class="flex gap-2">
+                                <button onclick="saveTemplate('internship')" class="text-gray-600 hover:text-blue-600"
+                                    title="Uložiť šablónu"><i class="fas fa-save"></i></button>
+                                <button onclick="loadTemplate('internship')"
+                                    class="text-gray-600 hover:text-blue-600 mr-2" title="Načítať šablónu"><i
+                                        class="fas fa-folder-open"></i></button>
+                                <button onclick="addInternshipRow()"
+                                    class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold hover:bg-green-200">+
+                                    Pridať mesiac</button>
+                            </div>
+                        </div>
+                        <div id="internship-rows-container" class="space-y-2"></div>
+                    </div>
+                    <div>
+                        <h3 class="form-section-title">4. Podpis</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-sm text-gray-700 font-medium">Mesto</label><input type="text"
+                                    id="int-input-city" value="Bratislave" class="w-full border p-2 rounded text-sm"
+                                    oninput="renderDocument()"></div>
+                            <div><label class="block text-sm text-gray-700 font-medium">Dátum vystavenia</label><input
+                                    type="date" id="int-input-date" class="w-full border p-2 rounded text-sm"
+                                    oninput="renderDocument()"></div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-sm text-gray-700 font-medium">Meno (Konateľ / Zástupca
+                                spoločnosti)</label>
+                            <input type="text" id="int-input-manager" value="Ing. Jozef Mak, konateľ"
+                                class="w-full border p-2 rounded text-sm" oninput="renderDocument()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <!-- Spodná lišta -->
@@ -871,6 +956,11 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
         ];
         let membersData = ["Ing. Ján Novák", "JUDr. Anna Malá"];
 
+        let internshipData = [
+            { month: "September 2025", hours: "40" },
+            { month: "Október 2025", hours: "40" }
+        ];
+
         // Nová štruktúra dát pre zmluvy (hierarchická)
         let contractDataGroups = [
             {
@@ -960,6 +1050,7 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
             if (type === 'protocol') dataToSave = protocolData;
             else if (type === 'evaluation') dataToSave = { criteria: criteriaData, members: membersData };
             else if (type === 'contract') dataToSave = contractDataGroups;
+            else if (type === 'internship') dataToSave = internshipData;
 
             // COMPOSITE OBJECT SAVE INCLUDING LOGOS
             const fullSave = {
@@ -992,6 +1083,7 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
             if (activeTemplateType === 'protocol') dataToSave = protocolData;
             else if (activeTemplateType === 'evaluation') dataToSave = { criteria: criteriaData, members: membersData };
             else if (activeTemplateType === 'contract') dataToSave = contractDataGroups;
+            else if (activeTemplateType === 'internship') dataToSave = internshipData;
 
             // COMPOSITE OBJECT OVERWRITE
             const fullSave = {
@@ -1120,6 +1212,9 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
                         contractDataGroups = listData;
                         renderEditorContract();
                     }
+                } else if (activeTemplateType === 'internship') {
+                    internshipData = listData;
+                    renderEditorInternshipRows();
                 }
 
                 // --- 3. LOAD VISUALS ---
@@ -1172,10 +1267,25 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
                     restoreDate('input-datum', savedFormData.datum);
                     restoreDate('eval-input-date', savedFormData.evalDate);
                     restoreDate('con-input-date', savedFormData.conDate);
+                    restoreDate('int-input-date-from', savedFormData.intDateFrom);
+                    restoreDate('int-input-date-to', savedFormData.intDateTo);
+                    restoreDate('int-input-date', savedFormData.intDate);
 
                     setInput('con-input-number', savedFormData.conNumber);
                     setInput('con-input-project', savedFormData.conProject);
                     setInput('con-input-author', savedFormData.conAuthor);
+
+                    setInput('int-input-student', savedFormData.intStudent);
+                    setInput('int-input-school', savedFormData.intSchool);
+                    setInput('int-input-program', savedFormData.intProgram);
+                    setInput('int-input-company', savedFormData.intCompany);
+                    setInput('int-input-address', savedFormData.intAddress);
+                    setInput('int-input-ico', savedFormData.intIco);
+                    const checkboxOngoing = document.getElementById('int-checkbox-ongoing');
+                    if (checkboxOngoing) checkboxOngoing.checked = savedFormData.intOngoing || false;
+                    setInput('int-input-total-hours', savedFormData.intTotalHours);
+                    setInput('int-input-city', savedFormData.intCity);
+                    setInput('int-input-manager', savedFormData.intManager);
                 }
 
                 toggleTemplateModal();
@@ -1278,7 +1388,7 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
             table.innerHTML = `<thead>${generateTableHeaderHTML()}</thead><tbody></tbody>`;
             contentBody.appendChild(table);
             let tbody = table.querySelector('tbody');
-            const rows = currentTemplate === 'protocol' ? protocolData : criteriaData;
+            const rows = currentTemplate === 'protocol' ? protocolData : (currentTemplate === 'internship' ? internshipData : criteriaData);
 
             for (let i = 0; i < rows.length; i++) {
                 const row = rows[i];
@@ -1418,7 +1528,21 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
                 conNumber: safeGetValue('con-input-number'),
                 conProject: safeGetValue('con-input-project'),
                 conAuthor: safeGetValue('con-input-author'),
-                conDate: formatDate(safeGetValue('con-input-date'))
+                conDate: formatDate(safeGetValue('con-input-date')),
+
+                intStudent: safeGetValue('int-input-student'),
+                intSchool: safeGetValue('int-input-school'),
+                intProgram: safeGetValue('int-input-program'),
+                intCompany: safeGetValue('int-input-company'),
+                intAddress: safeGetValue('int-input-address'),
+                intIco: safeGetValue('int-input-ico'),
+                intDateFrom: formatDate(safeGetValue('int-input-date-from')),
+                intDateTo: formatDate(safeGetValue('int-input-date-to')),
+                intOngoing: document.getElementById('int-checkbox-ongoing') ? document.getElementById('int-checkbox-ongoing').checked : false,
+                intTotalHours: safeGetValue('int-input-total-hours'),
+                intCity: safeGetValue('int-input-city'),
+                intDate: formatDate(safeGetValue('int-input-date')),
+                intManager: safeGetValue('int-input-manager')
             };
         }
 
@@ -1439,7 +1563,20 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
                     </div>`;
             } else if (currentTemplate === 'evaluation') {
                 titleHtml = `<div class="doc-title" style="margin-top:${visuals.titleTop}">Hodnotiaci hárok<br><span style="font-size: 11pt; font-weight: normal; display: block; margin-top: 2mm;">Vyhodnotenie ponúk</span></div>`;
-                infoHtml = `<div style="margin-top: 10mm; margin-bottom: 10mm; border-bottom: 2px solid #eee; padding-bottom: 5mm;"><div class="info-block"><span class="label" style="width: 40mm; display: inline-block;">Predmet zákazky:</span><span style="font-weight: bold;">${data.evalProject.replace(/\n/g, '<br>')}</span></div><div class="info-block"><span class="label" style="width: 40mm; display: inline-block;">Uchádzač:</span><span>${data.evalBidder}</span></div></div><h3 style="font-weight: bold; margin-bottom: 2mm;">Kritériá hodnotenia</h3>`;
+                infoHtml = `<div style="margin-top: 10mm; margin-bottom: 10mm; border-bottom: 2px solid #eee; padding-bottom: 5mm;"><div class="info-block"><span class="label" style="width: 40mm; display: inline-block;">Predmet zákazky:</span><span style="font-weight: bold;">${data.evalProject.replace(/\\n/g, '<br>')}</span></div><div class="info-block"><span class="label" style="width: 40mm; display: inline-block;">Uchádzač:</span><span>${data.evalBidder}</span></div></div><h3 style="font-weight: bold; margin-bottom: 2mm;">Kritériá hodnotenia</h3>`;
+            } else if (currentTemplate === 'internship') {
+                titleHtml = `<div class="doc-title" style="margin-top:${visuals.titleTop}">Potvrdenie o absolvovaní praxe</div>`;
+                infoHtml = `
+                    <div style="margin-top: 5mm; margin-bottom: 5mm;">
+                        <div class="info-block"><span class="label">Meno a priezvisko študenta:</span> <span>${data.intStudent}</span></div>
+                        <div class="info-block"><span class="label">Vysoká škola / fakulta:</span> <span>${data.intSchool}</span></div>
+                        <div class="info-block"><span class="label">Študijný program:</span> <span>${data.intProgram}</span></div>
+                        <div class="info-block" style="margin-top: 5mm;"><span class="label">Názov spoločnosti:</span> <span>${data.intCompany}</span></div>
+                        <div class="info-block"><span class="label">Sídlo spoločnosti:</span> <span>${data.intAddress}</span></div>
+                        <div class="info-block"><span class="label">IČO:</span> <span>${data.intIco}</span></div>
+                        <div class="info-block"><span class="label">Celkové obdobie praxe:</span> <span>${data.intDateFrom} - ${data.intOngoing ? 'stále trvá' : data.intDateTo}</span></div>
+                        <div class="info-block"><span class="label">Celkový počet hodín:</span> <span>${data.intTotalHours}</span></div>
+                    </div>`;
             } else {
                 titleHtml = `<div class="doc-title" style="margin-top:${visuals.titleTop}">Výťah zo zmluvy o dielo č. ${data.conNumber} (ďalej ako "ZoD")<br><span style="font-size: 11pt; font-weight: normal; display: block; margin-top: 2mm; text-transform: none;">${data.conProject}</span></div>`;
                 infoHtml = ``; // Prázdne infoHtml pre zmluvu, názov projektu je už v nadpise
@@ -1449,17 +1586,21 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
 
         function generateTableHeaderHTML() {
             if (currentTemplate === 'protocol') return `<tr><th class="col-id">P. č.</th><th class="col-doc">Dokument</th><th class="col-note">Poznámky</th></tr>`;
+            else if (currentTemplate === 'internship') return `<tr><th class="col-id" style="width:10%;">P. č.</th><th class="col-doc" style="width:60%;">Mesiac</th><th class="col-note" style="width:30%;">Počet hodín</th></tr>`;
             else return `<tr><th class="col-crit-name">Kritérium</th><th class="col-crit-weight">Váha (%)</th><th class="col-crit-points">Získané body<br><span style="font-weight: normal; font-size: 8pt;">(0-100)</span></th><th class="col-crit-total">Vážený počet bodov</th></tr>`;
         }
 
         function generateRowHTML(row, index) {
             if (currentTemplate === 'protocol') return `<td class="col-id text-center">${index + 1}</td><td class="col-doc">${row.doc}</td><td class="col-note">${row.note}</td>`;
+            else if (currentTemplate === 'internship') return `<td class="col-id text-center">${index + 1}</td><td class="col-doc">${row.month}</td><td class="col-note text-center">${row.hours}</td>`;
             else { const weightedScore = (row.points * row.weight) / 100; return `<td class="col-crit-name">${row.name}</td><td class="col-crit-weight">${row.weight}%</td><td class="col-crit-points">${row.points}</td><td class="col-crit-total">${weightedScore.toFixed(2)}</td>`; }
         }
 
         function generateSignaturesHTML(data) {
             if (currentTemplate === 'protocol') {
                 return `<div class="signature-section"><p>V <span id="out-mesto">${data.mesto}</span>, dňa <span id="out-datum">${data.datum}</span></p><table style="width: 100%; border: none; margin-top: 5mm; border-collapse: collapse;"><tr><td style="width: 45%; border: none; vertical-align: bottom; padding: 0;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: left; border-top: 1px solid black; padding-top: 2mm;"><span class="label" style="display:block; margin-bottom: 1mm;">Odovzdávajúci:</span><span>${data.podpisL}</span></div></td><td style="width: 10%; border: none;"></td><td style="width: 45%; border: none; vertical-align: bottom; padding: 0;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: left; border-top: 1px solid black; padding-top: 2mm;"><span class="label" style="display:block; margin-bottom: 1mm;">Preberajúci:</span><span>${data.podpisR}</span></div></td></tr></table></div>`;
+            } else if (currentTemplate === 'internship') {
+                return `<div class="signature-section"><p>V <span>${data.intCity}</span>, dňa <span>${data.intDate}</span></p><table style="width: 100%; border: none; margin-top: 5mm; border-collapse: collapse;"><tr><td style="width: 55%; border: none;"></td><td style="width: 45%; border: none; vertical-align: bottom; padding: 0;"><div style="height: 15mm;"></div><div class="signature-box" style="text-align: center; border-top: 1px solid black; padding-top: 2mm;"><span style="display:block; font-weight:bold;">${data.intManager}</span></div></td></tr></table></div>`;
             } else {
                 let membersHTML = '';
                 membersData.forEach(m => membersHTML += `<div><div style="height: 15mm;"></div><div class="signature-box"><span style="font-size: 9pt; display:block;">Člen komisie:</span><span style="font-weight:bold;">${m}</span></div></div>`);
@@ -1512,6 +1653,19 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
         function addMember() { membersData.push("Meno člena"); renderEditorMembers(); }
         function removeMember(i) { membersData.splice(i, 1); renderEditorMembers(); }
         function updateMember(i, v) { membersData[i] = v; renderDocument(); }
+
+        function renderEditorInternshipRows() {
+            const container = document.getElementById('internship-rows-container'); container.innerHTML = '';
+            internshipData.forEach((row, index) => {
+                const div = document.createElement('div'); div.className = "bg-gray-50 p-2 rounded border border-gray-200 text-sm flex gap-2 items-start";
+                div.innerHTML = `<div class="w-6 font-bold text-gray-500 pt-2 text-center">${index + 1}.</div><div class="flex-1 space-y-1"><input type="text" class="w-full border p-1 rounded" placeholder="Mesiac" value="${row.month}" oninput="updateInternshipRow(${index}, 'month', this.value)"><input type="text" class="w-full border p-1 rounded text-gray-600" placeholder="Počet hodín" value="${row.hours}" oninput="updateInternshipRow(${index}, 'hours', this.value)"></div><button onclick="removeInternshipRow(${index})" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>`;
+                container.appendChild(div);
+            });
+            renderDocument();
+        }
+        function addInternshipRow() { internshipData.push({ month: "", hours: "" }); renderEditorInternshipRows(); }
+        function removeInternshipRow(i) { internshipData.splice(i, 1); renderEditorInternshipRows(); }
+        function updateInternshipRow(i, f, v) { internshipData[i][f] = v; renderDocument(); }
 
         // --- NEW GROUPED CONTRACT EDITOR ---
         // Initializes Drag & Drop for GROUPS (Actors) and BULLETS
@@ -1845,10 +1999,10 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
             currentTemplate = t;
 
             // Update Browser Title
-            const titles = { 'protocol': 'Protokol', 'evaluation': 'Hodnotenie', 'contract': 'Výťah zo Zmluvy' };
+            const titles = { 'protocol': 'Protokol', 'evaluation': 'Hodnotenie', 'contract': 'Výťah zo Zmluvy', 'internship': 'Potvrdenie praxe' };
             document.title = titles[t] || 'Generátor Dokumentov';
 
-            ['protocol', 'evaluation', 'contract'].forEach(key => {
+            ['protocol', 'evaluation', 'contract', 'internship'].forEach(key => {
                 const btn = document.getElementById('tab-' + key);
                 const container = document.getElementById('form-' + key + '-container');
                 if (btn && container) {
@@ -1941,13 +2095,13 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
 
         window.addEventListener('load', function () {
             const today = new Date().toISOString().split('T')[0];
-            const dateInputs = ['input-datum', 'eval-input-date', 'con-input-date'];
+            const dateInputs = ['input-datum', 'eval-input-date', 'con-input-date', 'int-input-date', 'int-input-date-from', 'int-input-date-to'];
             dateInputs.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = today;
             });
 
-            renderEditorRows(); renderEditorCriteria(); renderEditorMembers();
+            renderEditorRows(); renderEditorCriteria(); renderEditorMembers(); renderEditorInternshipRows();
 
             if (typeof Sortable !== 'undefined') {
                 initContractSortable();
@@ -1986,7 +2140,7 @@ Hraničná 12, 815 26 Bratislava</textarea></div>
                 margins: { top: 720, right: 720, bottom: 720, left: 720 } // cca 1.25 cm
             });
 
-            const titles = { 'protocol': 'Protokol', 'evaluation': 'Hodnotenie', 'contract': 'Zmluva' };
+            const titles = { 'protocol': 'Protokol', 'evaluation': 'Hodnotenie', 'contract': 'Zmluva', 'internship': 'Potvrdenie_praxe' };
             const filename = (titles[currentTemplate] || 'dokument') + '.docx';
 
             // Uloženie súboru pomocou FileSaver.js
