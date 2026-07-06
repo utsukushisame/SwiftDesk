@@ -231,42 +231,71 @@
             </div>
 
             <div class="flex w-full md:w-auto gap-2">
-                <!-- AI Sort Button -->
-                <button id="magicAddBtn" onclick="app.ai.autoSort()"
-                    class="bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 px-3 py-2 rounded-xl transition text-sm font-bold flex items-center gap-2 whitespace-nowrap border border-purple-200 dark:border-purple-800/50 shadow-sm"
-                    title="Pretriediť všetky existujúce úlohy cez AI">
-                    <i class="fas fa-star"></i> <span class="hidden md:inline">AI Triediť</span>
-                </button>
-
-                <!-- Input Wrapper -->
-                <div class="relative flex-1 group min-w-[200px] lg:min-w-[250px]">
-                    <input type="text" id="taskInput" placeholder="Nová úloha..."
-                        class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition shadow-sm text-sm text-gray-800 dark:text-white dark:placeholder-slate-500"
-                        onkeydown="if(event.key === 'Enter') app.tasks.add()">
-
-                    <div class="absolute right-1.5 top-1.5 flex gap-1">
-                        <!-- Standard Add Button -->
-                        <button onclick="app.tasks.add()"
-                            class="p-1 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-lg transition"
-                            title="Pridať s detailmi">
-                            <i class="fas fa-plus text-lg"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Smart Add Button -->
-                <button onclick="app.ui.openModal('smartAddModal')"
-                    class="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white px-3 py-2 rounded-xl shadow-md transition text-sm font-bold shrink-0"
-                    title="Smart Import (z textu)">
-                    <i class="fas fa-robot"></i>
+                <!-- Sidebar Toggle -->
+                <button onclick="app.ui.toggleSidebar()"
+                    class="flex w-full md:w-auto items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-4 py-2.5 rounded-xl transition text-sm font-bold shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                    title="Skryť/Zobraziť Inbox">
+                    <i class="fas fa-inbox"></i> <span class="inline">Zobraziť Inbox</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Matrix Grid -->
-    <main class="flex-1 p-4 overflow-hidden relative">
-        <div class="grid grid-cols-1 md:grid-cols-2 grid-rows-2 h-full gap-4 max-w-7xl mx-auto">
+    <!-- Main Content -->
+    <main class="flex-1 p-4 overflow-hidden relative flex flex-col xl:flex-row gap-4 max-w-[1600px] mx-auto w-full">
+        <!-- Sidebar (Inbox) -->
+        <aside id="inboxSidebar"
+            class="w-full xl:w-80 flex flex-col bg-gray-50 dark:bg-slate-800/30 rounded-3xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden shrink-0 transition-all h-[300px] xl:h-auto xl:order-last">
+            <div
+                class="px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center sticky top-0 z-10">
+                <h2 class="font-bold text-gray-800 dark:text-gray-200 text-sm uppercase tracking-wide flex items-center gap-2">
+                    <i class="fas fa-inbox text-indigo-500"></i> Inbox
+                </h2>
+                <div class="flex gap-2 items-center">
+                    <span class="text-[10px] font-bold bg-white dark:bg-slate-700 text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 dark:border-slate-600 hidden sm:inline">Nezaradené</span>
+                    <button onclick="app.ui.toggleSidebar()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition p-1"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+            
+            <!-- Quick Add Input in Sidebar -->
+            <div class="p-3 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/50">
+                <div class="relative group">
+                    <input type="text" id="taskInput" placeholder="Nová úloha..."
+                        class="w-full pl-3 pr-8 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition shadow-sm text-sm text-gray-800 dark:text-white dark:placeholder-slate-500"
+                        onkeydown="if(event.key === 'Enter') app.tasks.add()">
+                    <div class="absolute right-1 top-1 flex gap-1">
+                        <button onclick="app.tasks.add()"
+                            class="p-1 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-slate-800 rounded transition"
+                            title="Pridať s detailmi">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inbox List -->
+            <div id="inbox" class="drop-zone flex-1 p-3 overflow-y-auto custom-scroll space-y-2"
+                ondragover="app.dnd.allowDrop(event)" ondrop="app.dnd.drop(event, 'inbox')"
+                ondragleave="app.dnd.leave(event)">
+            </div>
+
+            <!-- AI Tools in Sidebar -->
+            <div class="p-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 space-y-2">
+                <button id="magicAddBtn" onclick="app.ai.autoSort()"
+                    class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white px-3 py-2.5 rounded-xl transition shadow-md text-sm font-bold flex items-center justify-center gap-2"
+                    title="Pretriediť všetky existujúce úlohy cez AI">
+                    <i class="fas fa-magic"></i> AI Triediť
+                </button>
+                <button onclick="app.ui.openModal('smartAddModal')"
+                    class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-3 py-2.5 rounded-xl shadow-md transition text-sm font-bold flex items-center justify-center gap-2"
+                    title="Smart Import (z textu)">
+                    <i class="fas fa-robot"></i> Smart Pridanie
+                </button>
+            </div>
+        </aside>
+
+        <!-- Matrix Grid -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 grid-rows-2 h-full gap-4">
 
             <!-- Q1 -->
             <section
@@ -359,9 +388,15 @@
         </div>
     </main>
 
+    <!-- Mini Stopwatch Button -->
+    <button id="swMiniBtn" onclick="app.stopwatch.toggleCollapse(false)"
+        class="hidden fixed bottom-4 left-4 md:bottom-8 md:left-8 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-full font-bold shadow-xl z-50 transition-transform hover:scale-105 flex items-center gap-2 ring-4 ring-cyan-600/30">
+        <i class="fas fa-stopwatch"></i> <span id="swMiniText">⏱ 0s</span>
+    </button>
+
     <!-- Stopwatch Widget (Left Side) -->
     <div id="stopwatchWidget" data-open="true"
-        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-300 transform">
+        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-500 transform translate-y-0 opacity-100">
         <div class="bg-gradient-to-r from-cyan-600 to-cyan-700 dark:from-cyan-800 dark:to-cyan-900 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
             onclick="app.stopwatch.toggleCollapse()">
             <div class="flex items-center gap-2">
@@ -395,9 +430,16 @@
         </div>
     </div>
 
+    <!-- Mini Timer Button -->
+    <button id="timerMiniBtn" onclick="app.timer.toggleCollapse(false)"
+        class="hidden fixed bottom-4 right-4 md:bottom-8 md:right-8 bg-gray-900 dark:bg-indigo-600 text-white px-4 py-2 rounded-full font-bold shadow-xl z-50 transition-transform hover:scale-105 flex items-center gap-2 ring-4 ring-indigo-600/30">
+        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" id="timerMiniIndicator" style="display:none"></div>
+        <span id="timerMiniText">⏳ 25m</span>
+    </button>
+
     <!-- Pomodoro Widget (Right Side) -->
     <div id="pomodoroWidget" data-open="true"
-        class="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-300 transform">
+        class="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-500 transform translate-y-0 opacity-100">
         <div class="bg-gradient-to-r from-gray-800 to-gray-900 dark:from-slate-800 dark:to-slate-950 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
             onclick="app.timer.toggleCollapse()">
             <div class="flex items-center gap-2">
@@ -441,8 +483,7 @@
     </div>
 
     <!-- StopWatch Save Modal -->
-    <div id="swSaveModal"
-        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+    <div id="swSaveModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div
             class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm border border-transparent dark:border-slate-800 shadow-2xl">
             <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2"><i
@@ -490,8 +531,7 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settingsModal"
-        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+    <div id="settingsModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 class="text-xl font-bold mb-4 dark:text-white">Nastavenia</h3>
 
@@ -547,8 +587,7 @@
     </div>
 
     <!-- Smart Add Modal -->
-    <div id="smartAddModal"
-        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+    <div id="smartAddModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-lg shadow-2xl">
             <h3 class="text-xl font-bold mb-4 dark:text-white">Smart Add</h3>
             <textarea id="smartInputText" rows="4"
@@ -564,6 +603,7 @@
                     <input type="number" id="smartEst" class="w-full border-b p-1 dark:bg-transparent dark:text-white">
                 </div>
                 <select id="smartQ" class="w-full border-b p-1 dark:bg-transparent dark:text-white">
+                    <option value="inbox" class="dark:text-black">Inbox</option>
                     <option value="q1" class="dark:text-black">1. Urob hneď</option>
                     <option value="q2" class="dark:text-black">2. Naplánuj</option>
                     <option value="q3" class="dark:text-black">3. Deleguj</option>
@@ -578,12 +618,13 @@
     </div>
 
     <!-- Edit Modal -->
-    <div id="editModal"
-        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+    <div id="editModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold dark:text-white" id="editorTitle">Úloha</h3>
-                <button onclick="app.ai.breakdownEditor(event)" class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition shadow-sm" title="Rozdeliť na podúlohy pomocou AI">
+                <button onclick="app.ai.breakdownEditor(event)"
+                    class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition shadow-sm"
+                    title="Rozdeliť na podúlohy pomocou AI">
                     <i class="fas fa-star"></i> AI Rozdelenie
                 </button>
             </div>
@@ -619,8 +660,7 @@
     </div>
 
     <!-- Completed Modal -->
-    <div id="completedModal"
-        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+    <div id="completedModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold dark:text-white">Splnené</h3>
@@ -632,8 +672,7 @@
     </div>
 
     <!-- Stats Modal -->
-    <div id="statsModal"
-        class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+    <div id="statsModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-3xl relative shadow-2xl">
             <button onclick="app.ui.toggleStats()" class="absolute top-4 right-4 text-gray-400"><i
                     class="fas fa-times text-lg"></i></button>
@@ -928,19 +967,25 @@
                         if (!this.running && this.elapsed > 0) saveBtn.classList.remove('hidden');
                         else saveBtn.classList.add('hidden');
                     }
+                    if (app.ui && app.ui.updateTabTitle) app.ui.updateTabTitle();
+                    const miniBtnTxt = document.getElementById('swMiniText');
+                    if (miniBtnTxt) {
+                        let swMiniStr = hrs > 0 ? `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}` : `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                        miniBtnTxt.innerText = `⏱ ${swMiniStr}`;
+                    }
                 },
                 toggleCollapse(force) {
                     const w = document.getElementById('stopwatchWidget');
-                    const i = document.getElementById('swCollapseIcon');
+                    const mb = document.getElementById('swMiniBtn');
                     const isOpen = w.getAttribute('data-open') === 'true';
                     const shouldClose = force !== undefined ? force : isOpen;
                     if (shouldClose) {
-                        w.style.transform = 'translateY(calc(100% - 3.5rem))';
-                        if (i) i.style.transform = 'rotate(180deg)';
+                        w.classList.add('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
                         w.setAttribute('data-open', 'false');
+                        setTimeout(() => { if (w.getAttribute('data-open') === 'false') mb.classList.remove('hidden'); }, 300);
                     } else {
-                        w.style.transform = 'translateY(0)';
-                        if (i) i.style.transform = 'rotate(0deg)';
+                        mb.classList.add('hidden');
+                        w.classList.remove('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
                         w.setAttribute('data-open', 'true');
                     }
                 },
@@ -1129,12 +1174,10 @@
                         app.ui.render();
                     }
                 },
-                delete(id) {
-                    if (confirm("Vymazať túto úlohu?")) {
-                        app.data.tasks = app.data.tasks.filter(t => t.id !== id);
-                        app.storage.save();
-                        app.ui.render();
-                    }
+                deleteTask(id) {
+                    app.data.tasks = app.data.tasks.filter(t => t.id !== id);
+                    app.storage.save();
+                    app.ui.render();
                 },
                 complete(id) {
                     const t = app.data.tasks.find(x => x.id === id);
@@ -1150,11 +1193,9 @@
                     if (t) { t.done = false; app.storage.save(); app.ui.render(); app.ui.renderCompleted(); }
                 },
                 deleteCompleted(id) {
-                    if (confirm("Naozaj vymazať túto úlohu z histórie?")) {
-                        app.data.tasks = app.data.tasks.filter(t => t.id !== id);
-                        app.storage.save();
-                        app.ui.renderCompleted();
-                    }
+                    app.data.tasks = app.data.tasks.filter(t => t.id !== id);
+                    app.storage.save();
+                    app.ui.renderCompleted();
                 },
                 openEditor(id, prefillTitle = '') {
                     document.getElementById('modalSubInput').value = '';
@@ -1193,7 +1234,7 @@
                             task.text = text; task.dl = dl; task.est = est; task.subs = JSON.parse(JSON.stringify(app.data.tempSubs));
                         }
                     } else {
-                        const newTask = { id: 't' + Date.now(), text: text, q: 'q1', dl: dl, est: est, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false };
+                        const newTask = { id: 't' + Date.now(), text: text, q: 'inbox', dl: dl, est: est, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false };
                         app.data.tasks.push(newTask);
                     }
                     app.storage.save();
@@ -1308,7 +1349,13 @@
                     const m = Math.floor(this.rem / 60).toString().padStart(2, '0');
                     const s = (this.rem % 60).toString().padStart(2, '0');
                     safeSetText('timerDisplay', `${m}:${s}`);
-                    document.title = this.run ? `(${m}:${s}) AI Matrix` : 'Eisenhower AI';
+                    if (app.ui && app.ui.updateTabTitle) app.ui.updateTabTitle();
+                    const miniBtnTxt = document.getElementById('timerMiniText');
+                    if (miniBtnTxt) {
+                        miniBtnTxt.innerText = `⏳ ${m}:${s}`;
+                    }
+                    const miniInd = document.getElementById('timerMiniIndicator');
+                    if (miniInd) miniInd.style.display = this.run ? 'block' : 'none';
                     const btn = document.getElementById('mainBtn');
                     if (btn) {
                         btn.innerText = this.run ? 'Pauza' : 'Štart';
@@ -1317,16 +1364,16 @@
                 },
                 toggleCollapse(force) {
                     const w = document.getElementById('pomodoroWidget');
-                    const i = document.getElementById('collapseIcon');
+                    const mb = document.getElementById('timerMiniBtn');
                     const isOpen = w.getAttribute('data-open') === 'true';
                     const shouldClose = force !== undefined ? force : isOpen;
                     if (shouldClose) {
-                        w.style.transform = 'translateY(calc(100% - 3.5rem))';
-                        if (i) i.style.transform = 'rotate(180deg)';
+                        w.classList.add('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
                         w.setAttribute('data-open', 'false');
+                        setTimeout(() => { if (w.getAttribute('data-open') === 'false') mb.classList.remove('hidden'); }, 300);
                     } else {
-                        w.style.transform = 'translateY(0)';
-                        if (i) i.style.transform = 'rotate(0deg)';
+                        mb.classList.add('hidden');
+                        w.classList.remove('translate-y-[150%]', 'opacity-0', 'pointer-events-none');
                         w.setAttribute('data-open', 'true');
                     }
                 },
@@ -1357,7 +1404,7 @@
                 },
                 async breakdownEditor(event) {
                     const title = document.getElementById('editName').value;
-                    if(!title) { app.ui.showToast("Zadajte najprv názov úlohy!"); return; }
+                    if (!title) { app.ui.showToast("Zadajte najprv názov úlohy!"); return; }
                     const btn = event.currentTarget;
                     const origHtml = btn.innerHTML;
                     btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i> Pracujem...';
@@ -1475,7 +1522,10 @@
             },
             ui: {
                 render() {
-                    ['q1', 'q2', 'q3', 'q4'].forEach(id => document.getElementById(id).innerHTML = '');
+                    ['inbox', 'q1', 'q2', 'q3', 'q4'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerHTML = '';
+                    });
                     app.data.tasks.filter(t => !t.done).forEach(t => {
                         const el = document.createElement('div');
                         el.className = `task-card bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm hover:shadow-md border border-gray-100 dark:border-slate-700 mb-2 group relative cursor-pointer active:scale-[0.98] transition-all duration-200 ${t.q === 'q1' ? 'border-l-[5px] border-l-red-500' : t.q === 'q2' ? 'border-l-[5px] border-l-blue-500' : t.q === 'q3' ? 'border-l-[5px] border-l-yellow-500' : 'border-l-[5px] border-l-gray-500'}`;
@@ -1483,7 +1533,7 @@
                         el.id = t.id;
                         el.addEventListener('dragstart', app.dnd.drag);
                         el.addEventListener('click', (e) => {
-                            if(e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+                            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
                             app.tasks.openEditor(t.id);
                         });
                         let subHTML = '';
@@ -1521,9 +1571,9 @@
                             <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-slate-800 px-1.5 py-1 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm z-10">
                                 <button onclick="app.tasks.togglePin('${t.id}')" class="text-gray-400 hover:text-indigo-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="${t.pinned ? 'Odopnúť' : 'Pripnúť (chráni pred AI)'}"><i class="fas fa-thumbtack ${t.pinned ? 'text-indigo-500 transform -rotate-45' : ''}"></i></button>
                                 <button onclick="app.timer.setTask('${t.id}')" class="text-gray-400 hover:text-indigo-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Časovač"><i class="fas fa-play"></i></button>
-                                <button onclick="app.tasks.delete('${t.id}')" class="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Vymazať"><i class="fas fa-trash"></i></button>
+                                <button onclick="app.tasks.deleteTask('${t.id}')" class="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors" title="Vymazať"><i class="fas fa-trash"></i></button>
                             </div>
-                             <select onchange="app.dnd.mobileMove('${t.id}', this.value)" class="md:hidden mt-2 w-full text-xs border bg-transparent rounded dark:text-white dark:border-slate-600"><option value="" disabled selected>Presunúť...</option><option value="q1">Urob hneď</option><option value="q2">Naplánuj</option><option value="q3">Deleguj</option><option value="q4">Odlož</option></select>
+                             <select onchange="app.dnd.mobileMove('${t.id}', this.value)" class="md:hidden mt-2 w-full text-xs border bg-transparent rounded dark:text-white dark:border-slate-600"><option value="" disabled selected>Presunúť...</option><option value="inbox">Inbox</option><option value="q1">Urob hneď</option><option value="q2">Naplánuj</option><option value="q3">Deleguj</option><option value="q4">Odlož</option></select>
                         `;
                         document.getElementById(t.q).appendChild(el);
                     });
@@ -1533,6 +1583,16 @@
                     if (id === 'settingsModal') app.settings.renderDeadlineSettings();
                 },
                 closeModal(id) { document.getElementById(id).classList.add('hidden'); },
+                toggleSidebar() {
+                    const sb = document.getElementById('inboxSidebar');
+                    if (sb) {
+                        if (sb.classList.contains('hidden')) {
+                            sb.classList.remove('hidden');
+                        } else {
+                            sb.classList.add('hidden');
+                        }
+                    }
+                },
                 toggleCompleted() {
                     const m = document.getElementById('completedModal');
                     if (m.classList.contains('hidden')) {
@@ -1555,6 +1615,37 @@
                 notify(title, msg) {
                     if (Notification.permission === "granted") new Notification(title, { body: msg });
                     else alert(title + ": " + msg);
+                },
+                updateTabTitle() {
+                    let titleParts = [];
+
+                    if (app.timer && (app.timer.run || app.timer.rem !== (app.timer.initRem || (app.timer.mode === 'work' ? 1500 : 300)))) {
+                        let rem = app.timer.rem;
+                        const m = Math.floor(rem / 60).toString().padStart(2, '0');
+                        const sStr = (rem % 60).toString().padStart(2, '0');
+                        const displayS = rem > 10 ? sStr[0] + '-' : sStr;
+                        const icon = app.timer.run ? '▶️' : '⏸️';
+                        titleParts.push(`${icon} ${m}:${displayS}`);
+                    }
+
+                    if (app.stopwatch && (app.stopwatch.running || app.stopwatch.elapsed > 0)) {
+                        let el = app.stopwatch.elapsed;
+                        const hrs = Math.floor(el / 3600);
+                        const mins = Math.floor((el % 3600) / 60);
+                        const secsStr = (el % 60).toString().padStart(2, '0');
+                        const displaySecs = el > 10 ? secsStr[0] + '-' : secsStr;
+                        const icon = app.stopwatch.running ? '▶️' : '⏸️';
+                        
+                        let swStr = hrs > 0 ? `${hrs}:${mins.toString().padStart(2, '0')}:${displaySecs}` : `${mins.toString().padStart(2, '0')}:${displaySecs}`;
+                        titleParts.push(`${icon} ${swStr}`);
+                    }
+
+                    let baseTitle = 'Eisenhower';
+                    let newTitle = titleParts.length > 0 ? `${titleParts.join(' | ')} | ${baseTitle}` : baseTitle;
+
+                    if (document.title !== newTitle) {
+                        document.title = newTitle;
+                    }
                 }
             }
         };
