@@ -631,13 +631,17 @@
             <input type="text" id="editName"
                 class="w-full border rounded p-2 mb-4 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 placeholder="Názov">
-            <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-2 gap-4 mb-2">
                 <input type="text" id="editDate"
                     class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     placeholder="Termín...">
                 <input type="number" id="editEst"
                     class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                    placeholder="Min">
+                    placeholder="Min" oninput="document.getElementById('editRequireDetails').checked = true">
+            </div>
+            <div class="mb-4 flex items-center gap-2">
+                <input type="checkbox" id="editRequireDetails" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                <label for="editRequireDetails" class="text-xs text-gray-500 dark:text-slate-400">Vyžiadať detaily pri dokončení</label>
             </div>
             <div class="mb-4">
                 <div id="modalSubList" class="space-y-2 mb-2"></div>
@@ -727,6 +731,29 @@
         </div>
     </div>
 
+    <!-- Completion Details Modal -->
+    <div id="completionModal" class="hidden fixed inset-0 bg-gray-900/50 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-transparent dark:border-slate-800">
+            <h3 class="text-lg font-bold mb-4 dark:text-white flex items-center gap-2"><i class="fas fa-check-circle text-green-500"></i> Detaily dokončenia</h3>
+            <p class="text-xs text-gray-500 dark:text-slate-400 mb-4">Prosím, potvrďte detaily pre túto úlohu.</p>
+            <div class="space-y-3">
+                <input type="hidden" id="compTaskId">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Dátum dokončenia</label>
+                    <input type="text" id="compDate" class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Dátum...">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Reálny čas (min)</label>
+                    <input type="number" id="compTime" class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Minúty...">
+                </div>
+            </div>
+            <div class="mt-5 flex gap-2">
+                <button onclick="app.tasks.confirmCompletion()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded font-bold transition">Uložiť</button>
+                <button onclick="app.ui.closeModal('completionModal')" class="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 py-2 rounded transition">Zrušiť</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const safeSetText = (id, text) => {
             const el = document.getElementById(id);
@@ -757,9 +784,10 @@
                 }
 
                 const fpConfig = { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "j.n.Y H:i", time_24hr: true, locale: "sk" };
-                flatpickr("#editDate", fpConfig);
+                flatpickr("#editDate", { ...fpConfig, onChange: function() { document.getElementById('editRequireDetails').checked = true; } });
                 flatpickr("#smartDate", fpConfig);
                 flatpickr("#swDateInput", fpConfig);
+                flatpickr("#compDate", fpConfig);
             },
 
             theme: {
@@ -1182,10 +1210,35 @@
                 complete(id) {
                     const t = app.data.tasks.find(x => x.id === id);
                     if (t) {
+                        if (t.requireDetails) {
+                            app.tasks.openCompletionModal(id);
+                        } else {
+                            t.done = true;
+                            t.completedAt = new Date().toISOString();
+                            app.storage.save();
+                            app.ui.render();
+                        }
+                    }
+                },
+                openCompletionModal(id) {
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (!t) return;
+                    document.getElementById('compTaskId').value = id;
+                    document.getElementById('compTime').value = t.est || '';
+                    const fp = document.getElementById('compDate')._flatpickr;
+                    if (fp) fp.setDate(new Date());
+                    app.ui.openModal('completionModal');
+                },
+                confirmCompletion() {
+                    const id = document.getElementById('compTaskId').value;
+                    const t = app.data.tasks.find(x => x.id === id);
+                    if (t) {
                         t.done = true;
-                        t.completedAt = new Date().toISOString();
+                        t.completedAt = document.getElementById('compDate').value || new Date().toISOString();
+                        t.actualTime = document.getElementById('compTime').value || t.est || 0;
                         app.storage.save();
                         app.ui.render();
+                        app.ui.closeModal('completionModal');
                     }
                 },
                 restore(id) {
@@ -1207,6 +1260,7 @@
                         const fp = document.getElementById('editDate')._flatpickr;
                         if (fp) fp.setDate(task.dl || "");
                         document.getElementById('editEst').value = task.est || '';
+                        document.getElementById('editRequireDetails').checked = !!task.requireDetails;
                         app.data.tempSubs = JSON.parse(JSON.stringify(task.subs || []));
                         safeSetText('editorTitle', 'Upraviť');
                     } else {
@@ -1215,6 +1269,7 @@
                         const fp = document.getElementById('editDate')._flatpickr;
                         if (fp) fp.clear();
                         document.getElementById('editEst').value = '';
+                        document.getElementById('editRequireDetails').checked = false;
                         safeSetText('editorTitle', 'Nová úloha');
                         app.data.tempSubs = [];
                     }
@@ -1227,14 +1282,15 @@
                     const text = document.getElementById('editName').value.trim();
                     const dl = document.getElementById('editDate').value;
                     const est = document.getElementById('editEst').value;
+                    const reqDet = document.getElementById('editRequireDetails').checked;
                     if (!text) { app.ui.showToast("Zadajte názov úlohy"); return; }
                     if (id) {
                         const task = app.data.tasks.find(t => t.id === id);
                         if (task) {
-                            task.text = text; task.dl = dl; task.est = est; task.subs = JSON.parse(JSON.stringify(app.data.tempSubs));
+                            task.text = text; task.dl = dl; task.est = est; task.requireDetails = reqDet; task.subs = JSON.parse(JSON.stringify(app.data.tempSubs));
                         }
                     } else {
-                        const newTask = { id: 't' + Date.now(), text: text, q: 'inbox', dl: dl, est: est, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false };
+                        const newTask = { id: 't' + Date.now(), text: text, q: 'inbox', dl: dl, est: est, requireDetails: reqDet, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false };
                         app.data.tasks.push(newTask);
                     }
                     app.storage.save();
