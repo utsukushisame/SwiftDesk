@@ -231,6 +231,13 @@
             </div>
 
             <div class="flex w-full md:w-auto gap-2">
+                <!-- Layout Toggle -->
+                <button id="layoutToggleBtn" onclick="app.ui.toggleLayout()"
+                    class="flex w-full md:w-auto items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-4 py-2.5 rounded-xl transition text-sm font-bold shadow-sm border border-indigo-100 dark:border-indigo-800/50"
+                    title="Prepnúť rozloženie (Zoznam/Matica)">
+                    <i class="fas fa-list"></i> <span class="hidden md:inline">Zoznam</span>
+                </button>
+
                 <!-- Sidebar Toggle -->
                 <button onclick="app.ui.toggleSidebar()"
                     class="flex w-full md:w-auto items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-4 py-2.5 rounded-xl transition text-sm font-bold shadow-sm border border-indigo-100 dark:border-indigo-800/50"
@@ -240,6 +247,11 @@
             </div>
         </div>
     </header>
+
+    <!-- Project Tabs -->
+    <div class="max-w-[1600px] mx-auto w-full px-4 mt-4 flex items-center gap-2 overflow-x-auto custom-scroll pb-2" id="projectTabsContainer">
+        <!-- Tabs will be rendered here dynamically -->
+    </div>
 
     <!-- Main Content -->
     <main class="flex-1 p-4 overflow-hidden relative flex flex-col xl:flex-row gap-4 max-w-[1600px] mx-auto w-full">
@@ -291,22 +303,27 @@
                     title="Smart Import (z textu)">
                     <i class="fas fa-robot"></i> Smart Pridanie
                 </button>
+                <button onclick="app.ai.masterplan.open()"
+                    class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-3 py-2.5 rounded-xl shadow-md transition text-sm font-bold flex items-center justify-center gap-2"
+                    title="Vytvor detailný plán úloh s AI">
+                    <i class="fas fa-project-diagram"></i> Masterplan
+                </button>
             </div>
         </aside>
 
         <!-- Matrix Grid -->
-        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 grid-rows-2 h-full gap-4">
+        <div id="matrixGrid" class="flex-1 grid grid-cols-1 md:grid-cols-2 grid-rows-2 h-full gap-4 transition-all duration-300">
 
             <!-- Q1 -->
             <section
                 class="flex flex-col bg-red-50 dark:bg-red-950/30 rounded-3xl border border-red-200 dark:border-red-900/50 shadow-sm overflow-hidden relative group transition-all">
-                <div
-                    class="px-4 py-3 bg-red-100 dark:bg-red-900/50 border-b border-red-200 dark:border-red-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
-                    <h2 class="font-bold text-red-800 dark:text-red-200 text-sm uppercase tracking-wide">
-                        <i class="fas fa-fire-alt"></i> 1. Urob hneď
+                <div onclick="app.ui.toggleQuadrant('q1')"
+                    class="cursor-pointer px-4 py-3 bg-red-100 dark:bg-red-900/50 border-b border-red-200 dark:border-red-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
+                    <h2 class="font-bold text-red-800 dark:text-red-200 text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i class="fas fa-chevron-up transition-transform duration-300 hidden layout-icon" id="q1-icon"></i> <i class="fas fa-fire-alt"></i> 1. Urob hneď
                     </h2>
                     <div class="flex items-center gap-2">
-                        <button onclick="app.tasks.sort('q1')"
+                        <button onclick="event.stopPropagation(); app.tasks.sort('q1')"
                             class="text-xs text-red-600 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800/50 p-1 rounded"
                             title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
                         <span
@@ -323,13 +340,13 @@
             <!-- Q2 -->
             <section
                 class="flex flex-col bg-blue-50 dark:bg-blue-950/30 rounded-3xl border border-blue-200 dark:border-blue-900/50 shadow-sm overflow-hidden relative group transition-all">
-                <div
-                    class="px-4 py-3 bg-blue-100 dark:bg-blue-900/50 border-b border-blue-200 dark:border-blue-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
-                    <h2 class="font-bold text-blue-800 dark:text-blue-200 text-sm uppercase tracking-wide">
-                        <i class="fas fa-calendar-check"></i> 2. Naplánuj
+                <div onclick="app.ui.toggleQuadrant('q2')"
+                    class="cursor-pointer px-4 py-3 bg-blue-100 dark:bg-blue-900/50 border-b border-blue-200 dark:border-blue-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
+                    <h2 class="font-bold text-blue-800 dark:text-blue-200 text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i class="fas fa-chevron-up transition-transform duration-300 hidden layout-icon" id="q2-icon"></i> <i class="fas fa-calendar-check"></i> 2. Naplánuj
                     </h2>
                     <div class="flex items-center gap-2">
-                        <button onclick="app.tasks.sort('q2')"
+                        <button onclick="event.stopPropagation(); app.tasks.sort('q2')"
                             class="text-xs text-blue-600 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/50 p-1 rounded"
                             title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
                         <span
@@ -345,13 +362,13 @@
             <!-- Q3 -->
             <section
                 class="flex flex-col bg-yellow-50 dark:bg-yellow-950/30 rounded-3xl border border-yellow-200 dark:border-yellow-900/50 shadow-sm overflow-hidden relative group transition-all">
-                <div
-                    class="px-4 py-3 bg-yellow-100 dark:bg-yellow-900/50 border-b border-yellow-200 dark:border-yellow-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
-                    <h2 class="font-bold text-yellow-800 dark:text-yellow-200 text-sm uppercase tracking-wide">
-                        <i class="fas fa-user-clock"></i> 3. Deleguj
+                <div onclick="app.ui.toggleQuadrant('q3')"
+                    class="cursor-pointer px-4 py-3 bg-yellow-100 dark:bg-yellow-900/50 border-b border-yellow-200 dark:border-yellow-900/80 flex justify-between items-center sticky top-0 z-10 transition-all">
+                    <h2 class="font-bold text-yellow-800 dark:text-yellow-200 text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i class="fas fa-chevron-up transition-transform duration-300 hidden layout-icon" id="q3-icon"></i> <i class="fas fa-user-clock"></i> 3. Deleguj
                     </h2>
                     <div class="flex items-center gap-2">
-                        <button onclick="app.tasks.sort('q3')"
+                        <button onclick="event.stopPropagation(); app.tasks.sort('q3')"
                             class="text-xs text-yellow-600 dark:text-yellow-300 hover:bg-yellow-200 dark:hover:bg-yellow-800/50 p-1 rounded"
                             title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
                         <span
@@ -367,13 +384,13 @@
             <!-- Q4 -->
             <section
                 class="flex flex-col bg-gray-100 dark:bg-slate-800/50 rounded-3xl border border-gray-200 dark:border-slate-700/50 shadow-sm overflow-hidden relative group transition-all">
-                <div
-                    class="px-4 py-3 bg-gray-200 dark:bg-slate-700/50 border-b border-gray-300 dark:border-slate-600/50 flex justify-between items-center sticky top-0 z-10 transition-all">
-                    <h2 class="font-bold text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wide">
-                        <i class="fas fa-trash-alt"></i> 4. Odlož
+                <div onclick="app.ui.toggleQuadrant('q4')"
+                    class="cursor-pointer px-4 py-3 bg-gray-200 dark:bg-slate-700/50 border-b border-gray-300 dark:border-slate-600/50 flex justify-between items-center sticky top-0 z-10 transition-all">
+                    <h2 class="font-bold text-gray-700 dark:text-slate-300 text-sm uppercase tracking-wide flex items-center gap-2">
+                        <i class="fas fa-chevron-up transition-transform duration-300 hidden layout-icon" id="q4-icon"></i> <i class="fas fa-trash-alt"></i> 4. Odlož
                     </h2>
                     <div class="flex items-center gap-2">
-                        <button onclick="app.tasks.sort('q4')"
+                        <button onclick="event.stopPropagation(); app.tasks.sort('q4')"
                             class="text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-600 p-1 rounded"
                             title="Zoradiť"><i class="fas fa-sort-amount-down"></i></button>
                         <span
@@ -390,13 +407,13 @@
 
     <!-- Mini Stopwatch Button -->
     <button id="swMiniBtn" onclick="app.stopwatch.toggleCollapse(false)"
-        class="hidden fixed bottom-4 left-4 md:bottom-8 md:left-8 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-full font-bold shadow-xl z-50 transition-transform hover:scale-105 flex items-center gap-2 ring-4 ring-cyan-600/30">
+        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-full font-bold shadow-xl z-50 transition-transform hover:scale-105 flex items-center gap-2 ring-4 ring-cyan-600/30">
         <i class="fas fa-stopwatch"></i> <span id="swMiniText">⏱ 0s</span>
     </button>
 
     <!-- Stopwatch Widget (Left Side) -->
-    <div id="stopwatchWidget" data-open="true"
-        class="fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-500 transform translate-y-0 opacity-100">
+    <div id="stopwatchWidget" data-open="false"
+        class="translate-y-[150%] opacity-0 pointer-events-none fixed bottom-4 left-4 md:bottom-8 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-50 transition-all duration-500 transform">
         <div class="bg-gradient-to-r from-cyan-600 to-cyan-700 dark:from-cyan-800 dark:to-cyan-900 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
             onclick="app.stopwatch.toggleCollapse()">
             <div class="flex items-center gap-2">
@@ -432,14 +449,14 @@
 
     <!-- Mini Timer Button -->
     <button id="timerMiniBtn" onclick="app.timer.toggleCollapse(false)"
-        class="hidden fixed bottom-4 right-4 md:bottom-8 md:right-8 bg-gray-900 dark:bg-indigo-600 text-white px-4 py-2 rounded-full font-bold shadow-xl z-50 transition-transform hover:scale-105 flex items-center gap-2 ring-4 ring-indigo-600/30">
+        class="fixed bottom-20 left-4 md:bottom-24 md:left-8 bg-gray-900 dark:bg-indigo-600 text-white px-4 py-2 rounded-full font-bold shadow-xl z-50 transition-transform hover:scale-105 flex items-center gap-2 ring-4 ring-indigo-600/30">
         <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse" id="timerMiniIndicator" style="display:none"></div>
         <span id="timerMiniText">⏳ 25m</span>
     </button>
 
-    <!-- Pomodoro Widget (Right Side) -->
-    <div id="pomodoroWidget" data-open="true"
-        class="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-40 transition-all duration-500 transform translate-y-0 opacity-100">
+    <!-- Pomodoro Widget (Left Side) -->
+    <div id="pomodoroWidget" data-open="false"
+        class="translate-y-[150%] opacity-0 pointer-events-none fixed bottom-20 left-4 md:bottom-24 md:left-8 w-80 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-800 overflow-hidden z-50 transition-all duration-500 transform">
         <div class="bg-gradient-to-r from-gray-800 to-gray-900 dark:from-slate-800 dark:to-slate-950 text-white px-4 py-3 flex justify-between items-center cursor-pointer select-none"
             onclick="app.timer.toggleCollapse()">
             <div class="flex items-center gap-2">
@@ -492,9 +509,16 @@
                 <div>
                     <label
                         class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Úloha</label>
-                    <select id="swTaskSelect"
+                    <select id="swTaskSelect" onchange="app.stopwatch.onTaskChange()"
                         class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                         <option value="">-- Vyberte úlohu --</option>
+                    </select>
+                </div>
+                <div>
+                    <label
+                        class="block text-xs font-bold text-gray-500 dark:text-slate-400 uppercase mb-1">Projekt</label>
+                    <select id="swProjectSelect"
+                        class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                     </select>
                 </div>
                 <div>
@@ -583,6 +607,25 @@
                 class="w-full bg-indigo-600 text-white py-2 rounded font-bold">Uložiť</button>
             <button onclick="app.ui.closeModal('settingsModal')"
                 class="w-full mt-2 text-gray-500 text-sm">Zrušiť</button>
+        </div>
+    </div>
+
+    <!-- Project Modal -->
+    <div id="projectModal" class="hidden fixed inset-0 bg-gray-900/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 class="text-xl font-bold mb-4 dark:text-white" id="projectModalTitle">Nový projekt</h3>
+            <input type="hidden" id="projectIdInput">
+            <div class="mb-4">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Názov projektu</label>
+                <input type="text" id="projectNameInput"
+                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Napr. Práca, Škola...">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="app.projects.saveProject()"
+                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded font-bold transition">Uložiť</button>
+                <button onclick="app.ui.closeModal('projectModal')"
+                    class="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-300 py-2 rounded transition">Zrušiť</button>
+            </div>
         </div>
     </div>
 
@@ -731,6 +774,48 @@
         </div>
     </div>
 
+    <!-- Masterplan Modal -->
+    <div id="masterplanModal" class="hidden fixed inset-0 bg-gray-900/60 z-[70] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-transparent dark:border-slate-800 overflow-hidden">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50">
+                <h3 class="text-xl font-bold dark:text-white flex items-center gap-2"><i class="fas fa-project-diagram text-blue-500"></i> AI Masterplan</h3>
+                <button onclick="app.ui.closeModal('masterplanModal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-white"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            
+            <!-- Chat Phase -->
+            <div id="mpChatPhase" class="flex-1 flex flex-col overflow-hidden min-h-[400px]">
+                <div id="mpChatHistory" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll bg-slate-50 dark:bg-slate-900/50">
+                    <!-- Chat bubbles will go here -->
+                </div>
+                <div class="p-4 border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div class="flex gap-2 mb-2">
+                        <textarea id="mpChatInput" rows="2" class="flex-1 border border-gray-200 dark:border-slate-700 rounded-xl p-3 text-sm dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none shadow-inner" placeholder="Napíšte svoj cieľ alebo odpoveď..." onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); app.ai.masterplan.sendAnswer(); }"></textarea>
+                        <button id="mpSendBtn" onclick="app.ai.masterplan.sendAnswer()" class="bg-blue-600 hover:bg-blue-700 text-white w-12 rounded-xl flex items-center justify-center transition shadow-md"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <button id="mpGenerateBtn" onclick="app.ai.masterplan.generatePlan()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl font-bold transition shadow-md hidden flex justify-center items-center gap-2"><i class="fas fa-magic"></i> Vygenerovať plán</button>
+                </div>
+            </div>
+
+            <!-- Review Phase -->
+            <div id="mpReviewPhase" class="hidden flex-1 flex flex-col overflow-hidden min-h-[400px]">
+                <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-100 dark:border-indigo-800/30">
+                    <p class="text-sm text-indigo-800 dark:text-indigo-200 font-medium"><i class="fas fa-info-circle mr-1"></i> Skontrolujte navrhnutý plán. Môžete ho schváliť, alebo požiadať o úpravu.</p>
+                </div>
+                <div id="mpPlanContainer" class="flex-1 overflow-y-auto p-4 custom-scroll space-y-3">
+                    <!-- Plan items will go here -->
+                </div>
+                <div class="p-4 border-t border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="mpModifyInput" class="flex-1 border border-gray-200 dark:border-slate-700 rounded-lg p-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="Napr. Pridaj úlohu na vybavenie pošty..." onkeydown="if(event.key === 'Enter') app.ai.masterplan.modifyPlan()">
+                        <button id="mpModifyBtn" onclick="app.ai.masterplan.modifyPlan()" class="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-white px-4 rounded-lg font-bold transition"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                    <button id="mpExecuteBtn" onclick="app.ai.masterplan.executePlan()" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold text-lg transition shadow-md flex items-center justify-center gap-2"><i class="fas fa-check-double"></i> Zaviesť do systému</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Completion Details Modal -->
     <div id="completionModal" class="hidden fixed inset-0 bg-gray-900/50 z-[60] flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl border border-transparent dark:border-slate-800">
@@ -771,17 +856,24 @@
                     { id: 'URGENT', label: 'Moje nervy (48h)', color: '#ef4444', threshold: 48 }, // Red (Today/Tmrw)
                     { id: 'COMFORT', label: 'Pohodička (7 dní)', color: '#eab308', threshold: 168 }, // Yellow (Week)
                     { id: 'SAFE', label: 'Ďaleká budúcnosť', color: '#10b981', threshold: null } // Green (Far)
-                ]
+                ],
+                projects: [{ id: 'default', name: 'Hlavný' }],
+                activeProjectId: 'default',
+                layoutMode: 'matrix'
             },
 
             init() {
                 this.theme.init();
                 this.storage.load();
+                if (this.projects) this.projects.renderTabs();
                 this.ui.render();
-                if (window.innerWidth < 768) {
-                    this.timer.toggleCollapse(true);
-                    this.stopwatch.toggleCollapse(true);
-                }
+                
+                // Initialize layout
+                this.ui.toggleLayout(true);
+                // Ensure they stay collapsed at init
+                this.timer.toggleCollapse(true);
+                this.stopwatch.toggleCollapse(true);
+
 
                 const fpConfig = { enableTime: true, dateFormat: "Y-m-d\\TH:i", altInput: true, altFormat: "j.n.Y H:i", time_24hr: true, locale: "sk" };
                 flatpickr("#editDate", { ...fpConfig, onChange: function() { document.getElementById('editRequireDetails').checked = true; } });
@@ -823,12 +915,21 @@
                         const s = localStorage.getItem('em_stats_v2');
                         const k = localStorage.getItem('em_apikey_v2');
                         const ds = localStorage.getItem('em_deadline_settings');
+                        const p = localStorage.getItem('em_projects');
+                        const ap = localStorage.getItem('em_active_project');
                         app.data.tasks = t ? JSON.parse(t) : [];
                         app.data.stats = s ? JSON.parse(s) : {};
                         app.data.apiKey = k || "";
                         if (ds) app.data.deadlineSettings = JSON.parse(ds);
+                        if (p) app.data.projects = JSON.parse(p);
+                        if (ap) app.data.activeProjectId = ap;
                         const apiInput = document.getElementById('apiKeyInput');
                         if (apiInput) apiInput.value = app.data.apiKey;
+                        
+                        // Migrate existing tasks
+                        app.data.tasks.forEach(task => {
+                            if (!task.projectId) task.projectId = 'default';
+                        });
                     } catch (e) { app.data.tasks = []; app.data.stats = {}; }
                 },
                 save() {
@@ -836,6 +937,95 @@
                     localStorage.setItem('em_stats_v2', JSON.stringify(app.data.stats));
                     localStorage.setItem('em_apikey_v2', app.data.apiKey);
                     localStorage.setItem('em_deadline_settings', JSON.stringify(app.data.deadlineSettings));
+                    localStorage.setItem('em_projects', JSON.stringify(app.data.projects));
+                    localStorage.setItem('em_active_project', app.data.activeProjectId);
+                }
+            },
+            
+            projects: {
+                openModal(id = null) {
+                    if (id) {
+                        const proj = app.data.projects.find(p => p.id === id);
+                        if (proj) {
+                            document.getElementById('projectIdInput').value = id;
+                            document.getElementById('projectNameInput').value = proj.name;
+                            document.getElementById('projectModalTitle').innerText = "Upraviť projekt";
+                        }
+                    } else {
+                        document.getElementById('projectIdInput').value = '';
+                        document.getElementById('projectNameInput').value = '';
+                        document.getElementById('projectModalTitle').innerText = "Nový projekt";
+                    }
+                    app.ui.openModal('projectModal');
+                    setTimeout(() => document.getElementById('projectNameInput').focus(), 150);
+                },
+                saveProject() {
+                    const idInput = document.getElementById('projectIdInput').value;
+                    const name = document.getElementById('projectNameInput').value.trim();
+                    if (!name) return;
+                    
+                    if (idInput) {
+                        const proj = app.data.projects.find(p => p.id === idInput);
+                        if (proj) proj.name = name;
+                    } else {
+                        const newId = 'p_' + Date.now();
+                        app.data.projects.push({ id: newId, name: name });
+                        app.data.activeProjectId = newId; // Auto switch to new project
+                    }
+                    app.storage.save();
+                    this.renderTabs();
+                    app.ui.render();
+                    app.ui.closeModal('projectModal');
+                },
+                switchProject(id) {
+                    if (app.data.activeProjectId === id) return;
+                    app.data.activeProjectId = id;
+                    app.storage.save();
+                    this.renderTabs();
+                    app.ui.render();
+                },
+                deleteProject(id) {
+                    if (id === 'default') {
+                        app.ui.showAlert("Chyba", "Hlavný projekt nie je možné vymazať.");
+                        return;
+                    }
+                    if (confirm("Naozaj chcete vymazať tento projekt? Všetky úlohy v ňom budú natrvalo odstránené!")) {
+                        app.data.projects = app.data.projects.filter(p => p.id !== id);
+                        app.data.tasks = app.data.tasks.filter(t => t.projectId !== id);
+                        app.data.activeProjectId = 'default';
+                        app.storage.save();
+                        this.renderTabs();
+                        app.ui.render();
+                    }
+                },
+                renderTabs() {
+                    const container = document.getElementById('projectTabsContainer');
+                    if (!container) return;
+                    
+                    container.innerHTML = app.data.projects.map(p => {
+                        const isActive = p.id === app.data.activeProjectId;
+                        const baseClasses = "group flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm transition-all cursor-pointer border shrink-0 ";
+                        const activeClasses = isActive 
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-200 dark:shadow-indigo-900/50" 
+                            : "bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700";
+                            
+                        const actions = isActive && p.id !== 'default' 
+                            ? `<button onclick="event.stopPropagation(); app.projects.openModal('${p.id}')" class="text-indigo-200 hover:text-white transition px-1"><i class="fas fa-edit text-xs"></i></button>
+                               <button onclick="event.stopPropagation(); app.projects.deleteProject('${p.id}')" class="text-indigo-200 hover:text-red-200 transition px-1"><i class="fas fa-trash text-xs"></i></button>`
+                            : (isActive && p.id === 'default' ? `<button onclick="event.stopPropagation(); app.projects.openModal('${p.id}')" class="text-indigo-200 hover:text-white transition px-1"><i class="fas fa-edit text-xs"></i></button>` : '');
+                            
+                        return `<div class="${baseClasses} ${activeClasses}" onclick="app.projects.switchProject('${p.id}')">
+                            <span class="truncate max-w-[150px]">${p.name}</span>
+                            ${actions ? `<div class="flex items-center gap-1 border-l border-indigo-400 pl-2 ml-1">${actions}</div>` : ''}
+                        </div>`;
+                    }).join('');
+                    
+                    // Add "Pridať projekt" button
+                    container.innerHTML += `
+                        <button onclick="app.projects.openModal()" class="shrink-0 flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-500 hover:text-indigo-600 hover:border-indigo-300 transition hover:bg-white shadow-sm">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    `;
                 }
             },
 
@@ -896,6 +1086,152 @@
                             { id: 'SAFE', label: 'Ďaleká budúcnosť', color: '#10b981', threshold: null }
                         ];
                         this.renderDeadlineSettings();
+                    }
+                },
+                masterplan: {
+                    history: [],
+                    currentPlan: [],
+                    open() {
+                        this.history = [];
+                        this.currentPlan = [];
+                        document.getElementById('mpChatHistory').innerHTML = '<div class="text-center text-sm text-gray-500 my-4">Ahoj! Aký je tvoj veľký cieľ, ktorý chceš naplánovať?</div>';
+                        document.getElementById('mpChatInput').value = '';
+                        document.getElementById('mpChatPhase').classList.remove('hidden');
+                        document.getElementById('mpReviewPhase').classList.add('hidden');
+                        document.getElementById('mpGenerateBtn').classList.add('hidden');
+                        app.ui.openModal('masterplanModal');
+                        setTimeout(() => document.getElementById('mpChatInput').focus(), 150);
+                    },
+                    appendBubble(text, role) {
+                        const div = document.createElement('div');
+                        div.className = `max-w-[85%] rounded-2xl p-3 text-sm ${role === 'user' ? 'bg-blue-600 text-white self-end rounded-br-sm ml-auto' : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-white self-start rounded-bl-sm border border-gray-100 dark:border-slate-700 shadow-sm'}`;
+                        div.innerHTML = text.replace(/\n/g, '<br>');
+                        const container = document.getElementById('mpChatHistory');
+                        container.appendChild(div);
+                        container.scrollTop = container.scrollHeight;
+                    },
+                    async sendAnswer() {
+                        const inp = document.getElementById('mpChatInput');
+                        const text = inp.value.trim();
+                        if (!text) return;
+                        inp.value = '';
+                        this.appendBubble(text, 'user');
+                        this.history.push({ role: 'user', parts: [{ text: text }] });
+                        
+                        document.getElementById('mpGenerateBtn').classList.remove('hidden');
+
+                        const btn = document.getElementById('mpSendBtn');
+                        const origBtn = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i>';
+                        btn.disabled = true;
+
+                        try {
+                            const systemMsg = "Ty si produktívny asistent. Používateľ ti zadal cieľ. Opýtaj sa 1-2 doplňujúce, stručné otázky, aby si mu pomohol lepšie naplánovať úlohy. Ak už máš dosť info, len povedz, že si pripravený vygenerovať plán. (Negenruj ešte zoznam úloh).";
+                            const payload = [{ role: 'user', parts: [{ text: systemMsg }] }, ...this.history];
+                            const response = await app.ai.callChat(payload);
+                            if (response) {
+                                this.appendBubble(response, 'model');
+                                this.history.push({ role: 'model', parts: [{ text: response }] });
+                            }
+                        } finally {
+                            btn.innerHTML = origBtn;
+                            btn.disabled = false;
+                        }
+                    },
+                    async generatePlan() {
+                        const btn = document.getElementById('mpGenerateBtn');
+                        const origBtn = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i> Pracujem...';
+                        btn.disabled = true;
+                        
+                        try {
+                            const prompt = "Vygeneruj detailný plán vo formáte JSON poľa. Každý objekt poľa musí mať 'title' (názov), 'dl' (odhadovaný dátum yyyy-mm-ddThh:mm alebo prázdne), 'est' (minúty), 'q' (jedna z 'q1','q2','q3','q4') a 'subs' (pole stringov - podúloh). Output len čistý JSON bez markdown značiek.";
+                            const payload = [...this.history, { role: 'user', parts: [{ text: prompt }] }];
+                            const response = await app.ai.callChat(payload);
+                            if (response) {
+                                const jsonStr = response.match(/\[[\s\S]*\]/)?.[0];
+                                if (jsonStr) {
+                                    this.currentPlan = JSON.parse(jsonStr);
+                                    this.renderPlan();
+                                    document.getElementById('mpChatPhase').classList.add('hidden');
+                                    document.getElementById('mpReviewPhase').classList.remove('hidden');
+                                } else {
+                                    app.ui.showToast("Chyba pri generovaní plánu.");
+                                }
+                            }
+                        } catch (e) {
+                            app.ui.showToast("Zlý formát plánu od AI.");
+                        } finally {
+                            btn.innerHTML = origBtn;
+                            btn.disabled = false;
+                        }
+                    },
+                    renderPlan() {
+                        const container = document.getElementById('mpPlanContainer');
+                        if (!this.currentPlan.length) {
+                            container.innerHTML = '<p class="text-sm text-gray-500">Žiadne úlohy.</p>';
+                            return;
+                        }
+                        container.innerHTML = this.currentPlan.map((t, i) => `
+                            <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                                <div class="font-bold text-gray-800 dark:text-white mb-1 flex justify-between">
+                                    <span>${i+1}. ${t.title}</span>
+                                    <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-lg">${t.q}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mb-2">Odhad: ${t.est || 0}m</div>
+                                ${t.subs && t.subs.length ? `<ul class="text-xs text-gray-600 dark:text-slate-400 pl-4 list-disc space-y-1">${t.subs.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+                            </div>
+                        `).join('');
+                    },
+                    async modifyPlan() {
+                        const inp = document.getElementById('mpModifyInput');
+                        const text = inp.value.trim();
+                        if (!text) return;
+                        inp.value = '';
+                        
+                        this.history.push({ role: 'user', parts: [{ text: `Tu je pripomienka k plánu: ${text}. Prosím pregeneruj pôvodný JSON pole s týmito úpravami. Output iba čistý JSON.` }] });
+                        
+                        const btn = document.getElementById('mpModifyBtn');
+                        btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i>';
+                        btn.disabled = true;
+
+                        try {
+                            const response = await app.ai.callChat(this.history);
+                            if (response) {
+                                const jsonStr = response.match(/\[[\s\S]*\]/)?.[0];
+                                if (jsonStr) {
+                                    this.currentPlan = JSON.parse(jsonStr);
+                                    this.renderPlan();
+                                } else {
+                                    app.ui.showToast("Chyba pri úprave plánu.");
+                                }
+                            }
+                        } catch (e) {
+                            app.ui.showToast("Zlý formát od AI.");
+                        } finally {
+                            btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                            btn.disabled = false;
+                        }
+                    },
+                    executePlan() {
+                        if (!this.currentPlan.length) return;
+                        this.currentPlan.forEach(t => {
+                            const validQ = ['q1','q2','q3','q4'].includes(t.q) ? t.q : 'q2';
+                            const subs = (t.subs || []).map(s => ({ text: s, done: false }));
+                            app.data.tasks.push({
+                                id: 'mp' + Date.now() + Math.floor(Math.random() * 1000),
+                                text: t.title,
+                                q: validQ,
+                                dl: t.dl || "",
+                                est: t.est || "",
+                                subs: subs,
+                                done: false
+                            });
+                        });
+                        app.storage.save();
+                        app.ui.render();
+                        app.ui.closeModal('masterplanModal');
+                        app.ui.showToast('Úlohy boli úspešne pridané!');
                     }
                 }
             },
@@ -1021,6 +1357,12 @@
                     const activeTasks = app.data.tasks.filter(t => !t.done);
                     const select = document.getElementById('swTaskSelect');
                     select.innerHTML = '<option value="">-- Vyberte úlohu --</option>' + activeTasks.map(t => `<option value="${t.id}">${t.text}</option>`).join('');
+                    
+                    const pSelect = document.getElementById('swProjectSelect');
+                    if (pSelect) {
+                        pSelect.innerHTML = app.data.projects.map(p => `<option value="${p.id}" ${p.id === app.data.activeProjectId ? 'selected' : ''}>${p.name}</option>`).join('');
+                    }
+
                     const now = new Date();
                     const fp = document.getElementById('swDateInput')._flatpickr;
                     if (fp) fp.setDate(now);
@@ -1029,13 +1371,28 @@
                     document.getElementById('swDurationInput').value = mins;
                     app.ui.openModal('swSaveModal');
                 },
+                onTaskChange() {
+                    const taskId = document.getElementById('swTaskSelect').value;
+                    if (taskId) {
+                        const task = app.data.tasks.find(t => t.id === taskId);
+                        const pSelect = document.getElementById('swProjectSelect');
+                        if (task && task.projectId && pSelect) {
+                            pSelect.value = task.projectId;
+                        }
+                    }
+                },
                 confirmSave() {
                     const taskId = document.getElementById('swTaskSelect').value;
                     const dateStr = document.getElementById('swDateInput').value;
                     const duration = parseInt(document.getElementById('swDurationInput').value);
+                    const pSelect = document.getElementById('swProjectSelect');
+                    const projectId = pSelect ? pSelect.value : app.data.activeProjectId;
+                    
                     if (!dateStr || !duration) { alert("Vyplňte dátum a trvanie."); return; }
                     const dateKey = dateStr.split('T')[0];
-                    app.data.stats[dateKey] = (app.data.stats[dateKey] || 0) + duration;
+                    
+                    app.stats.log(duration, dateKey, projectId, taskId);
+                    
                     if (taskId) {
                         const task = app.data.tasks.find(t => t.id === taskId);
                         if (task) task.spent = (task.spent || 0) + duration;
@@ -1050,9 +1407,37 @@
             stats: {
                 view: 'week',
                 date: new Date(),
-                log(mins) {
-                    const k = new Date().toISOString().split('T')[0];
-                    app.data.stats[k] = (app.data.stats[k] || 0) + mins;
+                log(mins, customDateKey = null, customProjectId = null, customTaskId = null) {
+                    const k = customDateKey || new Date().toISOString().split('T')[0];
+                    let currentDay = app.data.stats[k];
+                    
+                    if (typeof currentDay === 'number') {
+                        currentDay = { total: currentDay, default: { total: currentDay, tasks: {} } };
+                    } else if (!currentDay) {
+                        currentDay = { total: 0 };
+                    } else {
+                        for (let p in currentDay) {
+                            if (p === 'total') continue;
+                            if (typeof currentDay[p] === 'number') {
+                                currentDay[p] = { total: currentDay[p], tasks: {} };
+                            }
+                        }
+                    }
+                    
+                    const pId = customProjectId || app.data.activeProjectId || 'default';
+                    if (!currentDay[pId]) currentDay[pId] = { total: 0, tasks: {} };
+                    
+                    currentDay[pId].total += mins;
+                    currentDay.total += mins;
+                    
+                    let taskName = "Nezaradené";
+                    if (customTaskId) {
+                        const t = app.data.tasks.find(x => x.id === customTaskId);
+                        if (t) taskName = t.text;
+                    }
+                    currentDay[pId].tasks[taskName] = (currentDay[pId].tasks[taskName] || 0) + mins;
+                    
+                    app.data.stats[k] = currentDay;
                     app.storage.save();
                 },
                 setView(v) { this.view = v; this.date = new Date(); this.render(); },
@@ -1082,15 +1467,31 @@
                 getData() {
                     let labels = [], values = [], total = 0;
                     const d = new Date(this.date);
+
+                    const getDayData = (dateStr) => {
+                        const s = app.data.stats[dateStr];
+                        if (typeof s === 'number') return { total: s, default: { total: s, tasks: {} } };
+                        if (s) {
+                            let fixed = { total: s.total };
+                            for (let k in s) {
+                                if (k === 'total') continue;
+                                if (typeof s[k] === 'number') fixed[k] = { total: s[k], tasks: {} };
+                                else fixed[k] = s[k];
+                            }
+                            return fixed;
+                        }
+                        return { total: 0 };
+                    };
+
                     if (this.view === 'week') {
                         const day = d.getDay() || 7;
                         if (day !== 1) d.setHours(-24 * (day - 1));
                         for (let i = 0; i < 7; i++) {
                             const dateStr = d.toISOString().split('T')[0];
-                            const val = app.data.stats[dateStr] || 0;
-                            values.push(val);
+                            const valObj = getDayData(dateStr);
+                            values.push(valObj);
                             labels.push(d.toLocaleDateString('sk-SK', { weekday: 'short' }));
-                            total += val;
+                            total += valObj.total;
                             d.setDate(d.getDate() + 1);
                         }
                     } else if (this.view === 'month') {
@@ -1099,33 +1500,46 @@
                         for (let i = 1; i <= daysInMonth; i++) {
                             const current = new Date(year, month, i, 12);
                             const dateStr = current.toISOString().split('T')[0];
-                            const val = app.data.stats[dateStr] || 0;
-                            values.push(val);
+                            const valObj = getDayData(dateStr);
+                            values.push(valObj);
                             labels.push(i % 5 === 0 || i === 1 ? i.toString() : '');
-                            total += val;
+                            total += valObj.total;
                         }
                     } else if (this.view === 'year') {
                         const year = d.getFullYear();
                         for (let i = 0; i < 12; i++) {
-                            let monthTotal = 0;
+                            let monthObj = { total: 0 };
                             const daysInM = new Date(year, i + 1, 0).getDate();
                             for (let j = 1; j <= daysInM; j++) {
                                 const current = new Date(year, i, j, 12);
                                 const dateStr = current.toISOString().split('T')[0];
-                                monthTotal += (app.data.stats[dateStr] || 0);
+                                const dData = getDayData(dateStr);
+                                for (const k in dData) {
+                                    if (k === 'total') {
+                                        monthObj.total += dData.total;
+                                    } else {
+                                        if (!monthObj[k]) monthObj[k] = { total: 0, tasks: {} };
+                                        monthObj[k].total += dData[k].total;
+                                        if (dData[k].tasks) {
+                                            for (const tName in dData[k].tasks) {
+                                                monthObj[k].tasks[tName] = (monthObj[k].tasks[tName] || 0) + dData[k].tasks[tName];
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            values.push(monthTotal);
+                            values.push(monthObj);
                             labels.push(new Date(year, i, 1).toLocaleDateString('sk-SK', { month: 'short' }));
-                            total += monthTotal;
+                            total += monthObj.total;
                         }
                     } else if (this.view === 'day') {
                         const dateStr = d.toISOString().split('T')[0];
-                        const val = app.data.stats[dateStr] || 0;
-                        values.push(val);
+                        const valObj = getDayData(dateStr);
+                        values.push(valObj);
                         labels.push('Dnes');
-                        total = val;
+                        total = valObj.total;
                     }
-                    return { labels, values, total, max: Math.max(...values, 10) };
+                    return { labels, values, total, max: Math.max(...values.map(v => v.total), 10) };
                 },
                 render() {
                     ['viewDayBtn', 'viewWeekBtn', 'viewMonthBtn', 'viewYearBtn'].forEach(id => {
@@ -1152,18 +1566,87 @@
                     labelsContainer.innerHTML = '';
                     if (this.view === 'day') {
                         const pct = Math.min((data.total / 300) * 100, 100);
-                        chart.innerHTML = `<div class="w-full h-full flex items-center justify-center"><div class="relative w-32 h-32 rounded-full border-8 border-indigo-100 dark:border-slate-700 flex items-center justify-center"><div class="text-xl font-bold text-indigo-600 dark:text-indigo-400">${data.total}m</div></div></div>`;
+                        let breakdownHTML = '';
+                        const valObj = data.values[0] || { total: 0 };
+                        if (valObj.total > 0) {
+                            breakdownHTML = `<div class="mt-4 text-sm text-gray-500 flex flex-wrap gap-2 justify-center w-full px-4">`;
+                            for (const k in valObj) {
+                                if (k === 'total') continue;
+                                const p = app.data.projects.find(x => x.id === k) || {name: k};
+                                breakdownHTML += `<div class="bg-gray-50 dark:bg-slate-700/50 p-2 rounded-xl flex flex-col items-start min-w-[120px] shadow-sm border border-gray-100 dark:border-slate-700">
+                                    <span class="font-bold text-gray-800 dark:text-gray-200 border-b border-gray-200 dark:border-slate-600 pb-1 mb-1 w-full">${p.name}: ${valObj[k].total}m</span>`;
+                                if (valObj[k].tasks) {
+                                    for (let t in valObj[k].tasks) {
+                                        breakdownHTML += `<span class="text-[10px] text-gray-500 dark:text-slate-400 truncate w-full" title="${t}">- ${t}: ${valObj[k].tasks[t]}m</span>`;
+                                    }
+                                }
+                                breakdownHTML += `</div>`;
+                            }
+                            breakdownHTML += `</div>`;
+                        }
+                        chart.innerHTML = `<div class="w-full h-full flex flex-col items-center justify-center">
+                            <div class="relative w-32 h-32 rounded-full border-8 border-indigo-100 dark:border-slate-700 flex items-center justify-center">
+                                <div class="text-xl font-bold text-indigo-600 dark:text-indigo-400">${data.total}m</div>
+                            </div>
+                            ${breakdownHTML}
+                        </div>`;
                         return;
                     }
-                    data.values.forEach((val, i) => {
-                        const h = (val / data.max) * 100;
-                        const bar = document.createElement('div');
+                    
+                    const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500', 'bg-cyan-500'];
+                    data.values.forEach((valObj, i) => {
+                        const totalVal = valObj.total;
+                        const h = (totalVal / data.max) * 100;
+                        const barContainer = document.createElement('div');
                         let widthClass = 'w-full';
                         if (this.view === 'month') widthClass = 'w-[3%]';
-                        bar.className = `${widthClass} rounded-t-sm transition-all duration-500 relative group bg-indigo-500 dark:bg-indigo-600 hover:bg-indigo-400`;
+                        barContainer.className = `${widthClass} h-full flex flex-col justify-end items-center relative group`;
+                        
+                        const bar = document.createElement('div');
+                        bar.className = `w-full rounded-t-sm flex flex-col-reverse justify-start items-stretch overflow-hidden shadow-sm`;
                         bar.style.height = `${h}%`;
-                        bar.innerHTML = `<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-slate-700 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition pointer-events-none whitespace-nowrap z-10">${val}m</div>`;
-                        chart.appendChild(bar);
+
+                        let tooltipParts = [];
+                        let cIdx = 0;
+                        
+                        if (totalVal > 0) {
+                            for (const k in valObj) {
+                                if (k === 'total') continue;
+                                const pval = valObj[k];
+                                const p = app.data.projects.find(x => x.id === k) || {name: k};
+                                const ph = (pval.total / totalVal) * 100;
+                                const pBar = document.createElement('div');
+                                pBar.className = `w-full ${colors[cIdx % colors.length]} transition-all duration-500 hover:opacity-80`;
+                                pBar.style.height = `${ph}%`;
+                                bar.appendChild(pBar);
+                                
+                                let taskLines = [];
+                                if (pval.tasks) {
+                                    for (let t in pval.tasks) {
+                                        taskLines.push(`<div class="text-[9px] text-gray-300 pl-3 opacity-90">- ${t}: ${pval.tasks[t]}m</div>`);
+                                    }
+                                }
+                                
+                                tooltipParts.push(`
+                                    <div class="flex flex-col mb-1.5 w-full text-left">
+                                        <div class="flex items-center gap-1 font-bold"><span class="w-2 h-2 rounded-full bg-white opacity-80"></span><span class="${colors[cIdx % colors.length].replace('bg-', 'text-')} drop-shadow-md brightness-150">${p.name}: ${pval.total}m</span></div>
+                                        ${taskLines.join('')}
+                                    </div>
+                                `);
+                                cIdx++;
+                            }
+                            
+                            barContainer.innerHTML = `<div class="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900/95 dark:bg-slate-800/95 text-white text-[10px] py-2 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20 flex flex-col items-start shadow-xl border border-gray-700 backdrop-blur-sm min-w-[150px]">
+                                <div class="font-bold border-b border-gray-700 pb-1 mb-1.5 w-full text-center text-xs text-gray-300 tracking-wide uppercase">Spolu: ${totalVal}m</div>
+                                ${tooltipParts.join('')}
+                            </div>`;
+                        } else {
+                             bar.className += ` bg-gray-100 dark:bg-slate-800`;
+                        }
+
+                        barContainer.appendChild(bar);
+                        chart.appendChild(barContainer);
+
                         const label = document.createElement('div');
                         label.className = "w-full text-center truncate";
                         label.innerText = data.labels[i];
@@ -1186,7 +1669,7 @@
                     if (!title) { app.ui.showToast("Zadajte názov úlohy"); return; }
                     let qVal = document.getElementById('smartQ').value;
                     if (!['q1', 'q2', 'q3', 'q4'].includes(qVal)) qVal = 'q1';
-                    const newTask = { id: 't' + Date.now(), text: title, q: qVal, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false, pinned: false };
+                    const newTask = { id: 't' + Date.now(), text: title, q: qVal, dl: document.getElementById('smartDate').value, est: document.getElementById('smartEst').value, subs: [], done: false, pinned: false, projectId: app.data.activeProjectId };
                     app.data.tasks.push(newTask);
                     document.getElementById('smartInputText').value = '';
                     document.getElementById('smartResult').classList.add('hidden');
@@ -1290,7 +1773,7 @@
                             task.text = text; task.dl = dl; task.est = est; task.requireDetails = reqDet; task.subs = JSON.parse(JSON.stringify(app.data.tempSubs));
                         }
                     } else {
-                        const newTask = { id: 't' + Date.now(), text: text, q: 'inbox', dl: dl, est: est, requireDetails: reqDet, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false };
+                        const newTask = { id: 't' + Date.now(), text: text, q: 'inbox', dl: dl, est: est, requireDetails: reqDet, subs: JSON.parse(JSON.stringify(app.data.tempSubs)), done: false, projectId: app.data.activeProjectId };
                         app.data.tasks.push(newTask);
                     }
                     app.storage.save();
@@ -1342,13 +1825,23 @@
                     e.preventDefault();
                     const id = e.dataTransfer.getData('id');
                     const t = app.data.tasks.find(x => x.id === id);
-                    if (t) { t.q = q; app.storage.save(); app.ui.render(); }
+                    if (t) { 
+                        t.q = q; 
+                        if (q !== 'inbox') t.projectId = app.data.activeProjectId;
+                        app.storage.save(); 
+                        app.ui.render(); 
+                    }
                     e.currentTarget.classList.remove('bg-gray-100', 'dark:bg-slate-800');
                 },
                 allowDrop(e) { e.preventDefault(); e.currentTarget.classList.add('bg-gray-100', 'dark:bg-slate-800'); },
                 mobileMove(id, q) {
                     const t = app.data.tasks.find(x => x.id === id);
-                    if (t) { t.q = q; app.storage.save(); app.ui.render(); }
+                    if (t) { 
+                        t.q = q; 
+                        if (q !== 'inbox') t.projectId = app.data.activeProjectId;
+                        app.storage.save(); 
+                        app.ui.render(); 
+                    }
                 }
             },
             timer: {
@@ -1375,7 +1868,12 @@
                     this.pause();
                     this.playBeep();
                     if (this.mode === 'work') {
-                        app.stats.log(Math.round((this.initRem || 1500) / 60));
+                        let pid = app.data.activeProjectId;
+                        if (this.taskId) {
+                            const t = app.data.tasks.find(x => x.id === this.taskId);
+                            if (t && t.projectId) pid = t.projectId;
+                        }
+                        app.stats.log(Math.round((this.initRem || 1500) / 60), null, pid, this.taskId);
                         app.ai.genTip();
                         app.ui.notify("Hotovo", "Daj si pauzu");
                         this.setMode(5, 'break');
@@ -1399,6 +1897,7 @@
                 setTask(id) {
                     const t = app.data.tasks.find(x => x.id === id);
                     safeSetText('currentTaskLabel', t ? t.text : "-- Žiadna úloha --");
+                    this.taskId = t ? t.id : null;
                     this.toggleCollapse(false);
                 },
                 updateUI() {
@@ -1445,6 +1944,153 @@
                 }
             },
             ai: {
+                masterplan: {
+                    history: [],
+                    currentPlan: [],
+                    open() {
+                        this.history = [];
+                        this.currentPlan = [];
+                        document.getElementById('mpChatHistory').innerHTML = '<div class="text-center text-sm text-gray-500 my-4">Ahoj! Aký je tvoj veľký cieľ, ktorý chceš naplánovať?</div>';
+                        document.getElementById('mpChatInput').value = '';
+                        document.getElementById('mpChatPhase').classList.remove('hidden');
+                        document.getElementById('mpReviewPhase').classList.add('hidden');
+                        document.getElementById('mpGenerateBtn').classList.add('hidden');
+                        app.ui.openModal('masterplanModal');
+                        setTimeout(() => document.getElementById('mpChatInput').focus(), 150);
+                    },
+                    appendBubble(text, role) {
+                        const div = document.createElement('div');
+                        div.className = `max-w-[85%] rounded-2xl p-3 text-sm ${role === 'user' ? 'bg-blue-600 text-white self-end rounded-br-sm ml-auto' : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-white self-start rounded-bl-sm border border-gray-100 dark:border-slate-700 shadow-sm'}`;
+                        div.innerHTML = text.replace(/\n/g, '<br>');
+                        const container = document.getElementById('mpChatHistory');
+                        container.appendChild(div);
+                        container.scrollTop = container.scrollHeight;
+                    },
+                    async sendAnswer() {
+                        const inp = document.getElementById('mpChatInput');
+                        const text = inp.value.trim();
+                        if (!text) return;
+                        inp.value = '';
+                        this.appendBubble(text, 'user');
+                        this.history.push({ role: 'user', parts: [{ text: text }] });
+                        
+                        document.getElementById('mpGenerateBtn').classList.remove('hidden');
+
+                        const btn = document.getElementById('mpSendBtn');
+                        const origBtn = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i>';
+                        btn.disabled = true;
+
+                        try {
+                            const systemMsg = "Ty si produktívny asistent. Používateľ ti zadal cieľ. Opýtaj sa 1-2 doplňujúce, stručné otázky, aby si mu pomohol lepšie naplánovať úlohy. Ak už máš dosť info, len povedz, že si pripravený vygenerovať plán. (Negenruj ešte zoznam úloh).";
+                            const payload = [{ role: 'user', parts: [{ text: systemMsg }] }, ...this.history];
+                            const response = await app.ai.callChat(payload);
+                            if (response) {
+                                this.appendBubble(response, 'model');
+                                this.history.push({ role: 'model', parts: [{ text: response }] });
+                            }
+                        } finally {
+                            btn.innerHTML = origBtn;
+                            btn.disabled = false;
+                        }
+                    },
+                    async generatePlan() {
+                        const btn = document.getElementById('mpGenerateBtn');
+                        const origBtn = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i> Pracujem...';
+                        btn.disabled = true;
+                        
+                        try {
+                            const prompt = "Vygeneruj detailný plán vo formáte JSON poľa. Každý objekt poľa musí mať 'title' (názov), 'dl' (odhadovaný dátum yyyy-mm-ddThh:mm alebo prázdne), 'est' (minúty), 'q' (jedna z 'q1','q2','q3','q4') a 'subs' (pole stringov - podúloh). Output len čistý JSON bez markdown značiek.";
+                            const payload = [...this.history, { role: 'user', parts: [{ text: prompt }] }];
+                            const response = await app.ai.callChat(payload);
+                            if (response) {
+                                const jsonStr = response.match(/\[[\s\S]*\]/)?.[0];
+                                if (jsonStr) {
+                                    this.currentPlan = JSON.parse(jsonStr);
+                                    this.renderPlan();
+                                    document.getElementById('mpChatPhase').classList.add('hidden');
+                                    document.getElementById('mpReviewPhase').classList.remove('hidden');
+                                } else {
+                                    app.ui.showToast("Chyba pri generovaní plánu.");
+                                }
+                            }
+                        } catch (e) {
+                            app.ui.showToast("Zlý formát plánu od AI.");
+                        } finally {
+                            btn.innerHTML = origBtn;
+                            btn.disabled = false;
+                        }
+                    },
+                    renderPlan() {
+                        const container = document.getElementById('mpPlanContainer');
+                        if (!this.currentPlan.length) {
+                            container.innerHTML = '<p class="text-sm text-gray-500">Žiadne úlohy.</p>';
+                            return;
+                        }
+                        container.innerHTML = this.currentPlan.map((t, i) => `
+                            <div class="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                                <div class="font-bold text-gray-800 dark:text-white mb-1 flex justify-between">
+                                    <span>${i+1}. ${t.title}</span>
+                                    <span class="text-xs px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-lg">${t.q}</span>
+                                </div>
+                                <div class="text-xs text-gray-500 mb-2">Odhad: ${t.est || 0}m</div>
+                                ${t.subs && t.subs.length ? `<ul class="text-xs text-gray-600 dark:text-slate-400 pl-4 list-disc space-y-1">${t.subs.map(s => `<li>${s}</li>`).join('')}</ul>` : ''}
+                            </div>
+                        `).join('');
+                    },
+                    async modifyPlan() {
+                        const inp = document.getElementById('mpModifyInput');
+                        const text = inp.value.trim();
+                        if (!text) return;
+                        inp.value = '';
+                        
+                        this.history.push({ role: 'user', parts: [{ text: `Tu je pripomienka k plánu: ${text}. Prosím pregeneruj pôvodný JSON pole s týmito úpravami. Output iba čistý JSON.` }] });
+                        
+                        const btn = document.getElementById('mpModifyBtn');
+                        btn.innerHTML = '<i class="fas fa-spinner animate-spin-fast"></i>';
+                        btn.disabled = true;
+
+                        try {
+                            const response = await app.ai.callChat(this.history);
+                            if (response) {
+                                const jsonStr = response.match(/\[[\s\S]*\]/)?.[0];
+                                if (jsonStr) {
+                                    this.currentPlan = JSON.parse(jsonStr);
+                                    this.renderPlan();
+                                } else {
+                                    app.ui.showToast("Chyba pri úprave plánu.");
+                                }
+                            }
+                        } catch (e) {
+                            app.ui.showToast("Zlý formát od AI.");
+                        } finally {
+                            btn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                            btn.disabled = false;
+                        }
+                    },
+                    executePlan() {
+                        if (!this.currentPlan.length) return;
+                        this.currentPlan.forEach(t => {
+                            const validQ = ['q1','q2','q3','q4'].includes(t.q) ? t.q : 'q2';
+                            const subs = (t.subs || []).map(s => ({ text: s, done: false }));
+                            app.data.tasks.push({
+                                id: 'mp' + Date.now() + Math.floor(Math.random() * 1000),
+                                text: t.title,
+                                q: validQ,
+                                dl: t.dl || "",
+                                est: t.est || "",
+                                subs: subs,
+                                done: false,
+                                projectId: app.data.activeProjectId
+                            });
+                        });
+                        app.storage.save();
+                        app.ui.render();
+                        app.ui.closeModal('masterplanModal');
+                        app.ui.showToast('Úlohy boli úspešne pridané!');
+                    }
+                },
                 async call(p) {
                     const key = app.data.apiKey || SYSTEM_KEY;
                     if (!key) { app.ui.showAlert("Chýba API Kľúč", "Vložte API kľúč v nastaveniach."); app.ui.openModal('settingsModal'); return null; }
@@ -1452,6 +2098,19 @@
                         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
                             method: 'POST', headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ contents: [{ parts: [{ text: p }] }] })
+                        });
+                        const data = await res.json();
+                        if (data.error) throw new Error(data.error.message);
+                        return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    } catch (e) { console.error("AI Error", e); app.ui.showAlert("Chyba AI", "Nepodarilo sa spojiť."); return null; }
+                },
+                async callChat(contents) {
+                    const key = app.data.apiKey || SYSTEM_KEY;
+                    if (!key) { app.ui.showAlert("Chýba API Kľúč", "Vložte API kľúč v nastaveniach."); app.ui.openModal('settingsModal'); return null; }
+                    try {
+                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: contents })
                         });
                         const data = await res.json();
                         if (data.error) throw new Error(data.error.message);
@@ -1506,7 +2165,7 @@
                     if (res) {
                         let q = res.trim().toLowerCase();
                         if (q.includes('q1')) q = 'q1'; else if (q.includes('q2')) q = 'q2'; else if (q.includes('q3')) q = 'q3'; else if (q.includes('q4')) q = 'q4'; else q = 'q1';
-                        app.data.tasks.push({ id: 't' + Date.now(), text: text, q: q, dl: '', est: '', subs: [], done: false });
+                        app.data.tasks.push({ id: 't' + Date.now(), text: text, q: q, dl: '', est: '', subs: [], done: false, projectId: app.data.activeProjectId });
                         input.value = '';
                         app.storage.save();
                         app.ui.render();
@@ -1582,7 +2241,7 @@
                         const el = document.getElementById(id);
                         if (el) el.innerHTML = '';
                     });
-                    app.data.tasks.filter(t => !t.done).forEach(t => {
+                    app.data.tasks.filter(t => !t.done && (t.q === 'inbox' || t.projectId === app.data.activeProjectId)).forEach(t => {
                         const el = document.createElement('div');
                         el.className = `task-card bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm hover:shadow-md border border-gray-100 dark:border-slate-700 mb-2 group relative cursor-pointer active:scale-[0.98] transition-all duration-200 ${t.q === 'q1' ? 'border-l-[5px] border-l-red-500' : t.q === 'q2' ? 'border-l-[5px] border-l-blue-500' : t.q === 'q3' ? 'border-l-[5px] border-l-yellow-500' : 'border-l-[5px] border-l-gray-500'}`;
                         el.draggable = true;
@@ -1646,6 +2305,59 @@
                             sb.classList.remove('hidden');
                         } else {
                             sb.classList.add('hidden');
+                        }
+                    }
+                },
+                toggleLayout(init = false) {
+                    if (!init) {
+                        app.data.layoutMode = app.data.layoutMode === 'matrix' ? 'list' : 'matrix';
+                        app.storage.save();
+                    }
+                    const isList = app.data.layoutMode === 'list';
+                    const grid = document.getElementById('matrixGrid');
+                    const btn = document.getElementById('layoutToggleBtn');
+                    
+                    if (isList) {
+                        grid.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'grid-rows-2', 'h-full');
+                        grid.classList.add('flex', 'flex-col', 'overflow-y-auto', 'custom-scroll');
+                        if (btn) btn.innerHTML = '<i class="fas fa-th-large"></i> <span class="hidden md:inline">Matica</span>';
+                        document.querySelectorAll('.layout-icon').forEach(i => i.classList.remove('hidden'));
+                        ['q1','q2','q3','q4'].forEach(id => {
+                            const q = document.getElementById(id);
+                            if (q) {
+                                q.classList.remove('overflow-y-auto', 'flex-1');
+                                q.parentElement.classList.add('shrink-0');
+                            }
+                        });
+                    } else {
+                        grid.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'grid-rows-2', 'h-full');
+                        grid.classList.remove('flex', 'flex-col', 'overflow-y-auto', 'custom-scroll');
+                        if (btn) btn.innerHTML = '<i class="fas fa-list"></i> <span class="hidden md:inline">Zoznam</span>';
+                        document.querySelectorAll('.layout-icon').forEach(i => i.classList.add('hidden'));
+                        // Ensure all quadrants are visible
+                        ['q1','q2','q3','q4'].forEach(id => {
+                            const q = document.getElementById(id);
+                            if (q) {
+                                q.classList.remove('hidden');
+                                q.classList.add('overflow-y-auto', 'flex-1');
+                                q.parentElement.classList.remove('shrink-0');
+                            }
+                            const icon = document.getElementById(id + '-icon');
+                            if (icon) icon.classList.remove('rotate-180');
+                        });
+                    }
+                },
+                toggleQuadrant(id) {
+                    if (app.data.layoutMode !== 'list') return;
+                    const q = document.getElementById(id);
+                    const icon = document.getElementById(id + '-icon');
+                    if (q) {
+                        if (q.classList.contains('hidden')) {
+                            q.classList.remove('hidden');
+                            if (icon) icon.classList.remove('rotate-180');
+                        } else {
+                            q.classList.add('hidden');
+                            if (icon) icon.classList.add('rotate-180');
                         }
                     }
                 },
