@@ -1276,10 +1276,16 @@
                                     const newTasks = d.tasks.filter(t => !existIds.has(t.id));
                                     app.data.tasks = [...app.data.tasks, ...newTasks];
                                     app.data.stats = { ...d.stats, ...app.data.stats };
+                                    if (d.projects) {
+                                        const existProjIds = new Set(app.data.projects.map(p => p.id));
+                                        const newProjects = d.projects.filter(p => !existProjIds.has(p.id));
+                                        app.data.projects = [...app.data.projects, ...newProjects];
+                                    }
                                 } else {
                                     app.data = d;
                                 }
                                 app.storage.save();
+                                if (app.projects && app.projects.renderTabs) app.projects.renderTabs();
                                 app.ui.render();
                                 app.ui.notify("Hotovo", "Dáta obnovené.");
                             }
