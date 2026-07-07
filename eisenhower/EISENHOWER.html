@@ -17,6 +17,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://npmcdn.com/flatpickr/dist/l10n/sk.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
     <script>
         tailwind.config = {
@@ -220,6 +225,13 @@
                     class="flex items-center gap-2 text-gray-600 dark:text-slate-400 hover:text-green-600 hover:bg-white dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition text-sm font-medium"
                     title="Splnené úlohy">
                     <i class="fas fa-check-circle"></i> <span class="hidden md:inline">Splnené</span>
+                </button>
+
+                <!-- Firebase Login Button -->
+                <button id="fbLoginBtn" onclick="app.firebase.toggleLogin()"
+                    class="hidden lg:flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:bg-white dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition text-sm font-medium"
+                    title="Prihlásenie (Cloud Sync)">
+                    <i class="fab fa-google"></i> <span class="hidden md:inline" id="fbLoginText">Prihlásiť sa</span>
                 </button>
 
                 <!-- Settings Button -->
@@ -588,9 +600,13 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">API Kľúč</label>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">API Kľúč (AI)</label>
                 <input type="password" id="apiKeyInput"
-                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white">
+                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white mb-3">
+                    
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Firebase Config (JSON pre Sync)</label>
+                <textarea id="fbConfigInput" rows="3"
+                    class="w-full border rounded p-2 text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white placeholder-gray-400" placeholder='{"apiKey": "...", "authDomain": "...", ...}'></textarea>
             </div>
             <div class="flex gap-2 mb-4">
                 <button onclick="app.backup.download()"
@@ -850,6 +866,7 @@
                 tasks: [],
                 stats: {},
                 apiKey: "",
+                fbConfig: "",
                 tempSubs: [],
                 deadlineSettings: [
                     { id: 'OVERDUE', label: 'Po termíne', color: '#7f1d1d', threshold: 0 },   // Burgundy (Past)
@@ -867,6 +884,11 @@
                 this.storage.load();
                 if (this.projects) this.projects.renderTabs();
                 this.ui.render();
+                
+                // Init Firebase if config exists
+                if (this.data.fbConfig) {
+                    this.firebase.init();
+                }
                 
                 // Initialize layout
                 this.ui.toggleLayout(true);
@@ -914,17 +936,21 @@
                         const t = localStorage.getItem('em_tasks_v2');
                         const s = localStorage.getItem('em_stats_v2');
                         const k = localStorage.getItem('em_apikey_v2');
+                        const fbc = localStorage.getItem('em_fbconfig');
                         const ds = localStorage.getItem('em_deadline_settings');
                         const p = localStorage.getItem('em_projects');
                         const ap = localStorage.getItem('em_active_project');
                         app.data.tasks = t ? JSON.parse(t) : [];
                         app.data.stats = s ? JSON.parse(s) : {};
                         app.data.apiKey = k || "";
+                        app.data.fbConfig = fbc || "";
                         if (ds) app.data.deadlineSettings = JSON.parse(ds);
                         if (p) app.data.projects = JSON.parse(p);
                         if (ap) app.data.activeProjectId = ap;
                         const apiInput = document.getElementById('apiKeyInput');
                         if (apiInput) apiInput.value = app.data.apiKey;
+                        const fbInput = document.getElementById('fbConfigInput');
+                        if (fbInput) fbInput.value = app.data.fbConfig;
                         
                         // Migrate existing tasks
                         app.data.tasks.forEach(task => {
@@ -932,13 +958,106 @@
                         });
                     } catch (e) { app.data.tasks = []; app.data.stats = {}; }
                 },
-                save() {
+                saveLocalOnly() {
                     localStorage.setItem('em_tasks_v2', JSON.stringify(app.data.tasks));
                     localStorage.setItem('em_stats_v2', JSON.stringify(app.data.stats));
                     localStorage.setItem('em_apikey_v2', app.data.apiKey);
+                    localStorage.setItem('em_fbconfig', app.data.fbConfig || "");
                     localStorage.setItem('em_deadline_settings', JSON.stringify(app.data.deadlineSettings));
                     localStorage.setItem('em_projects', JSON.stringify(app.data.projects));
                     localStorage.setItem('em_active_project', app.data.activeProjectId);
+                },
+                save() {
+                    this.saveLocalOnly();
+                    if (app.firebase && app.firebase.user) {
+                        app.firebase.syncToCloud();
+                    }
+                }
+            },
+
+            firebase: {
+                user: null,
+                db: null,
+                init() {
+                    const configStr = app.data.fbConfig;
+                    if (!configStr) return;
+                    try {
+                        const config = JSON.parse(configStr);
+                        if (!firebase.apps.length) {
+                            firebase.initializeApp(config);
+                        }
+                        this.db = firebase.firestore();
+                        
+                        firebase.auth().onAuthStateChanged((user) => {
+                            this.user = user;
+                            const btn = document.getElementById('fbLoginBtn');
+                            const text = document.getElementById('fbLoginText');
+                            if (user) {
+                                if (btn) {
+                                    btn.classList.add('bg-indigo-50', 'dark:bg-indigo-900/30');
+                                    btn.classList.remove('text-indigo-600', 'dark:text-indigo-400');
+                                    btn.classList.add('text-indigo-800', 'dark:text-indigo-200');
+                                }
+                                if (text) text.innerText = user.email.split('@')[0];
+                                this.syncFromCloud();
+                            } else {
+                                if (btn) {
+                                    btn.classList.remove('bg-indigo-50', 'dark:bg-indigo-900/30', 'text-indigo-800', 'dark:text-indigo-200');
+                                    btn.classList.add('text-indigo-600', 'dark:text-indigo-400');
+                                }
+                                if (text) text.innerText = "Prihlásiť sa";
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Firebase Init Error:", e);
+                    }
+                },
+                toggleLogin() {
+                    if (!app.data.fbConfig) {
+                        app.ui.showAlert("Chyba", "Najprv vložte Firebase Config (JSON) v Nastaveniach.");
+                        app.ui.openModal('settingsModal');
+                        return;
+                    }
+                    if (this.user) {
+                        firebase.auth().signOut().then(() => {
+                            app.ui.notify("Odhlásený", "Boli ste odhlásený z cloudu.");
+                        });
+                    } else {
+                        const provider = new firebase.auth.GoogleAuthProvider();
+                        firebase.auth().signInWithPopup(provider).catch(e => {
+                            app.ui.showAlert("Chyba prihlásenia", e.message);
+                        });
+                    }
+                },
+                syncToCloud() {
+                    if (!this.user || !this.db) return;
+                    const dataToSave = {
+                        tasks: app.data.tasks,
+                        stats: app.data.stats,
+                        deadlineSettings: app.data.deadlineSettings,
+                        projects: app.data.projects,
+                        activeProjectId: app.data.activeProjectId,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    this.db.collection('users').doc(this.user.uid).set(dataToSave).catch(console.error);
+                },
+                syncFromCloud() {
+                    if (!this.user || !this.db) return;
+                    this.db.collection('users').doc(this.user.uid).get().then(doc => {
+                        if (doc.exists) {
+                            const d = doc.data();
+                            if (d.tasks) app.data.tasks = d.tasks;
+                            if (d.stats) app.data.stats = d.stats;
+                            if (d.deadlineSettings) app.data.deadlineSettings = d.deadlineSettings;
+                            if (d.projects) app.data.projects = d.projects;
+                            if (d.activeProjectId) app.data.activeProjectId = d.activeProjectId;
+                            
+                            app.storage.saveLocalOnly();
+                            if (app.projects) app.projects.renderTabs();
+                            app.ui.render();
+                            app.ui.notify("Cloud Sync", "Dáta boli načítané a synchronizované z cloudu.");
+                        }
+                    }).catch(console.error);
                 }
             },
             
@@ -1032,8 +1151,16 @@
             settings: {
                 save() {
                     app.data.apiKey = document.getElementById('apiKeyInput').value.trim();
+                    const fbConfInput = document.getElementById('fbConfigInput');
+                    if (fbConfInput) app.data.fbConfig = fbConfInput.value.trim();
+                    
                     app.settings.saveRulesFromUI();
                     app.storage.save();
+                    
+                    if (app.data.fbConfig && (!app.firebase.db)) {
+                        app.firebase.init();
+                    }
+                    
                     app.ui.render(); // Re-render to apply new colors
                     app.ui.closeModal('settingsModal');
                 },
